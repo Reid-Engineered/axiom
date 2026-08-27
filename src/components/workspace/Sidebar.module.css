@@ -6,6 +6,7 @@
   background: var(--color-chrome);
   color: var(--text-primary);
   font-family: var(--font-ui);
+  box-sizing: border-box;
 }
 
 .primaryLinks,
@@ -33,10 +34,13 @@
   padding: var(--space-md) var(--space-lg);
   background: transparent;
   color: var(--text-primary);
-  font: inherit;
+  font-family: var(--font-ui);
   font-size: var(--font-size-body);
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  user-select: none;
 }
 
 .navButton:hover,
@@ -44,21 +48,35 @@
   background: var(--color-recessed);
 }
 
-.shortcut,
-.eyebrow {
+.shortcut {
   color: var(--text-metadata);
-  font-size: var(--font-size-eyebrow);
-  letter-spacing: var(--letter-spacing-eyebrow);
-  text-transform: uppercase;
+  font-size: var(--font-size-metadata);
+  font-family: monospace;
+  background: var(--color-recessed);
+  padding: var(--space-2xs) var(--space-md-minus);
+  border-radius: var(--radius-small);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  line-height: 1;
 }
 
 .eyebrow {
-  padding: 0 var(--space-lg);
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
   font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  padding: 0 var(--space-lg);
 }
 
 .createButton {
   color: var(--text-secondary);
+  font-size: var(--font-size-small-plus);
+  font-weight: 400;
+  margin-top: var(--space-xs);
+}
+
+.createButton:hover {
+  color: var(--text-primary);
 }
 
 .footer {

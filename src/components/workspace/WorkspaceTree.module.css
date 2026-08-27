@@ -7,13 +7,17 @@
 
 .workspaceButton,
 .subItem {
+  display: flex;
+  align-items: center;
   border: 0;
   border-radius: var(--radius-row);
   background: transparent;
   color: var(--text-secondary);
-  font: inherit;
+  font-family: var(--font-ui);
   text-align: left;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  user-select: none;
 }
 
 .workspaceButton {
@@ -23,19 +27,32 @@
   font-weight: 600;
 }
 
+.workspaceButton:hover {
+  background: var(--color-recessed);
+}
+
 .subItems {
   padding-left: var(--space-xl);
+  margin-top: var(--space-2xs);
+  margin-bottom: var(--space-2xs);
+  gap: var(--space-2xs);
 }
 
 .subItem {
   padding: var(--space-md-minus) var(--space-lg);
   font-size: var(--font-size-small-plus);
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
-.workspaceButton:hover,
-.subItem:hover,
-.open,
-.active {
+.subItem:hover {
   background: var(--color-recessed);
   color: var(--text-primary);
+}
+
+.subItem.active {
+  background: var(--color-chrome-rail);
+  color: var(--accent-action);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
 }

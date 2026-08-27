@@ -33,11 +33,18 @@
   --content-gutter: 32px;
   --layout-column-width: 520px;
   --layout-column-width-wide: 560px;
+  --layout-rail-width: 250px;
   --layout-gallery-width: 900px;
   --gallery-placeholder-height: 100px;
   --command-palette-width: 600px;
   --command-palette-top: 96px;
   --command-palette-max-height: 400px;
+
+  /* session pane flex ratios */
+  --session-viz-flex: 1.35;
+  --session-lower-flex: 1.55;
+  --session-problem-flex: 1.55;
+  --session-tutor-flex: 1;
 
   /* spacing */
   --space-2xs: 2px;

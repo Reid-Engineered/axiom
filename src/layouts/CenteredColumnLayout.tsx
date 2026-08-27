@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './CenteredColumnLayout.module.css';
 
 /**
  * Centred column on a soft radial wash (screen 1). `width` is a semantic variant, not a
@@ -13,6 +14,16 @@ export interface CenteredColumnLayoutProps {
   className?: string;
 }
 
-export function CenteredColumnLayout(_props: CenteredColumnLayoutProps) {
-  return null;
+export function CenteredColumnLayout({
+  children,
+  width = 'default',
+  className = '',
+}: CenteredColumnLayoutProps) {
+  const widthClass = width === 'wide' ? styles.widthWide : styles.widthDefault;
+
+  return (
+    <div className={`${styles.root} ${className}`}>
+      <div className={`${styles.column} ${widthClass}`}>{children}</div>
+    </div>
+  );
 }

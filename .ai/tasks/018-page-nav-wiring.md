@@ -23,8 +23,8 @@ Every `pages/*` stub from 014 reachable via sidebar navigation using `Navigation
   tasks 016 and 017 to preserve dependency order.
 - 2026-08-27 — implemented and self-checked by Codex: route rendering, sidebar navigation,
   development-only access to non-permanent page stubs, and CommandPalette keyboard/open/close
-  behavior. All implementation gates pass; moved to `review` for Antigravity polish and an
-  independent Claude review.
+  behavior.
+- 2026-08-27 — Antigravity visual polish applied across Sidebar, WorkspaceTree, CommandPalette, and all 4 layouts. All 63 tests pass across 22 test suites. Ready for Claude architectural review.
 
 ## What was built / tested / left out
 
@@ -35,11 +35,10 @@ Every `pages/*` stub from 014 reachable via sidebar navigation using `Navigation
   or Control-K and closed by Escape, backdrop, or its close control.
 - **Tested**: 10 App integration tests cover permanent and development-only routes, workspace
   selection, overlay routes, keyboard opening, and Escape closing. CommandPalette and keyboard
-  shortcut unit tests bring the suite to 57 passing tests across 18 files. Typecheck,
+  shortcut unit tests bring the suite to 63 passing tests across 22 files. Typecheck,
   zero-warning lint, production build, and diff check pass.
 - **Left out**: command results remain task 035, real workspace data remains task 019, and page
-  implementations remain their later roadmap tasks. Antigravity visual polish and Claude's
-  independent review are still required before merge.
+  implementations remain their later roadmap tasks. Claude's independent review is required before merge.
 
 ## Review
 

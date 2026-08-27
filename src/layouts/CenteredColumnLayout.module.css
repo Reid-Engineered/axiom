@@ -1,0 +1,29 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--space-4xl) var(--space-xl);
+  background: radial-gradient(
+    ellipse at 50% 25%,
+    var(--color-chrome-rail) 0%,
+    var(--color-content) 75%
+  );
+  box-sizing: border-box;
+}
+
+.column {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.widthDefault {
+  max-width: var(--layout-column-width);
+}
+
+.widthWide {
+  max-width: var(--layout-column-width-wide);
+}

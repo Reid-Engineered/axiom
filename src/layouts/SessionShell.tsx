@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './SessionShell.module.css';
 
 /**
  * Session toolbar (44px) plus a resizable pane grid: visualization (upper, `flex: 1.35`),
@@ -13,6 +14,23 @@ export interface SessionShellProps {
   className?: string;
 }
 
-export function SessionShell(_props: SessionShellProps) {
-  return null;
+export function SessionShell({
+  toolbar,
+  visualization,
+  problem,
+  tutor,
+  className = '',
+}: SessionShellProps) {
+  return (
+    <div className={`${styles.root} ${className}`}>
+      <header className={styles.toolbar}>{toolbar}</header>
+      <div className={styles.body}>
+        <div className={styles.visualization}>{visualization}</div>
+        <div className={styles.lowerRow}>
+          <div className={styles.problem}>{problem}</div>
+          <aside className={styles.tutor}>{tutor}</aside>
+        </div>
+      </div>
+    </div>
+  );
 }

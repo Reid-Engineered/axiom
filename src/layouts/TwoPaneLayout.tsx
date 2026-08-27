@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './TwoPaneLayout.module.css';
 
 /** Main content plus a 250px right rail (used by WorkspaceOverviewPage, ConceptViewPage, ModuleDetailPage). */
 export interface TwoPaneLayoutProps {
@@ -7,6 +8,11 @@ export interface TwoPaneLayoutProps {
   className?: string;
 }
 
-export function TwoPaneLayout(_props: TwoPaneLayoutProps) {
-  return null;
+export function TwoPaneLayout({ children, rail, className = '' }: TwoPaneLayoutProps) {
+  return (
+    <div className={`${styles.root} ${className}`}>
+      <main className={styles.main}>{children}</main>
+      <aside className={styles.rail}>{rail}</aside>
+    </div>
+  );
 }

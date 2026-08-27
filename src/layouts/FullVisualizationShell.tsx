@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './FullVisualizationShell.module.css';
 
 /**
  * Full-bleed, no sidebar. `header` holds "‹ Session", the scene name, and actions
@@ -11,6 +12,15 @@ export interface FullVisualizationShellProps {
   className?: string;
 }
 
-export function FullVisualizationShell(_props: FullVisualizationShellProps) {
-  return null;
+export function FullVisualizationShell({
+  header,
+  children,
+  className = '',
+}: FullVisualizationShellProps) {
+  return (
+    <div className={`${styles.root} ${className}`}>
+      <header className={styles.header}>{header}</header>
+      <main className={styles.content}>{children}</main>
+    </div>
+  );
 }
