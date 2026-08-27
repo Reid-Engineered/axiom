@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+
+import styles from './CommandPalette.module.css';
 
 export interface CommandPaletteResultItem {
   id: string;
@@ -36,6 +38,68 @@ export interface CommandPaletteProps {
   className?: string;
 }
 
-export function CommandPalette(_props: CommandPaletteProps) {
-  return null;
+export function CommandPalette({
+  open,
+  onClose,
+  query,
+  onQueryChange,
+  groups,
+  scopeLabel,
+  className = '',
+}: CommandPaletteProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className={styles.backdrop} role="presentation" onMouseDown={onClose}>
+      <section
+        className={`${styles.palette} ${className}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className={styles.searchRow}>
+          <input
+            autoFocus
+            className={styles.input}
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            aria-label="Search commands"
+          />
+          {scopeLabel ? <span className={styles.scope}>{scopeLabel}</span> : null}
+        </div>
+        <div className={styles.results}>
+          {groups.map((group) => (
+            <section key={group.label} className={styles.group}>
+              <div className={styles.groupLabel}>{group.label}</div>
+              {group.items.map((item) => (
+                <button
+                  type="button"
+                  className={styles.result}
+                  key={item.id}
+                  onClick={item.onSelect}
+                >
+                  <span>{item.content}</span>
+                  {item.shortcut ? <span className={styles.shortcut}>{item.shortcut}</span> : null}
+                </button>
+              ))}
+            </section>
+          ))}
+        </div>
+        <footer className={styles.footer}>↑↓ move · ⏎ run · ⇥ scope · esc close</footer>
+      </section>
+    </div>
+  );
 }

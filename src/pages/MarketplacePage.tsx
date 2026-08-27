@@ -1,10 +1,13 @@
+import type { ReactNode } from 'react';
+
 import { AppShell } from '../layouts/AppShell';
 
 export interface MarketplacePageProps {
   forWorkspaceId?: string;
+  sidebar?: ReactNode;
 }
 
 /** Module marketplace, optionally personalized for the active workspace. */
-export function MarketplacePage(_props: MarketplacePageProps) {
-  return <AppShell>{null}</AppShell>;
+export function MarketplacePage({ sidebar }: MarketplacePageProps) {
+  return <AppShell sidebar={sidebar}>{null}</AppShell>;
 }

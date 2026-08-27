@@ -12,6 +12,7 @@
   --text-metadata: rgba(28, 27, 25, 0.46);
   --color-hairline: rgba(28, 27, 25, 0.1);
   --color-hairline-strong: rgba(28, 27, 25, 0.14);
+  --color-overlay: rgba(28, 27, 25, 0.3);
 
   /* accents — exactly two, plus the amber mistake dot. No red anywhere. */
   --accent-action: oklch(0.5 0.13 258);
@@ -34,6 +35,9 @@
   --layout-column-width-wide: 560px;
   --layout-gallery-width: 900px;
   --gallery-placeholder-height: 100px;
+  --command-palette-width: 600px;
+  --command-palette-top: 96px;
+  --command-palette-max-height: 400px;
 
   /* spacing */
   --space-2xs: 2px;
