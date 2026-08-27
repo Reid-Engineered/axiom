@@ -30,6 +30,8 @@
   --toolbar-height-workspace: 38px;
   --toolbar-height-session: 44px;
   --content-gutter: 32px;
+  --layout-column-width: 520px;
+  --layout-column-width-wide: 560px;
 
   /* radii */
   --radius-row: 7px;
