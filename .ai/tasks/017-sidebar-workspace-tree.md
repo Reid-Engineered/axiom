@@ -1,7 +1,7 @@
 ---
 id: 017
 title: Sidebar / WorkspaceTree implementation
-status: proposed
+status: review
 owner: codex
 stage: 3
 depends_on: [009, 016]
@@ -18,9 +18,24 @@ Implement `Sidebar` / `WorkspaceTree` against mock workspace names only (no real
 
 ## Worklog
 
+- 2026-08-27 — started by Codex on `agent/codex/017-sidebar-workspace-tree`, stacked on
+  review-ready task 016 so the declared dependency remains explicit.
+- 2026-08-27 — implemented the reusable two-level WorkspaceTree, permanent Sidebar, and
+  optional AppShell sidebar slot. Added enforcement tests and passed all gates; moved to
+  `review` for Antigravity polish and independent review.
+
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+- **Built**: WorkspaceTree renders four fixed workspace areas only beneath the one open
+  workspace; Sidebar composes search, Home, Marketplace, workspace tree, create action, and
+  optional footer; AppShell supports an optional fixed-width sidebar without changing
+  first-launch/full-visualization behavior.
+- **Tested**: render tests prove exactly one workspace expands, closed workspaces expose no
+  children, the tree stops at two levels, modules never appear as rows, active state is
+  semantic, and callbacks carry the expected selections. Typecheck, zero-warning lint, 46
+  tests, build, both design-value greps, and diff check pass.
+- **Left out**: real workspace data and route wiring remain tasks 019 and 018 respectively;
+  Antigravity visual polish remains the next pass in this task.
 
 ## Review
 

@@ -1,3 +1,5 @@
+import styles from './WorkspaceTree.module.css';
+
 export interface WorkspaceTreeEntry {
   id: string;
   name: string;
@@ -18,6 +20,49 @@ export interface WorkspaceTreeProps {
   className?: string;
 }
 
-export function WorkspaceTree(_props: WorkspaceTreeProps) {
-  return null;
+const SUB_ITEMS = ['overview', 'concepts', 'material', 'tools'] as const;
+
+export function WorkspaceTree({
+  workspaces,
+  openWorkspaceId,
+  activeSubItem,
+  onSelectWorkspace,
+  onSelectSubItem,
+  className = '',
+}: WorkspaceTreeProps) {
+  return (
+    <div className={`${styles.tree} ${className}`}>
+      {workspaces.map((workspace) => {
+        const isOpen = workspace.id === openWorkspaceId;
+
+        return (
+          <div className={styles.workspace} key={workspace.id}>
+            <button
+              type="button"
+              className={`${styles.workspaceButton} ${isOpen ? styles.open : ''}`}
+              aria-expanded={isOpen}
+              onClick={() => onSelectWorkspace?.(workspace.id)}
+            >
+              {workspace.name}
+            </button>
+            {isOpen ? (
+              <div className={styles.subItems}>
+                {SUB_ITEMS.map((subItem) => (
+                  <button
+                    type="button"
+                    key={subItem}
+                    className={`${styles.subItem} ${activeSubItem === subItem ? styles.active : ''}`}
+                    aria-current={activeSubItem === subItem ? 'page' : undefined}
+                    onClick={() => onSelectSubItem?.(subItem)}
+                  >
+                    {subItem[0].toUpperCase() + subItem.slice(1)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 }

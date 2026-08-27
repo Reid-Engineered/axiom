@@ -10,8 +10,20 @@
   height: var(--drag-strip-height);
 }
 
-.content {
+.body {
+  display: flex;
   flex: 1;
   min-height: 0;
+}
+
+.sidebar {
+  flex: 0 0 var(--sidebar-width);
+  min-width: 0;
+  border-right: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
   overflow: auto;
 }

@@ -1,0 +1,68 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--color-chrome);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
+
+.primaryLinks,
+.workspaces {
+  display: flex;
+  flex-direction: column;
+}
+
+.primaryLinks {
+  gap: var(--space-2xs);
+}
+
+.workspaces {
+  gap: var(--space-sm);
+  margin-top: var(--space-3xl);
+}
+
+.navButton,
+.createButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: var(--radius-row);
+  padding: var(--space-md) var(--space-lg);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.navButton:hover,
+.createButton:hover {
+  background: var(--color-recessed);
+}
+
+.shortcut,
+.eyebrow {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  padding: 0 var(--space-lg);
+  font-weight: 600;
+}
+
+.createButton {
+  color: var(--text-secondary);
+}
+
+.footer {
+  margin-top: auto;
+  border-top: var(--border-width-hairline) solid var(--color-hairline);
+  padding-top: var(--space-lg);
+}

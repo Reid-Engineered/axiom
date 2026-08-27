@@ -1,0 +1,41 @@
+.tree,
+.workspace,
+.subItems {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspaceButton,
+.subItem {
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspaceButton {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.subItems {
+  padding-left: var(--space-xl);
+}
+
+.subItem {
+  padding: var(--space-md-minus) var(--space-lg);
+  font-size: var(--font-size-small-plus);
+}
+
+.workspaceButton:hover,
+.subItem:hover,
+.open,
+.active {
+  background: var(--color-recessed);
+  color: var(--text-primary);
+}
