@@ -1,0 +1,17 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-content);
+}
+
+.dragStrip {
+  flex-shrink: 0;
+  height: var(--drag-strip-height);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

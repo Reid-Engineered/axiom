@@ -1,0 +1,42 @@
+:root {
+  /* surfaces */
+  --color-content: #fbfaf8;
+  --color-chrome: #f2f1ed;
+  --color-chrome-rail: #faf9f6;
+  --color-recessed: #e9e7e2;
+  --color-ink: #1c1b19;
+
+  /* text */
+  --text-primary: #1c1b19;
+  --text-secondary: rgba(28, 27, 25, 0.58);
+  --text-metadata: rgba(28, 27, 25, 0.46);
+  --color-hairline: rgba(28, 27, 25, 0.1);
+  --color-hairline-strong: rgba(28, 27, 25, 0.14);
+
+  /* accents — exactly two, plus the amber mistake dot. No red anywhere. */
+  --accent-action: oklch(0.5 0.13 258);
+  --accent-mastery: oklch(0.5 0.13 150);
+  --accent-amber: oklch(0.65 0.12 60);
+
+  /* type */
+  --font-ui:
+    ui-sans-serif, system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue",
+    sans-serif;
+  --font-math: "STIX Two Text", serif;
+
+  /* metrics */
+  --sidebar-width: 232px;
+  --drag-strip-height: 38px;
+  --toolbar-height-workspace: 38px;
+  --toolbar-height-session: 44px;
+  --content-gutter: 32px;
+
+  /* radii */
+  --radius-row: 7px;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+
+  /* shadows */
+  --shadow-card: 0 1px 2px rgba(28, 27, 25, 0.04);
+  --shadow-sheet: 0 24px 60px rgba(28, 27, 25, 0.3);
+}
