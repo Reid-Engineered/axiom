@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#e9e8e4;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:oklch(.5 .13 258);text-decoration:none}
+a:hover{color:oklch(.42 .14 258)}
+</style>
+</helmet>
+
+<div style="max-width:1120px;margin:0 auto;padding:56px 40px 96px;background:#fbfaf8;font-family:ui-sans-serif,system-ui,'Segoe UI Variable Text','Segoe UI',Roboto,'Helvetica Neue',sans-serif;color:#1c1b19;min-height:100vh">
+
+  <div style="display:flex;align-items:center;gap:11px;margin-bottom:26px">
+    <span style="width:26px;height:26px;border:1.5px solid #1c1b19;border-radius:6px;position:relative;display:block"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);width:10px;height:10px;background:oklch(.5 .13 258)"></span></span>
+    <span style="font-weight:600;font-size:19px;line-height:1;letter-spacing:-.01em">Axiom — UI Design Handoff</span>
+  </div>
+
+  <p style="font-size:15px;line-height:1.65;color:rgba(28,27,25,.68);margin:0 0 12px;max-width:660px;text-wrap:pretty">A complete description of the Axiom desktop learning environment as designed — system, navigation, all twelve screens, and the invariants that must survive implementation. Written to be handed to another AI or engineer as the source of truth.</p>
+  <p style="font-size:13px;line-height:1.6;color:rgba(28,27,25,.5);margin:0 0 40px;max-width:660px">Target runtime: <b style="font-weight:600;color:rgba(28,27,25,.75)">Tauri, multi-platform</b> (macOS, Windows, Linux). Native-desktop feel, no platform-specific chrome — a 38px draggable strip at the top of the window, each OS supplying its own decorations. The written spec also exists as <a href="AXIOM-HANDOFF.md">AXIOM-HANDOFF.md</a>; full-resolution frames are in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px">screenshots/</code>.</p>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-bottom:44px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:16px">Product model</div>
+    <pre style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.8;color:rgba(28,27,25,.72);background:#f4f2ee;border:1px solid rgba(28,27,25,.09);border-radius:10px;padding:16px 18px;margin:0 0 18px;overflow-x:auto">Goal ──guides──&gt; Workspace ──contains──&gt; Concepts ──related to──&gt; Concepts
+                     │                        │
+                     ├──enables──&gt; Modules (tools)
+                     └──records──&gt; Sessions, notes, practice history, mastery</pre>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 34px;font-size:13px;line-height:1.6;color:rgba(28,27,25,.65)">
+      <div><b style="font-weight:600;color:#1c1b19">Workspace</b> — curated learning environment for one subject. Owns goals, concepts, material, history, enabled modules, preferences. Chosen over “Collection”.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Goal</b> — living object: verbatim natural-language text plus inferred structure (deadline, mastery type, pacing, scope). One primary active goal; history retained.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Concept</b> — semantic node with prerequisite / related / leads-to edges, a mastery state, and links to notes, practice, visualizations, tutor threads.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Module</b> — a capability enabled inside a workspace. Never a navigation destination; never described in developer language.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Session intent</b> — short-term goal (“practice 30 minutes”), distinct from the workspace goal.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Mastery</b> — five named states: New · Developing · Familiar · Strong · Mastered. The word is the indicator; the ring is shorthand. States decay honestly (“was Strong”). Never a percentage, never a chart.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Offline</b> — a workspace-level promise. Resources and modules are Works offline · Online enhanced · Internet required.</div>
+      <div><b style="font-weight:600;color:#1c1b19">Goal states</b> — Guiding · Waiting · Met · Resting. Exactly one goal guides, and it alone shapes recommendations.</div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-bottom:16px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:8px">Design system</div>
+    <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.62);margin:0 0 18px;max-width:660px;text-wrap:pretty">Warm neutral surfaces, exactly two accents sharing lightness and chroma, system UI type for interface and STIX Two Text for mathematics. Sidebar 232px · drag strip 38px · workspace toolbar 38px · session toolbar 44px · radii 7–16 · 1px hairlines. Note for implementers: <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px">font: 400 12px/1 inherit</code> is invalid CSS and is silently dropped — use longhands and let family inherit.</p>
+    <img src="screenshots/00-foundations.png" alt="Foundations — surfaces, accents, type scale, controls, mastery glyph" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+    <p style="font-size:12.5px;line-height:1.6;color:rgba(28,27,25,.5);margin:11px 0 0;max-width:660px">Content <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">#FBFAF8</code> · chrome <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">#F2F1ED</code> · recessed <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">#E9E7E2</code> · ink <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">#1C1B19</code> · action <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">oklch(.50 .13 258)</code> · mastery <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">oklch(.50 .13 150)</code>. Amber <code style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px">oklch(.65 .12 60)</code> only for a named mistake; no red anywhere.</p>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin:44px 0 16px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:8px">Navigation — chosen structure A</div>
+    <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.62);margin:0 0 18px;max-width:660px;text-wrap:pretty">Home, Marketplace, then workspaces. Only the open workspace expands, into Overview / Concepts / Material / Tools; the tree never exceeds two levels; modules are never rows here. The sidebar is absent on first launch and hidden only in Full Visualization mode, which offers a single “‹ Session” return.</p>
+    <img src="screenshots/13-navigation-studies.png" alt="Three navigation structures explored" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+    <p style="font-size:12.5px;line-height:1.6;color:rgba(28,27,25,.5);margin:11px 0 0;max-width:660px">Rejected but recorded: <b style="font-weight:600">B</b> icon rail + header switcher (max content width, weaker recognisability); <b style="font-weight:600">C</b> sidebar scoped to one workspace (deepest focus, harder cross-subject work).</p>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin:44px 0 0">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:24px">The twelve screens</div>
+
+    <div style="display:flex;flex-direction:column;gap:44px">
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">1 · First Launch</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Centred 520px column. One question, one field pre-filled with a ghost example, one button. Below a hairline, three text rows in ascending commitment: install a template / import a syllabus / explore a sample. No sidebar, no account step, no tour, no mention of modules.</p>
+        <img src="screenshots/01-first-launch.png" alt="Screen 1 — First Launch" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">2 · Create Workspace</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Two fields: subject, and “what are you trying to accomplish?” in plain language. The <b style="font-weight:600">“Axiom read that as”</b> panel shows inferred structure as removable chips with an Adjust link that expands level, materials, and pacing in place. Deadline and starting level are never asked as form fields — they are inferred and correctable.</p>
+        <img src="screenshots/02-create-workspace.png" alt="Screen 2 — Create Workspace" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">3 · Home</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">One line of remembered context, one Continue card that restates the actual half-finished problem typeset and holds the visualization's last camera position, then three workspace cards (name, goal, unlabelled 3px progress, last concept). Templates / Marketplace / Import are a quiet footer row. No dashboard, no analytics.</p>
+        <img src="screenshots/03-home.png" alt="Screen 3 — Home, continue-led" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+          <div>
+            <img src="screenshots/03b-home-alt-session-intent.png" alt="Home alternate — session-intent led" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px">
+            <p style="font-size:12px;line-height:1.6;color:rgba(28,27,25,.5);margin:9px 0 0"><b style="font-weight:600;color:rgba(28,27,25,.72)">Alternate — session-intent led.</b> “How much time do you have?” and a plan sized to fit, each row stating its reason. Strong for exam season; presumes one active workspace. Could ship as a preference.</p>
+          </div>
+          <div>
+            <img src="screenshots/03c-home-alt-library.png" alt="Home alternate — library led" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px">
+            <p style="font-size:12px;line-height:1.6;color:rgba(28,27,25,.5);margin:9px 0 0"><b style="font-weight:600;color:rgba(28,27,25,.72)">Alternate — library led.</b> No sidebar; workspaces are the page and Continue shrinks to a resume strip. Good for four or five subjects, wasteful for one.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">4 · Workspace Overview</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Answers “where am I, what next” in the first 300px: title, goal, Continue, and a Recommended block that states its own diagnosis. Concept rows use human status plus the mastery glyph. Right rail holds four tools, recent artefacts, and one panel proposing a goal change.</p>
+        <img src="screenshots/04-workspace-overview.png" alt="Screen 4 — Workspace Overview" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">5 · Active Study Session</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Stacked layout: visualization dominant on top, problem + working below-left, tutor below-right. The selected term in the integral is bound to the readout under the visualization and to “Ask about x”. The tutor is a panel asking one diagnostic question with three answers — not a chat log. The sidebar stays: a session is a mode of the workspace.</p>
+        <img src="screenshots/05-study-session.png" alt="Screen 5 — Active Study Session" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+        <img src="screenshots/14-session-layout-studies.png" alt="Three session layouts explored" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;margin-top:16px">
+        <p style="font-size:12px;line-height:1.6;color:rgba(28,27,25,.5);margin:9px 0 0;max-width:660px">Rejected: problem-dominant with the visualization as a narrow inspector (good for solving, poor for intuition); immersive visualization with floating panels (striking, least stable).</p>
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">6 · Full Visualization Mode</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">The only mode that hides navigation, with a single “‹ Session” return. Four verbs visible and everything else under More…; Bounds panel with two sliders and Advanced…; a selection inspector that reads out the primitives the scene was composed from and offers “Ask the tutor” carrying the object as context.</p>
+        <img src="screenshots/06-full-visualization.png" alt="Screen 6 — Full Visualization Mode" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">7 · Concept View</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Mastery as a glyph plus one sentence — “You can apply this independently”. Two paragraphs, the second quoting the learner's own heuristic back with evidence. Verbs: Practice / Ask / <b style="font-weight:600">Explain it back</b>. Rail: Builds on and Leads to, diagnostic practice history, notes excerpt.</p>
+        <img src="screenshots/07-concept-view.png" alt="Screen 7 — Concept View" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">8 · Workspace Tools</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">On / Off, never install / uninstall. One reassurance at the top that turning something off destroys nothing. Each row says what the module does for learning and what context it sees. Trust badges are quiet. One suggestion at the bottom, justified by observed behaviour.</p>
+        <img src="screenshots/08-workspace-tools.png" alt="Screen 8 — Workspace Tools" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">9 · Module Marketplace</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Opens on “For your Calculus II workspace” — an extension of the learning environment, not a store. Templates sit beside modules as equal citizens. Trust reads as provenance; community modules look ordinary, never risky. A dashed “Load local module” row for tinkerers, present and unpromoted.</p>
+        <img src="screenshots/09-marketplace.png" alt="Screen 9 — Module Marketplace" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">10 · Module Detail</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Install is workspace-scoped (“Install to Calculus II”), and “Try it first” runs the preview live and sandboxed. Permissions are titled <b style="font-weight:600">What it can see</b> and written as sentences with defaults visible. “Works with” shows coordination between modules — the antidote to modules feeling like separate apps.</p>
+        <img src="screenshots/10-module-detail.png" alt="Screen 10 — Module Detail" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">11 · Goal Editing</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">A sheet over the workspace, not a settings page, using the same natural-language field as Screen 2. The <b style="font-weight:600">What changes</b> panel previews consequences in learning terms and ends with the promise that nothing is deleted. “Goal history” keeps goals living objects rather than one-way switches.</p>
+        <img src="screenshots/11-goal-editing.png" alt="Screen 11 — Goal Editing" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+      <div>
+        <h3 style="font-weight:600;font-size:17px;line-height:1.25;letter-spacing:-.014em;margin:0 0 7px">12 · Command Palette</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">One query, four kinds of result: actions, concepts, your work, marketplace. Workspace-scoped, phrased as things to do, and the top hit carries a plain-language consequence so ⏎ is never a leap of faith. ⌘K is the only shortcut a beginner needs, and the sidebar advertises it.</p>
+        <img src="screenshots/12-command-palette.png" alt="Screen 12 — Command Palette" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+
+    </div>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-top:48px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:8px">Current system components</div>
+    <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.62);margin:0 0 18px;max-width:660px;text-wrap:pretty">These supersede the earlier four-bar mastery glyph and the Explain / Practice / Reflect segmented control. Where an older screenshot disagrees, this sheet is authoritative: five named mastery states, a recommendation that can show its reasoning, three offline states, session intent instead of mode tabs, and a tutor context anchor.</p>
+    <img src="screenshots/15-system-refinements.png" alt="Refined system components — mastery language, reasoned recommendation, offline states, session intent" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-top:44px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:8px">Scale behaviour — pressure-tested</div>
+    <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.62);margin:0 0 24px;max-width:660px;text-wrap:pretty">The same layouts under a semester of real content. These behaviours are part of the design, not later optimisations.</p>
+    <div style="display:flex;flex-direction:column;gap:40px">
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">Returning after two weeks</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Continue is <b style="font-weight:600">replaced</b>, same slot and weight, by three lines of recovery tied to mastery states — what held, what didn't, what changed underneath you — then a 5-minute refresher or straight back to the exact problem. Decay is stated honestly: “was Strong”. “While you were away” is three dated lines and then stops.</p>
+        <img src="screenshots/16-returning-after-time-away.png" alt="Returning after two weeks" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">87 concepts</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Never opens flat. <b style="font-weight:600">Needs work</b> first, ordered by what it blocks; everything else collapsed by chapter with a five-ring state profile. Filters are actionable counts, not taxonomy. Graph is a toggle; the rail shows one concept's prerequisite chain and everything attached to it.</p>
+        <img src="screenshots/17-concepts-at-scale.png" alt="87 concepts" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">A 712-page textbook</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">Reached through concepts and search — there is no folder view. Results are typed and each carries the reason it matters to this learner. Eighteen chapters compress into a four-segment bar; out-of-syllabus chapters stay available but never surface in recommendations.</p>
+        <img src="screenshots/18-material-textbook.png" alt="Textbook at scale" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">Hour three, forty tutor exchanges</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">The panel never becomes a transcript: exchanges collapse into <b style="font-weight:600">“What we've settled”</b>, promotable to concept notes, with history behind “Earlier today”. Explanations can be pinned to the object. The sidebar auto-collapses to a rail during deep focus. One protective break suggestion, in the tutor's voice.</p>
+        <img src="screenshots/19-long-session-tutor.png" alt="Long session with tutor history" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">The learning canvas</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">The one sanctioned inversion of the palette: the chrome is restrained everywhere else so the mathematics can be expressive. The equation sits under the object, the dragged term tinted the same hue as the geometry it controls. Five controls visible; the rest on ⌥ or More…. “Back to problem” keeps it a detour, not a destination.</p>
+        <img src="screenshots/20-learning-canvas.png" alt="Learning canvas" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+      <div>
+        <h3 style="font-weight:600;font-size:16px;line-height:1.25;letter-spacing:-.012em;margin:0 0 7px">Offline, twenty modules, four goals</h3>
+        <p style="font-size:13px;line-height:1.65;color:rgba(28,27,25,.65);margin:0 0 14px;max-width:660px;text-wrap:pretty">One offline sheet with honest sizes and a plain account of what degrades rather than breaks. Twenty modules group by where they appear, and none of them adds a sidebar row. Four goals, exactly one Guiding.</p>
+        <img src="screenshots/21-offline-modules-goals.png" alt="Offline, modules and goals at scale" style="display:block;width:100%;border:1px solid rgba(28,27,25,.12);border-radius:10px;box-shadow:0 1px 3px rgba(28,27,25,.07)">
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-top:48px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:16px">Invariants to preserve</div>
+    <ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.8;color:rgba(28,27,25,.68);max-width:700px">
+      <li>Simple by default, powerful by choice — one obvious next action per screen; advanced controls behind Adjust / Advanced… / More… / All tools.</li>
+      <li>Never expose configuration merely because it exists, and never use developer vocabulary (package, manifest, dependency, runtime, API) in the learner interface.</li>
+      <li>No dashboards, no percentages, no streaks, XP, badges, or leaderboards. Progress is named mastery states plus capability sentences.</li>
+      <li>Feedback diagnoses, never merely marks. Amber for a named mistake; no red; no celebration.</li>
+      <li>Modules are capabilities inside a workspace, never navigation destinations, and they share workspace context.</li>
+      <li>Visualization is composed from verified primitives and shared across tutor, practice, explanation, notes, assessment.</li>
+      <li>The tutor is a contextual panel that already knows what you are looking at — Axiom is not a chatbot.</li>
+      <li>A learner returning after three days never reconstructs what they were doing; the Continue surfaces do it for them.</li>
+      <li>Goals are living objects: changing one previews its consequences and destroys nothing.</li>
+      <li>Two accents, two type families, one placeholder treatment. Any new surface must be expressible in that vocabulary — the dark learning canvas is the single exception, and only for the mathematical object itself.</li><li>Permanent navigation never grows with capability: modules surface contextually, and the four workspace areas are the maximum.</li><li>Offline is a promise, surfaced only where it changes a decision.</li>
+    </ol>
+  </div>
+
+  <div style="border-top:1px solid rgba(28,27,25,.12);padding-top:28px;margin-top:44px">
+    <div style="font-weight:600;font-size:10px;line-height:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(28,27,25,.38);margin-bottom:12px">Not yet designed</div>
+    <p style="font-size:13px;line-height:1.7;color:rgba(28,27,25,.6);margin:0;max-width:700px;text-wrap:pretty">Empty states · notifications and menus · the full concept-graph view · tutor voice mode · in-app reading mode (the page view behind Material) · settings · developer-facing module authoring · onboarding for imported material · responsive behaviour below ~1100px window width.</p>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>
