@@ -1,0 +1,19 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small-plus);
+  color: var(--text-secondary);
+}
+
+.ringsRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.countText {
+  font-weight: 500;
+  color: var(--text-metadata);
+}

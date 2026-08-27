@@ -1,0 +1,79 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md-minus);
+  border-radius: var(--radius-row);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  border: var(--border-width-hairline) solid transparent;
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sizeSm {
+  padding: var(--space-sm-plus) var(--space-lg-minus);
+  font-size: var(--font-size-small);
+  line-height: 1.4;
+}
+
+.sizeMd {
+  padding: var(--space-md-plus) var(--space-xl-minus);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+}
+
+.sizeLg {
+  padding: var(--space-lg-plus) var(--space-2xl-minus);
+  font-size: var(--font-size-body-plus);
+  line-height: 1.5;
+}
+
+.variantPrimary {
+  background-color: var(--accent-action);
+  color: var(--color-content);
+  border-color: transparent;
+}
+
+.variantPrimary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.variantSecondary {
+  background-color: var(--color-content);
+  color: var(--text-primary);
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.variantSecondary:hover:not(:disabled) {
+  background-color: var(--color-chrome-rail);
+}
+
+.variantTertiary {
+  background-color: transparent;
+  color: var(--accent-action);
+  border-color: transparent;
+}
+
+.variantTertiary:hover:not(:disabled) {
+  background-color: var(--color-chrome);
+}
+
+.variantDark {
+  background-color: var(--color-ink);
+  color: var(--color-content);
+  border-color: transparent;
+}
+
+.variantDark:hover:not(:disabled) {
+  opacity: 0.9;
+}

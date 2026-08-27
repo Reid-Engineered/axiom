@@ -1,0 +1,31 @@
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-xl);
+  border-radius: var(--radius-card);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-chrome) 0,
+    var(--color-chrome) var(--placeholder-stripe-midpoint),
+    var(--color-recessed) var(--placeholder-stripe-midpoint),
+    var(--color-recessed) var(--placeholder-stripe-end)
+  );
+  border: var(--border-width-hairline) dashed var(--color-hairline-strong);
+  color: var(--text-secondary);
+  box-sizing: border-box;
+}
+
+.caption {
+  font-family: monospace;
+  font-size: var(--font-size-metadata);
+  font-weight: 500;
+  letter-spacing: var(--letter-spacing-placeholder);
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--color-content);
+  padding: var(--space-2xs) var(--space-md);
+  border-radius: var(--radius-small);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+}

@@ -1,0 +1,63 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md-minus);
+  padding: var(--space-sm) var(--space-lg-minus);
+  border-radius: var(--radius-row);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small-plus);
+  line-height: 1.4;
+  font-weight: 500;
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  background-color: var(--color-chrome-rail);
+  color: var(--text-primary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.variantDefault {
+  background-color: var(--color-chrome-rail);
+  border-color: var(--color-hairline);
+  color: var(--text-primary);
+}
+
+.variantAccent {
+  background-color: var(--color-chrome);
+  border-color: var(--accent-action);
+  color: var(--accent-action);
+}
+
+.variantSubtle {
+  background-color: var(--color-recessed);
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--chip-remove-size);
+  height: var(--chip-remove-size);
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-small-plus);
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.removeButton:hover {
+  color: var(--text-primary);
+  background-color: var(--color-hairline-strong);
+}

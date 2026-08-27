@@ -1,0 +1,46 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  color: var(--text-primary);
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.track {
+  position: relative;
+  width: var(--toggle-width);
+  height: var(--toggle-height);
+  border-radius: var(--toggle-radius);
+  background-color: var(--color-hairline-strong);
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.trackChecked {
+  background-color: var(--accent-action);
+}
+
+.knob {
+  position: absolute;
+  top: var(--toggle-knob-offset);
+  left: var(--toggle-knob-offset);
+  width: var(--toggle-knob-size);
+  height: var(--toggle-knob-size);
+  border-radius: 50%;
+  background-color: var(--color-content);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease;
+}
+
+.knobChecked {
+  transform: translateX(var(--toggle-knob-travel));
+}

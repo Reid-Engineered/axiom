@@ -32,9 +32,63 @@
   --content-gutter: 32px;
   --layout-column-width: 520px;
   --layout-column-width-wide: 560px;
+  --layout-gallery-width: 900px;
+  --gallery-placeholder-height: 100px;
+
+  /* spacing */
+  --space-2xs: 2px;
+  --space-xs: 3px;
+  --space-sm: 4px;
+  --space-sm-plus: 5px;
+  --space-md-minus: 6px;
+  --space-md: 8px;
+  --space-md-plus: 9px;
+  --space-lg-minus: 10px;
+  --space-lg-plus: 11px;
+  --space-lg: 12px;
+  --space-xl-minus: 14px;
+  --space-xl: 16px;
+  --space-2xl-minus: 18px;
+  --space-2xl: 20px;
+  --space-3xl: 24px;
+  --space-4xl: 32px;
+
+  /* type scale */
+  --font-size-eyebrow: 10px;
+  --font-size-metadata: 11.5px;
+  --font-size-small: 12px;
+  --font-size-small-plus: 12.5px;
+  --font-size-body: 13.5px;
+  --font-size-body-plus: 15px;
+  --font-size-title: 24px;
+  --letter-spacing-eyebrow: 0.06em;
+  --letter-spacing-placeholder: 0.03em;
+
+  /* component metrics */
+  --border-width-hairline: 1px;
+  --border-width-mastery: 1.5px;
+  --progress-height: 3px;
+  --progress-radius: 1.5px;
+  --toggle-width: 30px;
+  --toggle-height: 18px;
+  --toggle-radius: 9px;
+  --toggle-knob-size: 14px;
+  --toggle-knob-offset: 2px;
+  --toggle-knob-travel: 12px;
+  --mastery-ring-sm: 12px;
+  --mastery-ring-md: 15px;
+  --diagnostic-dot-sm: 6px;
+  --diagnostic-dot-md: 8px;
+  --diagnostic-dot-lg: 10px;
+  --badge-dot-size: 6px;
+  --chip-remove-size: 14px;
+  --placeholder-stripe-midpoint: 7px;
+  --placeholder-stripe-end: 14px;
 
   /* radii */
   --radius-row: 7px;
+  --radius-control: 5px;
+  --radius-small: 4px;
   --radius-card: 12px;
   --radius-sheet: 16px;
 

@@ -1,0 +1,33 @@
+.dot {
+  display: inline-block;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.typeMistake {
+  background-color: var(--accent-amber);
+}
+
+.typePositive {
+  background-color: var(--accent-mastery);
+}
+
+.typeNeutral {
+  background-color: var(--text-metadata);
+}
+
+.sizeSm {
+  width: var(--diagnostic-dot-sm);
+  height: var(--diagnostic-dot-sm);
+}
+
+.sizeMd {
+  width: var(--diagnostic-dot-md);
+  height: var(--diagnostic-dot-md);
+}
+
+.sizeLg {
+  width: var(--diagnostic-dot-lg);
+  height: var(--diagnostic-dot-lg);
+}

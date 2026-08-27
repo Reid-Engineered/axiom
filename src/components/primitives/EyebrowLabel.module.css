@@ -1,0 +1,9 @@
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  color: var(--text-metadata);
+  line-height: 1.4;
+}

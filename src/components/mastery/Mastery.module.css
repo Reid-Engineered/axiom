@@ -1,0 +1,73 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md-minus);
+  font-family: var(--font-ui);
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.sizeSm {
+  font-size: var(--font-size-small);
+}
+
+.sizeMd {
+  font-size: var(--font-size-body);
+}
+
+.ring {
+  position: relative;
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.ringSm {
+  width: var(--mastery-ring-sm);
+  height: var(--mastery-ring-sm);
+}
+
+.ringMd {
+  width: var(--mastery-ring-md);
+  height: var(--mastery-ring-md);
+}
+
+.stateNew {
+  border: var(--border-width-mastery) solid var(--text-metadata);
+  background-color: transparent;
+}
+
+.stateDeveloping {
+  border: var(--border-width-mastery) solid var(--accent-mastery);
+  background: conic-gradient(
+    var(--accent-mastery) 0% 25%,
+    transparent 25% 100%
+  );
+}
+
+.stateFamiliar {
+  border: var(--border-width-mastery) solid var(--accent-mastery);
+  background: conic-gradient(
+    var(--accent-mastery) 0% 50%,
+    transparent 50% 100%
+  );
+}
+
+.stateStrong {
+  border: var(--border-width-mastery) solid var(--accent-mastery);
+  background: conic-gradient(
+    var(--accent-mastery) 0% 75%,
+    transparent 75% 100%
+  );
+}
+
+.stateMastered {
+  border: var(--border-width-mastery) solid var(--accent-mastery);
+  background-color: var(--accent-mastery);
+}
+
+.label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
