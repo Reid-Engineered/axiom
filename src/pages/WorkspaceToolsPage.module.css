@@ -1,0 +1,24 @@
+.main { display: grid; align-content: start; gap: var(--space-3xl); max-width: var(--layout-gallery-width); padding: var(--content-gutter); }
+.header { display: flex; align-items: start; justify-content: space-between; gap: var(--space-2xl); }
+.header > div:first-child { display: grid; gap: var(--space-md); }
+.header h1 { font-size: var(--font-size-title); }
+.header p,
+.moduleRow p,
+.offlineIntro,
+.offlineKinds p,
+.degradation { color: var(--text-secondary); }
+.header > div:last-child { display: flex; gap: var(--space-md); }
+.scaleSummary { color: var(--text-metadata); }
+.group { display: grid; gap: var(--space-lg); }
+.group > h2 { color: var(--text-metadata); font-size: var(--font-size-eyebrow); letter-spacing: var(--letter-spacing-eyebrow); text-transform: uppercase; }
+.group > div { overflow: hidden; border: var(--border-width-hairline) solid var(--color-hairline); border-radius: var(--radius-card); }
+.moduleRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-xl); padding: var(--space-xl); }
+.moduleRow + .moduleRow { border-top: var(--border-width-hairline) solid var(--color-hairline); }
+.moduleRow > div { display: grid; gap: var(--space-sm); }
+.icon { display: grid; place-items: center; width: var(--space-4xl); height: var(--space-4xl); border-radius: var(--radius-row); background: var(--color-chrome); color: var(--text-metadata); }
+.offlineIntro { margin-bottom: var(--space-2xl); line-height: 1.5; }
+.offlineKinds { display: grid; margin: 0 calc(-1 * var(--space-3xl)); }
+.offlineKinds article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-lg); padding: var(--space-xl) var(--space-3xl); border-top: var(--border-width-hairline) solid var(--color-hairline); }
+.offlineKinds article > div { display: grid; gap: var(--space-sm); }
+.offlineKinds article > span { color: var(--text-metadata); }
+.degradation { padding-top: var(--space-xl); border-top: var(--border-width-hairline) solid var(--color-hairline); }

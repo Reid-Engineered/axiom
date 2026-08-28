@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './Sheet.module.css';
 
 /**
  * A sheet over the dimmed workspace, not a settings page — e.g. Goal Editing's 560px
@@ -14,6 +15,7 @@ export interface SheetProps {
   className?: string;
 }
 
-export function Sheet(_props: SheetProps) {
-  return null;
+export function Sheet({ open, onClose, eyebrow, title, children, footer, className = '' }: SheetProps) {
+  if (!open) return null;
+  return <div className={styles.backdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className={`${styles.sheet} ${className}`} role="dialog" aria-modal="true" aria-labelledby="sheet-title"><header>{eyebrow ? <span>{eyebrow}</span> : null}{title ? <h2 id="sheet-title">{title}</h2> : null}<button type="button" onClick={onClose} aria-label="Close sheet">×</button></header><div className={styles.body}>{children}</div>{footer ? <footer>{footer}</footer> : null}</section></div>;
 }
