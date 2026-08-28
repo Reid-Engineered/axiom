@@ -1,0 +1,131 @@
+.layout {
+  height: 100%;
+}
+
+.mainContent,
+.railContent {
+  display: grid;
+  align-content: start;
+}
+
+.mainContent {
+  gap: var(--space-3xl);
+  max-width: var(--layout-home-width);
+}
+
+.header {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.header h1 {
+  font-size: calc(var(--font-size-title) + var(--space-sm));
+}
+
+.header p,
+.continueCard p,
+.recent,
+.recent li {
+  color: var(--text-secondary);
+}
+
+.header p button,
+.link,
+.concepts header button {
+  margin-left: var(--space-lg);
+  border: 0;
+  background: transparent;
+  color: var(--accent-action);
+  font: inherit;
+  cursor: pointer;
+}
+
+.continueCard {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-content);
+  box-shadow: var(--shadow-card);
+}
+
+.continueCard h2,
+.concepts h2 {
+  font-size: var(--font-size-body-plus);
+}
+
+.continueCard > div {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.eyebrow {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.concepts {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.concepts header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.concepts > div {
+  overflow: hidden;
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+}
+
+.concepts > div > * + * {
+  border-top: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.railContent {
+  gap: var(--space-3xl);
+}
+
+.tools,
+.recent {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.tools > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.tools > div button {
+  padding: var(--space-lg);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.link {
+  width: max-content;
+  margin-left: 0;
+  padding: 0;
+}
+
+.recent ul {
+  display: grid;
+  gap: var(--space-lg);
+  margin: 0;
+  padding-left: var(--space-2xl);
+}

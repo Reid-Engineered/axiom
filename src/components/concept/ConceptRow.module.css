@@ -1,0 +1,26 @@
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-xl);
+  width: 100%;
+  padding: var(--space-lg) var(--space-xl);
+  border: 0;
+  background: var(--color-content);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+}
+
+button.row {
+  cursor: pointer;
+}
+
+button.row:hover {
+  background: var(--color-chrome-rail);
+}
+
+.status {
+  color: var(--text-secondary);
+  font-size: var(--font-size-small-plus);
+}

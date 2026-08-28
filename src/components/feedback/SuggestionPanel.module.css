@@ -1,0 +1,17 @@
+.panel {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-chrome);
+}
+
+.panel p {
+  color: var(--text-secondary);
+}
+
+.panel div {
+  display: flex;
+  gap: var(--space-sm);
+}

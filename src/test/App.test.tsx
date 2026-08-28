@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
@@ -108,5 +108,18 @@ describe('Stage 3 navigation', () => {
     expect(container.querySelector('aside')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(container.querySelector('[data-route="createWorkspace"]')).not.toBeNull();
+  });
+
+  it('completes the Stage 5 launch-to-populated-overview path', async () => {
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Workspace' }));
+    await waitFor(() => expect(container.querySelector('[data-route="home"]')).not.toBeNull());
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Calculus II' })[0]);
+    await waitFor(() => expect(container.querySelector('[data-route="workspaceOverview"]')).not.toBeNull());
+    expect(screen.getByText('Concepts in play')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Shell method/ })).toBeVisible();
   });
 });

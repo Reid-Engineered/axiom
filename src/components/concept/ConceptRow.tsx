@@ -1,4 +1,6 @@
 import type { MasteryState } from '../../types';
+import { Mastery } from '../mastery/Mastery';
+import styles from './ConceptRow.module.css';
 
 /**
  * A concept's mastery ring, name, and status text, reused across WorkspaceOverviewPage's
@@ -15,6 +17,18 @@ export interface ConceptRowProps {
   className?: string;
 }
 
-export function ConceptRow(_props: ConceptRowProps) {
-  return null;
+export function ConceptRow({ name, masteryState, statusText, onSelect, className = '' }: ConceptRowProps) {
+  const content = (
+    <>
+      <span className={styles.name}>{name}</span>
+      {statusText ? <span className={styles.status}>{statusText}</span> : null}
+      <Mastery state={masteryState} size="sm" />
+    </>
+  );
+
+  return onSelect ? (
+    <button type="button" className={`${styles.row} ${className}`} onClick={onSelect}>{content}</button>
+  ) : (
+    <div className={`${styles.row} ${className}`}>{content}</div>
+  );
 }

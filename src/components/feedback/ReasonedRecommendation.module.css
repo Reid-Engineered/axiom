@@ -1,0 +1,51 @@
+.recommendation {
+  display: grid;
+  gap: var(--space-sm);
+  padding-left: var(--space-xl);
+  border-left: var(--space-2xs) solid var(--accent-action);
+}
+
+.eyebrow {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.recommendation h2 {
+  font-size: var(--font-size-body-plus);
+}
+
+.recommendation p,
+.recommendation li {
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.why {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.recommendation ul {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  padding-left: var(--space-2xl);
+}
+
+.recommendation time {
+  margin-right: var(--space-md);
+  color: var(--text-metadata);
+  font-size: var(--font-size-small);
+}
