@@ -98,7 +98,7 @@
 .inferenceHeader h2 span {
   width: var(--space-md-minus);
   height: var(--space-md-minus);
-  border-radius: 50%;
+  border-radius: var(--toggle-radius);
   background: var(--accent-action);
 }
 

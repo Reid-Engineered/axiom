@@ -1,0 +1,22 @@
+.display {
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-row);
+  background: var(--color-chrome-rail);
+  color: var(--text-primary);
+  font-family: var(--font-math);
+  font-size: var(--font-size-body-plus);
+}
+
+.display button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.display .selected {
+  color: var(--accent-action);
+  background: var(--color-recessed);
+}

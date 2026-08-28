@@ -15,6 +15,26 @@ export interface WorkspaceCardProps {
   className?: string;
 }
 
-export function WorkspaceCard(_props: WorkspaceCardProps) {
-  return null;
+export function WorkspaceCard({
+  name,
+  goalSentence,
+  progress,
+  lastConceptName,
+  lastActivityLabel,
+  paused = false,
+  onSelect,
+  className = '',
+}: WorkspaceCardProps) {
+  return (
+    <button type="button" className={`${styles.card} ${className}`} onClick={onSelect}>
+      <span className={styles.title}><span aria-hidden="true" />{name}</span>
+      <span className={styles.goal}>{goalSentence}</span>
+      <ProgressBar value={progress} max={1} />
+      <span className={styles.activity}>
+        {paused ? 'Paused' : [lastConceptName, lastActivityLabel].filter(Boolean).join(' · ')}
+      </span>
+    </button>
+  );
 }
+import { ProgressBar } from '../primitives/ProgressBar';
+import styles from './WorkspaceCard.module.css';

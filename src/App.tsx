@@ -16,9 +16,9 @@ import { GoalEditingSheet } from './pages/GoalEditingSheet';
 import styles from './App.module.css';
 
 const WORKSPACES = [
-  { id: 'calculus', name: 'Calculus II' },
-  { id: 'linear-algebra', name: 'Linear Algebra' },
-  { id: 'circuits', name: 'Circuit Analysis' },
+  { id: 'workspace-calculus-ii', name: 'Calculus II' },
+  { id: 'workspace-linear-algebra', name: 'Linear Algebra' },
+  { id: 'workspace-physics', name: 'Mechanics' },
 ];
 
 function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {

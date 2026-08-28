@@ -17,6 +17,22 @@ export interface MathDisplayProps {
   className?: string;
 }
 
-export function MathDisplay(_props: MathDisplayProps) {
-  return null;
+export function MathDisplay({ expression, onSelectTerm, className = '' }: MathDisplayProps) {
+  return (
+    <div className={`${styles.display} ${className}`}>
+      {typeof expression === 'string'
+        ? expression
+        : expression.map((segment, index) => (
+            <button
+              key={`${segment.text}-${index}`}
+              type="button"
+              className={segment.selected ? styles.selected : ''}
+              onClick={() => onSelectTerm?.(segment)}
+            >
+              {segment.text}
+            </button>
+          ))}
+    </div>
+  );
 }
+import styles from './MathDisplay.module.css';
