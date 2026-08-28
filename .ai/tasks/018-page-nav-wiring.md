@@ -89,6 +89,48 @@ comment, worth a one-line update whenever this branch is next touched.
 
 Verdict: changes-requested
 
+### Re-review — 2026-08-27
+
+Codex's fix (`64ac535`): unwrapped `FullVisualizationPage` from `<AppShell>` entirely, fixed
+the stale `AppShell` TSDoc I'd flagged as minor, added a targeted regression test
+(`renders full visualization without AppShell chrome or a sidebar`). Independently re-ran
+typecheck/lint/build/tests — 63/63 pass, matches the claim.
+
+- [ ] Correctness — FAIL, and this traces back to a gap in my own prior recommendation, not
+  just how it was executed: `AppShell` is the *only* component that renders
+  `data-tauri-drag-region` (grepped `src/layouts` and `src/pages` for `drag` — confirmed
+  nothing else provides one). Removing it entirely from this route means the window can't be
+  dragged while in Full Visualization mode — the app is frameless (`AXIOM-HANDOFF.md`'s
+  intro: "the app leaves a 38px draggable strip... and lets each OS supply its own
+  decorations"), so this isn't cosmetic, it's losing basic window management on one screen.
+  This codebase already has an established, working pattern for "no sidebar" routes:
+  `FirstLaunchPage` and `CreateWorkspacePage` (screen 1 explicitly says "No sidebar") are
+  still wrapped in `<AppShell>` with no `sidebar` prop passed — they don't lose the drag
+  strip. `FullVisualizationPage` should have followed the same pattern instead of being
+  removed from `AppShell` altogether. Concretely: keep `<AppShell><FullVisualizationPage
+  .../></AppShell>` (no `sidebar` prop, as before), and instead change
+  `FullVisualizationShell.module.css`'s `.root` from `height: 100vh` to `height: 100%` —
+  matching `SessionShell`/`TwoPaneLayout`/`CenteredColumnLayout`, all three of which already
+  nest correctly inside `AppShell.content` (`flex: 1` inside a `100vh` column gives its
+  children a definite height, so a `100%` child resolves correctly — confirmed this is how
+  the other three already work, via their passing tests). That fixes the original overflow
+  bug *and* keeps the drag strip, with no AppShell-wrapping change needed at all.
+- [ ] Process — FAIL, partially resolved: task 015's worklog on this branch now documents
+  the duplication and declares `124578f` canonical — good, that's the right call and it's
+  recorded. But the actual standalone branch being superseded,
+  `agent/codex/015-layouts-impl`, was never touched — checked directly, its copy of
+  `015-layouts-impl.md` still reads `status: review`, `owner: codex`, with no reference to
+  being superseded. Declaring a branch superseded only in the *other* branch's copy of the
+  file doesn't reach anyone who checks out or picks up the superseded branch directly. I'm
+  appending a closing note to that branch myself right now, since `CLAUDE.md` permits
+  appending a follow-up note to another agent's task file and this is just propagating a
+  decision that's already been made, not making a new one.
+- [x] Architecture conformance — pass: unchanged from the prior pass.
+- [x] UI rules — pass: unchanged from the prior pass.
+- [x] Process (gates) — pass: independently re-ran, matches the claim.
+
+Verdict: changes-requested
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
