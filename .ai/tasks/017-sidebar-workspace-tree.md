@@ -39,7 +39,21 @@ Implement `Sidebar` / `WorkspaceTree` against mock workspace names only (no real
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-27
+
+- [x] Correctness — pass: read `WorkspaceTree.tsx` directly — only the workspace matching
+  `openWorkspaceId` renders its `SUB_ITEMS` block, and `SUB_ITEMS` is a fixed 4-item literal
+  array with no recursion, so a third level is structurally impossible, not just
+  mock-data-shaped. Confirmed by re-running the test suite myself: "expands only the open
+  workspace and never renders a third level" passes.
+- [x] Architecture conformance — pass: `WorkspaceTree`/`Sidebar` are props-driven, no service
+  imports, no module ever becomes a tree row (matches `AXIOM-HANDOFF.md` §3's sidebar
+  invariant).
+- [x] UI rules — pass: grepped `src/components/workspace` for stray hex/`rgba(` — clean.
+- [x] Process — pass: independently re-ran typecheck/lint/build/tests myself.
+
+Verdict: pass
 
 ## Follow-ups
 

@@ -42,7 +42,49 @@ Every `pages/*` stub from 014 reachable via sidebar navigation using `Navigation
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-27
+
+- [ ] Correctness — FAIL: `RouteContent.tsx`'s `fullVisualization` case wraps
+  `FullVisualizationPage` in `<AppShell>`. `FullVisualizationShell.module.css`'s `.root` sets
+  `height: 100vh`, while every sibling layout (`SessionShell`, `TwoPaneLayout`,
+  `CenteredColumnLayout` — all checked directly) correctly uses `height: 100%` /
+  `min-height: 100%` so they nest inside `AppShell.module.css`'s `.content` (`flex: 1` inside
+  a `100vh` column that's already spent `--drag-strip-height` on the drag strip). Nesting a
+  `100vh` child inside that `flex: 1` area overflows the viewport by the drag-strip's height.
+  This also contradicts the spec directly: screen 6 is explicitly "full-bleed, no sidebar,"
+  and `FullVisualizationShell`'s own TSDoc says the same — it shouldn't be inside `AppShell`
+  at all, sidebar or not. Fix: render `<FullVisualizationPage sessionId={route.sessionId} />`
+  directly in that case, unwrapped.
+- [ ] Process — FAIL: this branch's final commit bundles Antigravity's from-scratch redo of
+  task 015's four layouts (plus tests) into task 018's branch and worklog ("Antigravity
+  visual polish applied across Sidebar, WorkspaceTree, CommandPalette, and all 4 layouts").
+  A separate, independent branch for task 015 already exists —
+  `agent/codex/015-layouts-impl` (commit `eba8c9a`) — with Codex's own implementation of the
+  same four components. Neither branch was built on top of the other; this one's version of
+  `015-layouts-impl.md` describes Antigravity implementing all four layouts solo, with no
+  mention of the other branch's Codex pass. Two divergent implementations of the same task
+  now exist, and this branch mixes 015's scope into 018's commit/worklog instead of keeping
+  it on 015's own branch. See the finding left on `015-layouts-impl.md` for the fuller
+  comparison. This needs a human or task-owner decision on which implementation is canonical
+  before either can merge — not something I'm resolving unilaterally.
+- [x] Architecture conformance — pass on everything else: no component imports `services/`
+  directly (grepped the whole tree), `⌘K` correctly requires a modifier
+  (`useKeyboardShortcut.ts` checks `metaKey || ctrlKey`, not a bare `k` that would fire while
+  typing), `Stage3StubRouteMenu` and the `/dev/gallery` route are both correctly gated behind
+  `import.meta.env.DEV` — the ungated-gallery lesson from Stage 1's review was applied here.
+- [x] UI rules — pass: grepped every Stage 3 file for stray hex/`rgba(` — clean.
+  `CommandPalette`'s real open/close/backdrop/escape/render behavior is in-scope for this
+  task's own acceptance criterion ("⌘K opens a stub command palette overlay") — it renders
+  empty results via `StubCommandPalette`'s `groups={[]}`, not scope creep into task 035.
+- [x] Process (gates) — pass: independently re-ran `npm run typecheck`, `npm run lint`,
+  `npm run build`, `npm test -- --run` myself — 63/63 tests, matches the claim.
+
+Minor, non-blocking: `AppShell.tsx`'s TSDoc still says "No sidebar yet — that lands with
+navigation in Stage 3" — this is Stage 3, and the component now has a `sidebar` prop. Stale
+comment, worth a one-line update whenever this branch is next touched.
+
+Verdict: changes-requested
 
 ## Follow-ups
 

@@ -41,8 +41,43 @@ Real implementation of `SessionShell`, `FullVisualizationShell`, `TwoPaneLayout`
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-27
+
+- [ ] Process — FAIL: a separate branch, `agent/codex/015-layouts-impl` (commit `eba8c9a`),
+  already contains an independent implementation of this exact task — Codex's "implement"
+  pass on the same four layouts, `status: review`, `owner: codex`, per this task's own Scope
+  ("Codex implements structure/logic; Antigravity polishes... in the same task"). That branch
+  and this one diverge from the same point (Stage 1's merge, `4116c17`) and neither is aware
+  of the other — this worklog describes Antigravity implementing all four layouts solo, with
+  no reference to the Codex pass that already exists elsewhere. Compared: the standalone
+  `eba8c9a` branch has **no tests** (checked directly — `git show --stat` lists no
+  `src/test/layouts/*`), where this version has 6. This version appears to be the more
+  complete of the two, but that's a call for a human or the task owner to make explicitly,
+  not something to resolve by picking a winner unilaterally — see the matching finding on
+  `018-page-nav-wiring.md`, since this version's layout files are what's actually bundled
+  into that branch's mergeable candidate.
+- [ ] Correctness — FAIL (conditional on branch choice): if this version proceeds,
+  `FullVisualizationShell.module.css`'s `.root` uses `height: 100vh` while every sibling
+  layout in this same task (`SessionShell`, `TwoPaneLayout`, `CenteredColumnLayout`) uses
+  `height: 100%` / `min-height: 100%`. That's fine in isolation, but `018`'s `RouteContent.tsx`
+  currently nests this component inside `AppShell`, which overflows the viewport by the
+  drag-strip's height — see `018-page-nav-wiring.md`'s Correctness finding for the full
+  evidence. Either `RouteContent` stops wrapping `FullVisualizationPage` in `AppShell` (my
+  recommendation — matches "full-bleed, no sidebar"), or this component's root needs to
+  become parent-relative like its siblings. Fixing only one side leaves the other stale.
+- [x] Architecture conformance — pass: layouts remain structural, slot-driven, no data
+  fetching.
+- [x] UI rules — pass: grepped `src/layouts` for stray hex/`rgba(` — clean. `width` variant
+  on `CenteredColumnLayout` correctly stayed semantic (`'default' | 'wide'`) rather than
+  regressing to raw pixels.
+- [x] Process (gates) — pass on what's checkable in isolation: typecheck/lint/build/tests as
+  claimed, re-run myself as part of reviewing `018` (this version's files are what's present
+  there).
+
+Verdict: changes-requested
 
 ## Follow-ups
 
-None.
+Branch-choice decision needed: reconcile or close `agent/codex/015-layouts-impl` (`eba8c9a`)
+against this version, per the Process finding above.
