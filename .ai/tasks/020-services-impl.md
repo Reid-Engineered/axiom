@@ -107,6 +107,42 @@ Date: 2026-08-28
 Verdict: **changes-requested** — one blocking Correctness finding (module workspace
 scoping); everything else passes.
 
+### Re-review — 2026-08-28
+
+Fix (`forWorkspace` helper in `moduleService.ts`): `getModulesByWorkspace` and
+`getMarketplaceModules(forWorkspaceId)` now derive each module's `enabled` from the
+requested workspace's own `enabledModuleIds`; `installModule`/`setModuleEnabled` write only
+to `workspace.enabledModuleIds` and no longer touch the shared `Module` object's `enabled`
+field at all. Exactly the fix recommended. `setModuleVisibility` still mutates the global
+`Module.visibility` — correctly left alone, since that's the open per-workspace-visibility
+contract question I took as reviewer-owned, not something to invent unilaterally here.
+
+- [x] Correctness — pass: independently re-verified with a throwaway test —
+  `getModulesByWorkspace('workspace-linear-algebra')` now reports exactly that workspace's
+  4 enabled modules, not Calculus's 13. Codex's own new `moduleService.test.ts` adds a
+  proper regression pair: one asserting the 13-vs-4 counts across workspaces and the
+  personalized marketplace, one asserting `setModuleEnabled` on one workspace doesn't
+  change another workspace's state *or* the shared module fixture's `enabled` field —
+  with `afterEach` cleanup restoring `enabledModuleIds`, so it doesn't leak into other
+  test files. Good regression coverage, directly targeting the bug found.
+- [x] Architecture conformance — pass: no signature changes, still matches `006`.
+- [x] UI rules — n/a.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test — 78/78 across
+  31 files, matches the claim. Hardcoded-value and direct-service-import scans clean.
+
+Worth flagging (non-blocking, tracked against the same open contract question, not a new
+finding on this task): `setModuleEnabled` and `setModuleVisibility` are no longer
+symmetric. Enabling a module that's currently `visibility: 'off'` via `setModuleEnabled`
+now leaves it `enabled: true` / `visibility: 'off'` — a module the workspace has turned on
+that still reports as not appearing anywhere — because `setModuleEnabled` rightly stopped
+reaching into the global `visibility` field. `setModuleVisibility`, going the other
+direction, still forces `enabled` false when set to `'off'`. This asymmetry is a direct
+consequence of `visibility` having no per-workspace home, not a new bug Codex introduced —
+resolving it is bundled into the `Module.visibility` contract follow-up already logged
+above, mine to take.
+
+Verdict: **approved** — no blocking findings remain.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
