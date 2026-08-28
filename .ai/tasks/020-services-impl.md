@@ -1,7 +1,7 @@
 ---
 id: 020
 title: services/*Service.ts real implementations
-status: review
+status: changes-requested
 owner: codex
 stage: 4
 depends_on: [006, 019]
@@ -44,7 +44,54 @@ Real implementations against 019's mock data, matching 006's locked signatures e
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-28
+
+- [ ] Correctness — FAIL: `getModulesByWorkspace(workspaceId)` (`moduleService.ts:6-10`)
+  only uses `workspaceId` to check the workspace exists, then returns
+  `structuredClone(mockModules)` — the same global array regardless of which workspace was
+  requested. `mockModules[i].enabled`/`.visibility` are flat fields on the shared `Module`
+  object, not scoped per workspace, even though `Workspace.enabledModuleIds` (a real,
+  per-workspace field already on the locked `Workspace` type) says otherwise for two of the
+  three fixture workspaces. Confirmed with a throwaway test calling
+  `getModulesByWorkspace('workspace-linear-algebra')`: it reports 13 modules enabled
+  (`module-1`..`module-13`, the fixture's global default) instead of the 4 that workspace's
+  own `enabledModuleIds` (`module-1`, `module-3`, `module-5`, `module-8`) lists. This directly
+  contradicts the function's own docstring ("enabled/visibility scoped to this workspace")
+  and this task's "what was built" claim of workspace-scoped module behavior. `installModule`/
+  `setModuleEnabled`/`setModuleVisibility` compound it: they mutate the single shared
+  `Module` object's `enabled`/`visibility` fields directly, so toggling a module off in one
+  workspace silently turns it off in every other workspace that has it enabled too. Latent
+  today (no page calls these yet), but this breaks the instant Stage 5/6 wires up Workspace
+  Tools or Marketplace against more than one workspace.
+
+  This is partly a gap in a contract I locked in Stage 2, not purely an implementation
+  slip: `Module.visibility` (`src/types/module.ts`) has no per-workspace home at all —
+  `Workspace` has `enabledModuleIds: string[]` for the enabled/disabled half, but nothing
+  analogous for the workspace/contextual/off grouping, even though the product spec's own
+  language ("Off **in this workspace**", `AXIOM-HANDOFF.md` §5) implies it should be
+  per-workspace. Flagging that half as an open architectural question rather than deciding
+  it unilaterally mid-review (`CLAUDE.md`, "stop and flag it"), and I'll take it as a
+  follow-up against `src/types/module.ts` / `ARCHITECTURE.md`.
+
+  What's fixable today without touching any locked type: `enabled` already has a proper
+  per-workspace source of truth (`Workspace.enabledModuleIds`) that this task just isn't
+  using. Recommend `getModulesByWorkspace` and `getMarketplaceModules(forWorkspaceId)` derive
+  each returned module's `enabled` from `workspace.enabledModuleIds.includes(module.id)`
+  instead of trusting the module's own mutable field, and `installModule`/`setModuleEnabled`
+  write only to `workspace.enabledModuleIds` (which they already do) rather than also
+  mutating `module.enabled` globally. `visibility` can stay a known gap noted in the
+  worklog until the type question above is resolved.
+- [x] Architecture conformance — pass otherwise: no signature changed from `006`'s locked
+  contracts (checked all 24 exports against the stub signatures), every function stays
+  `async`/`Promise`-returning, reads return `structuredClone`s so callers can't mutate
+  fixtures directly.
+- [x] UI rules — n/a, no styling in this task.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test myself — 76/76,
+  matches the claim. Hardcoded-value scan clean.
+
+Verdict: **changes-requested** — one blocking Correctness finding (module workspace
+scoping); everything else passes.
 
 ## Follow-ups
 

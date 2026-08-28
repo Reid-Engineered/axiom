@@ -54,7 +54,35 @@ Real implementations of every `hooks/use*.ts`, each with a `renderHook` test aga
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-28
+
+- [x] Correctness — pass: every domain hook is a thin, correct wrapper around its service —
+  no hook re-implements service logic or bypasses `useAsyncResource`. `useCommandPalette`
+  correctly delegates open/close/query-reset to `NavigationContext` rather than owning
+  parallel overlay state. `useResizablePanes` correctly normalizes proportions and clamps
+  against `minSize` on resize.
+- [x] Architecture conformance — pass: grepped `src/components` and `src/pages` for any
+  `from '.*services'` import — none; only hooks call services, matching
+  `ARCHITECTURE.md` §5 rule 1. Domain data stays hook-owned; no new state escaped into
+  `NavigationContext`/`WorkspaceContext`.
+- [x] UI rules — n/a, no styling in this task.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test — 76/76 across
+  30 files, matches the claim. Confirmed the 13 new tests are genuinely `renderHook` against
+  `services/mockData/*` fixtures, not hand-rolled doubles, per `AGENTS.md` §Testing.
+
+Note, not blocking: `useModules`/`useMarketplaceModules` simply pass through whatever
+`moduleService` returns, so they inherit 020's workspace-scoping bug (see
+`020-services-impl.md` Review) rather than introducing one — no change needed in this task's
+own code once 020's fix lands, since the hooks are correct against the service contract as
+given. Also minor: `useResizablePanes.test.ts` derives its `initialSizes` from
+`mockSessions[0].exchanges.length / 40`, which always evaluates to `1` — reads as testing
+against "real fixtures" per the house rule, but the hook takes no fixture data at all
+(it's pure UI state), so the fixture reference doesn't add real coverage. Harmless, not
+worth a follow-up on its own.
+
+Verdict: **approved** — no blocking findings. Held out of merge only because it's stacked
+directly on 020, which has one; nothing in this task needs rework.
 
 ## Follow-ups
 

@@ -47,7 +47,35 @@ Realistic fixture data for workspaces, goals, concepts (with prerequisite/relate
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-28
+
+- [x] Correctness — pass: verified the scale claims directly against the fixtures, not just
+  the worklog's word — 87 Calculus concepts (`calc-concept-1..87`), 20 modules split 4/9/7 by
+  `visibility`, 4 goals covering all four states on `workspace-calculus-ii`, and the
+  `session-shell-method` fixture's 40-entry `longTutorHistory`. `calc-concept-22` (index 21,
+  the "Shell method" concept) is the one with `displayFormula`/`recentDiagnostics` populated,
+  and matches the session fixture that references it by id — cross-fixture references are
+  internally consistent.
+- [x] Architecture conformance — pass: fixtures match `005`'s locked `Concept`/`Goal`/
+  `Module`/`Session`/`Workspace` shapes exactly (confirmed via typecheck), no service logic
+  leaked into fixture files.
+- [x] UI rules — n/a, no styling in this task.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test on this branch
+  (76/76, matches the count claimed by 021 which stacks on this) and the hardcoded hex/`rgba(`
+  scan — clean.
+
+Minor, non-blocking: the generated `calc-concept-*` graph is directionally inconsistent —
+each concept's `blocksConceptIds` reaches three concepts ahead, but the downstream concepts'
+own `prerequisiteConceptIds` only lists the immediate predecessor. E.g. `calc-concept-1`
+claims to block `calc-concept-4`, but `calc-concept-4.prerequisiteConceptIds` is just
+`[calc-concept-3]`, not `[calc-concept-1]`. Not consumed by any code yet (Stage 4 hooks
+expose these fields raw), but whichever Stage 5/6 task builds the "blocks N concepts" count
+or the prerequisite-chain rail (`AXIOM-HANDOFF.md`'s 87-concept scale scenario) should either
+fix the generator or treat `blocksConceptIds` as directional-only, not an inverse of
+`prerequisiteConceptIds`.
+
+Verdict: **approved** — no blocking findings.
 
 ## Follow-ups
 
