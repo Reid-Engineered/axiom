@@ -136,6 +136,30 @@ typecheck/lint/build/tests — 63/63 pass, matches the claim.
 
 Verdict: changes-requested
 
+### Re-review — 2026-08-28
+
+Fix (`c2f2103`): `RouteContent.tsx`'s `fullVisualization` case is once again wrapped in
+`<AppShell>` with no `sidebar` prop (matching `FirstLaunchPage`/`CreateWorkspacePage`), and
+`FullVisualizationShell.module.css`'s `.root` now uses `height: 100%` instead of `100vh`,
+matching its three siblings. The regression test now asserts the drag region is present
+(`[data-tauri-drag-region]` not null) while still asserting no `<aside>` renders. Verified
+in a clean worktree (`npm ci` from this commit): typecheck, lint, build, and all 63 tests
+across 22 files pass independently. Grepped `FullVisualizationShell.module.css` for stray
+hex/`rgba(` — clean.
+
+- [x] Correctness — pass: the overflow bug and the drag-strip regression are both resolved
+  by the same minimal change (height unit swap), with no `AppShell`-wrapping change needed.
+- [x] Process — pass: the standalone `agent/codex/015-layouts-impl` branch already carries
+  the closing note declaring it superseded (confirmed directly on that branch, not just
+  this one's copy) — this finding was resolved before this re-review, nothing new needed.
+- [x] Architecture conformance — pass: unchanged from prior passes.
+- [x] UI rules — pass: unchanged from prior passes.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test — 63/63,
+  matches the claim.
+
+Verdict: **approved** — no blocking findings remain. Ready to merge to `main`; task moves to
+`done` and this file to `_archive/` once merged.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
