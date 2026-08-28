@@ -1,7 +1,7 @@
 ---
 id: 020
 title: services/*Service.ts real implementations
-status: review
+status: done
 owner: codex
 stage: 4
 depends_on: [006, 019]

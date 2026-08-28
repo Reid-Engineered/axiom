@@ -8,7 +8,7 @@ can go stale, not the source of truth. See `.ai/README.md` for why the split exi
 Codex, and Antigravity don't share a context window, so `.ai/tasks/` is how they hand off work
 to each other; this file is for a human skimming the same thing.
 
-_Last updated: 2026-08-28._
+_Last updated: 2026-08-28 (Stage 4 merge)._
 
 ## Who does what, by default
 
@@ -34,9 +34,9 @@ in the same task — no separate Codex "implement" pass.
 | 1 | Design system primitives | [001–004](.ai/tasks/_archive/) | Antigravity (+ Codex tests) | **Done**, merged to `master` |
 | 2 | Component contracts | [005–014](.ai/tasks/_archive/) | Claude | **Done**, merged to `master` |
 | 3 | Layouts and navigation | [015–018](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
-| 4 | Mock data, services, hooks | [019–021](.ai/tasks/) | Codex | Proposed, unblocked — Stage 3 merged |
-| 5 | First vertical slice | [022–025](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, blocked on Stage 4 |
-| 6 | Remaining pages | [026–036](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, blocked on Stage 4 |
+| 4 | Mock data, services, hooks | [019–021](.ai/tasks/_archive/) | Codex | **Done**, merged to `master` |
+| 5 | First vertical slice | [022–025](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, unblocked — Stage 4 merged |
+| 6 | Remaining pages | [026–036](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, blocked on Stage 5 |
 | 7 | Real persistence (Rust/SQLite) | [037–040](.ai/tasks/) | Codex | Proposed, blocked on Stage 2 types (unblocked in principle, not started) |
 
 Full per-task detail — scope, exact files, dependency ids — lives in `.ai/tasks/<id>-<slug>.md`
@@ -69,6 +69,35 @@ all four. Typecheck, lint, build, and all 63 tests pass on `master`. Task files 
 
 Full findings history: `.ai/tasks/_archive/018-page-nav-wiring.md` and
 `.ai/tasks/_archive/015-layouts-impl.md` (`## Review`).
+
+### Stage 4 — closed out
+
+All three tasks merged to `master` (fast-forward, `b83202b..7d17c32`) on 2026-08-28. Linear
+stack — 019 → 020 → 021 — same pattern as Stage 3. Typecheck, lint, build, and all 78 tests
+pass on `master`. Task files archived, `status: done`.
+
+- **019** (mock data fixtures) and **021** (hooks) — reviewed pass on the first round, no
+  blocking findings.
+- **020** (service implementations) — one round of changes-requested: `getModulesByWorkspace`
+  ignored `workspaceId` beyond an existence check and returned global module state, so every
+  workspace saw the same `enabled`/`visibility` values regardless of its own
+  `enabledModuleIds` — confirmed with a throwaway test against the Linear Algebra fixture
+  (expected 4 enabled, got 13). Fixed by deriving `enabled` from the requested workspace's
+  `enabledModuleIds` instead of the shared `Module` object, with a new regression test pair
+  (`moduleService.test.ts`) proving both the per-workspace counts and mutation isolation.
+  Approved 2026-08-28.
+- **Open follow-up, not yet a task**: `Module.visibility` (`src/types/module.ts`) has no
+  per-workspace home in the locked type — unlike `enabled`, which now correctly derives from
+  `Workspace.enabledModuleIds`, `visibility` ('workspace' / 'contextual' / 'off') is still a
+  flat field on the shared `Module`, even though the product spec's own language ("Off **in
+  this workspace**") implies it should be per-workspace. Consequence already visible:
+  `setModuleEnabled` and `setModuleVisibility` are now asymmetric — enabling a module that's
+  `visibility: 'off'` no longer promotes it, so a module can end up `enabled: true` /
+  `visibility: 'off'` in one workspace. Mine (Claude) to resolve against `ARCHITECTURE.md`/
+  `src/types/module.ts` before Stage 5/6 builds a page that renders module visibility
+  groupings (Workspace Tools, screen 8; Marketplace, screen 9).
+
+Full findings history: `.ai/tasks/_archive/020-services-impl.md` (`## Review`).
 
 ## Where to look for more
 
