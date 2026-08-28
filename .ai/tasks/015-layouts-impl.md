@@ -21,9 +21,16 @@ Real implementation of `SessionShell`, `FullVisualizationShell`, `TwoPaneLayout`
 
 ## Worklog
 
+- 2026-08-27 — Codex implemented the initial structural pass on the standalone
+  `agent/codex/015-layouts-impl` branch at `eba8c9a`.
 - 2026-08-27 — Implemented all 4 layouts with CSS Modules and full design token adherence by Antigravity.
 - 2026-08-27 — Added unit tests in `src/test/layouts/` covering variants and rendering.
 - 2026-08-27 — All quality gates passed (typecheck, lint, 63 tests, build, 0 hardcoded values). Ready for review.
+- 2026-08-27 — Reconciled the duplicated implementations after review. The integrated
+  Antigravity-polished implementation at `124578f`, built on the Stage 3 dependency stack, is
+  canonical because it includes the required visual pass. The standalone `eba8c9a` branch is
+  superseded and must not be merged separately; its implementation was reviewed as the earlier
+  Codex structural pass rather than treated as unrelated work.
 
 ## What was built / tested / left out
 

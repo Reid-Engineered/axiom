@@ -25,6 +25,9 @@ Every `pages/*` stub from 014 reachable via sidebar navigation using `Navigation
   development-only access to non-permanent page stubs, and CommandPalette keyboard/open/close
   behavior.
 - 2026-08-27 — Antigravity visual polish applied across Sidebar, WorkspaceTree, CommandPalette, and all 4 layouts. All 63 tests pass across 22 test suites. Ready for Claude architectural review.
+- 2026-08-27 — Codex resolved review findings: full visualization now renders directly without
+  AppShell chrome, with a regression test; task 015's duplicated history is reconciled in its
+  worklog, and `124578f` is the canonical layout implementation.
 
 ## What was built / tested / left out
 

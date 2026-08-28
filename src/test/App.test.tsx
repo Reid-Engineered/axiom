@@ -63,7 +63,6 @@ describe('Stage 3 navigation', () => {
   it.each([
     ['First launch', 'firstLaunch'],
     ['Study session', 'studySession'],
-    ['Full visualization', 'fullVisualization'],
     ['Concept view', 'conceptView'],
     ['Module detail', 'moduleDetail'],
   ])('reaches the %s stub without adding permanent navigation', (label, route) => {
@@ -72,6 +71,17 @@ describe('Stage 3 navigation', () => {
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(container.querySelector(`[data-route="${route}"]`)).not.toBeNull();
+  });
+
+  it('renders full visualization without AppShell chrome or a sidebar', () => {
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getByText('Page stubs'));
+    fireEvent.click(screen.getByRole('button', { name: 'Full visualization' }));
+
+    expect(container.querySelector('[data-route="fullVisualization"]')).not.toBeNull();
+    expect(container.querySelector('[data-tauri-drag-region]')).toBeNull();
+    expect(container.querySelector('aside')).toBeNull();
   });
 
   it('reaches the goal-editing overlay from the development stub menu', () => {

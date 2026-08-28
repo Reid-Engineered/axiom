@@ -6,10 +6,7 @@ export interface AppShellProps {
   sidebar?: ReactNode;
 }
 
-/**
- * Persistent chrome: a native-OS drag strip plus a content slot. No sidebar yet —
- * that lands with navigation in Stage 3 (see ROADMAP.md).
- */
+/** Persistent chrome with a native-OS drag strip, optional sidebar, and content slot. */
 export function AppShell({ children, sidebar }: AppShellProps) {
   return (
     <div className={styles.root}>
