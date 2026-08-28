@@ -1,7 +1,7 @@
 ---
 id: 023
 title: CreateWorkspacePage implementation
-status: review
+status: done
 owner: codex
 stage: 5
 depends_on: [014, 018, 021]

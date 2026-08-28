@@ -8,7 +8,7 @@ can go stale, not the source of truth. See `.ai/README.md` for why the split exi
 Codex, and Antigravity don't share a context window, so `.ai/tasks/` is how they hand off work
 to each other; this file is for a human skimming the same thing.
 
-_Last updated: 2026-08-28 (Stage 4 merge)._
+_Last updated: 2026-08-28 (Stage 5 merge)._
 
 ## Who does what, by default
 
@@ -35,8 +35,8 @@ in the same task — no separate Codex "implement" pass.
 | 2 | Component contracts | [005–014](.ai/tasks/_archive/) | Claude | **Done**, merged to `master` |
 | 3 | Layouts and navigation | [015–018](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
 | 4 | Mock data, services, hooks | [019–021](.ai/tasks/_archive/) | Codex | **Done**, merged to `master` |
-| 5 | First vertical slice | [022–025](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, unblocked — Stage 4 merged |
-| 6 | Remaining pages | [026–036](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, blocked on Stage 5 |
+| 5 | First vertical slice | [022–025](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
+| 6 | Remaining pages | [026–036](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, unblocked — Stage 5 merged |
 | 7 | Real persistence (Rust/SQLite) | [037–040](.ai/tasks/) | Codex | Proposed, blocked on Stage 2 types (unblocked in principle, not started) |
 
 Full per-task detail — scope, exact files, dependency ids — lives in `.ai/tasks/<id>-<slug>.md`
@@ -98,6 +98,48 @@ pass on `master`. Task files archived, `status: done`.
   groupings (Workspace Tools, screen 8; Marketplace, screen 9).
 
 Full findings history: `.ai/tasks/_archive/020-services-impl.md` (`## Review`).
+
+### Stage 5 — closed out
+
+All four tasks merged to `master` (fast-forward, `fc2c126..52be46b`) on 2026-08-28. Linear
+stack — 022 → 023 → 024 → 025 — same pattern as Stages 3–4. The full click-through works:
+launch → create a workspace → land on Home → open a workspace → see the overview populated
+from Stage 4's fixtures, no dead ends, no backend calls. Typecheck, lint, build, and all 92
+tests pass on `master`. Task files archived, `status: done`.
+
+- **023**, **024**, **025** — reviewed pass, no blocking findings. **025**
+  (`WorkspaceOverviewPage`) was the strongest of the four — matched
+  `04-workspace-overview.png` almost line-for-line, including status-label heuristics
+  clearly reverse-engineered from the mockup rather than guessed.
+- **022** (`FirstLaunchPage`) — one round of changes-requested: the subject field rendered
+  "Calculus II" as a real, dark, controlled value (`useState('Calculus II')`,
+  `color: var(--text-primary)`) instead of the ghost placeholder
+  `AXIOM-HANDOFF.md` names explicitly for screen 1 ("pre-filled with a **ghost** 'Calculus
+  II'") and the screenshot clearly shows in muted gray — a spec-named detail the self-
+  certified "visual check completed" worklog entry missed. Fixed with an empty controlled
+  value, a real `placeholder` attribute styled via the existing `--text-metadata` token, and
+  a submit-time fallback to "Calculus II" when left untouched, plus regression assertions
+  for both the empty value and the visible placeholder. Approved 2026-08-28.
+- **Process note**: none of the four tasks show an Antigravity polish pass in their
+  worklogs — Codex self-certified visual fidelity for all four rather than the usual
+  Plan → Implement (Codex) → Polish (Antigravity) → Review (Claude) loop. 022's finding is
+  a data point that self-certification missed a spec-named detail; worth reinstating the
+  Antigravity pass for Stage 6's page tasks rather than treating it as optional by default.
+- **Open follow-ups, not yet tasks**:
+  - `App.tsx`'s sidebar workspace list (`WORKSPACES`) is still a hardcoded 3-entry array,
+    not sourced from `useWorkspaces()`. A workspace created via 023 shows up correctly on
+    Home (which uses the real hook) but never appears in the persistent sidebar tree for the
+    rest of the session. Not a dead end today, but should be closed before Stage 6 leans on
+    the sidebar reflecting live workspace state.
+  - Four of the five newly-implemented locked component bodies (`WorkspaceCard`,
+    `MathDisplay`, `ReasonedRecommendation`, `SuggestionPanel`) originally placed their
+    `import`s after the function body instead of at the top; fixed during 022's re-review
+    pass. Purely cosmetic, already resolved — noted here only in case the pattern recurs in
+    Stage 6's new components.
+
+Full findings history: `.ai/tasks/_archive/022-first-launch-page.md`,
+`.ai/tasks/_archive/023-create-workspace-page.md`, `.ai/tasks/_archive/024-home-page.md`,
+`.ai/tasks/_archive/025-workspace-overview-page.md` (`## Review`).
 
 ## Where to look for more
 

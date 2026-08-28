@@ -1,7 +1,7 @@
 ---
 id: 024
 title: HomePage implementation (default / session-intent / library)
-status: review
+status: done
 owner: codex
 stage: 5
 depends_on: [014, 018, 021]
