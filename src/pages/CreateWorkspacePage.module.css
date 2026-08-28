@@ -1,0 +1,153 @@
+.page {
+  position: relative;
+}
+
+.back {
+  position: fixed;
+  top: calc(var(--drag-strip-height) + var(--space-md));
+  left: var(--space-2xl);
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-2xl);
+}
+
+.header {
+  display: grid;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.header > span {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.header h1 {
+  font-size: calc(var(--font-size-title) + var(--space-sm));
+  line-height: 1.25;
+}
+
+.field {
+  display: grid;
+  gap: var(--space-sm);
+  font-weight: 650;
+}
+
+.field small {
+  color: var(--text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: 400;
+}
+
+.field input,
+.field textarea,
+.adjustments input,
+.adjustments select {
+  width: 100%;
+  padding: var(--space-lg) var(--space-xl);
+  border: var(--border-width-hairline) solid var(--color-hairline-strong);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+  resize: vertical;
+}
+
+.field textarea:focus,
+.field input:focus,
+.adjustments input:focus,
+.adjustments select:focus {
+  border-color: var(--accent-action);
+  outline: var(--space-2xs) solid var(--accent-action);
+  outline-offset: var(--space-2xs);
+}
+
+.inference {
+  overflow: hidden;
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-content);
+}
+
+.inferenceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.inferenceHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--font-size-body);
+}
+
+.inferenceHeader h2 span {
+  width: var(--space-md-minus);
+  height: var(--space-md-minus);
+  border-radius: 50%;
+  background: var(--accent-action);
+}
+
+.inferenceHeader button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-action);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.adjustments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-lg);
+  padding: 0 var(--space-xl) var(--space-xl);
+}
+
+.adjustments label {
+  display: grid;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xl);
+}
+
+.footer div {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.footer > span {
+  color: var(--text-metadata);
+  font-size: var(--font-size-small-plus);
+}
+
+.error {
+  color: var(--accent-amber);
+}
