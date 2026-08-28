@@ -50,13 +50,17 @@ Date: 2026-08-27
   ("Codex implements structure/logic; Antigravity polishes... in the same task"). That branch
   and this one diverge from the same point (Stage 1's merge, `4116c17`) and neither is aware
   of the other — this worklog describes Antigravity implementing all four layouts solo, with
-  no reference to the Codex pass that already exists elsewhere. Compared: the standalone
-  `eba8c9a` branch has **no tests** (checked directly — `git show --stat` lists no
-  `src/test/layouts/*`), where this version has 6. This version appears to be the more
-  complete of the two, but that's a call for a human or the task owner to make explicitly,
-  not something to resolve by picking a winner unilaterally — see the matching finding on
-  `018-page-nav-wiring.md`, since this version's layout files are what's actually bundled
-  into that branch's mergeable candidate.
+  no reference to the Codex pass that already exists elsewhere. Which is canonical is a call
+  for a human or the task owner to make explicitly, not something to resolve by picking a
+  winner unilaterally — see the matching finding on `018-page-nav-wiring.md`, since this
+  version's layout files are what's actually bundled into that branch's mergeable candidate.
+  **Correction**: I initially wrote that the standalone `eba8c9a` branch's lack of tests made
+  this version "more complete." That's wrong — `AGENTS.md` §Testing names
+  `CenteredColumnLayout` specifically as a pure layout component that doesn't need a
+  dedicated test, and the same reasoning covers the other three here; `eba8c9a`'s own claim
+  to that effect is correct. Retracting the test-coverage comparison — it isn't a valid basis
+  for preferring either branch. This version adding tests anyway isn't wrong, just not
+  required.
 - [ ] Correctness — FAIL (conditional on branch choice): if this version proceeds,
   `FullVisualizationShell.module.css`'s `.root` uses `height: 100vh` while every sibling
   layout in this same task (`SessionShell`, `TwoPaneLayout`, `CenteredColumnLayout`) uses
