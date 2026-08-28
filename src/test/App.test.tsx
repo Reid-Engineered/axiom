@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
 
+function enterSampleWorkspace() {
+  fireEvent.click(screen.getByRole('button', { name: 'Explore a sample workspace' }));
+}
+
 describe('development gallery route', () => {
   beforeEach(() => {
     window.location.hash = '';
   });
 
-  it('keeps the app shell empty by default', () => {
+  it('does not show the development gallery by default', () => {
     render(<App />);
 
     expect(screen.queryByRole('heading', { name: 'Design System Primitives' })).toBeNull();
@@ -30,7 +34,9 @@ describe('Stage 3 navigation', () => {
   it('navigates through the permanent workspace areas', () => {
     const { container } = render(<App />);
 
+    enterSampleWorkspace();
     expect(container.querySelector('[data-route="home"]')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Calculus II' }));
     fireEvent.click(screen.getByRole('button', { name: 'Concepts' }));
     expect(container.querySelector('[data-route="conceptsList"]')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Concepts' })).toHaveAttribute(
@@ -68,6 +74,7 @@ describe('Stage 3 navigation', () => {
   ])('reaches the %s stub without adding permanent navigation', (label, route) => {
     const { container } = render(<App />);
 
+    enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(container.querySelector(`[data-route="${route}"]`)).not.toBeNull();
@@ -76,6 +83,7 @@ describe('Stage 3 navigation', () => {
   it('renders full visualization with a drag strip and without a sidebar', () => {
     const { container } = render(<App />);
 
+    enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: 'Full visualization' }));
 
@@ -87,8 +95,18 @@ describe('Stage 3 navigation', () => {
   it('reaches the goal-editing overlay from the development stub menu', () => {
     const { container } = render(<App />);
 
+    enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: 'Goal editing' }));
     expect(container.querySelector('[data-overlay="goalEditing"]')).not.toBeNull();
+  });
+
+  it('starts without a sidebar and continues to workspace setup', () => {
+    const { container } = render(<App />);
+
+    expect(screen.getByRole('heading', { name: 'What are you learning?' })).toBeVisible();
+    expect(container.querySelector('aside')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(container.querySelector('[data-route="createWorkspace"]')).not.toBeNull();
   });
 });

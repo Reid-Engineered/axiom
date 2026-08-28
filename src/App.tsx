@@ -111,8 +111,8 @@ function App() {
   }
 
   return (
-    <WorkspaceProvider initialWorkspaceId="calculus">
-      <NavigationProvider initialRoute={{ type: 'home' }}>
+    <WorkspaceProvider>
+      <NavigationProvider initialRoute={{ type: 'firstLaunch' }}>
         <Application />
       </NavigationProvider>
     </WorkspaceProvider>
