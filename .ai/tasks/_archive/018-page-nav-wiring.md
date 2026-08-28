@@ -1,7 +1,7 @@
 ---
 id: 018
 title: Wire page stubs into sidebar nav + stub CommandPalette
-status: review
+status: done
 owner: codex
 stage: 3
 depends_on: [014, 016, 017]

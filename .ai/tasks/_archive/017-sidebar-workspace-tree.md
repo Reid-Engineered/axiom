@@ -1,7 +1,7 @@
 ---
 id: 017
 title: Sidebar / WorkspaceTree implementation
-status: review
+status: done
 owner: codex
 stage: 3
 depends_on: [009, 016]

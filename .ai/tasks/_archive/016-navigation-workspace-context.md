@@ -1,7 +1,7 @@
 ---
 id: 016
 title: NavigationContext + WorkspaceContext
-status: review
+status: done
 owner: codex
 stage: 3
 depends_on: [005]

@@ -1,7 +1,7 @@
 ---
 id: 015
 title: layouts/* full implementation
-status: review
+status: done
 owner: antigravity
 stage: 3
 depends_on: [007]
