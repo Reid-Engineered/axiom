@@ -39,7 +39,22 @@ Full implementation matching `screenshots/02-create-workspace.png`, including th
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-28
+
+- [x] Correctness — pass: submit calls the real `useWorkspaces().createWorkspace`, activates
+  the returned workspace via `setActiveWorkspaceId`, and navigates Home; error path is
+  handled and re-enables the form. Compared side-by-side against `02-create-workspace.png` —
+  matches closely, including "Calculus II" rendered as a genuine dark value here (this
+  screen's mockup shows it as a real answer, not a ghost, unlike screen 1).
+- [x] Architecture conformance — pass: uses locked `Chip` for the inferred-structure facets,
+  no markup duplicated, no direct service import (goes through the hook).
+- [x] UI rules — pass: hardcoded-value scan on this page's CSS is clean; the `Adjust` panel's
+  `<select>`/`<input type="file">` are correctly left uncontrolled/local-only, consistent
+  with the task's own documented scope (mock inference only, no real backend).
+- [x] Process (gates) — pass: independently re-ran the full gate suite (92/92 cumulative).
+
+Verdict: **approved** — no blocking findings.
 
 ## Follow-ups
 

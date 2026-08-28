@@ -43,7 +43,38 @@ Full implementation of all three `HomePage` variants matching `screenshots/03-ho
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-28
+
+- [x] Correctness — pass: all three variants render from real hooks
+  (`useWorkspaces`/`useGoals`/`useActiveSession`/`useConcept`), `primaryWorkspace` correctly
+  falls back to `workspaces[0]` (Calculus II) when nothing is active yet, matching the
+  screenshots' featured workspace.
+- [x] Architecture conformance — pass: `WorkspaceCard`/`MathDisplay` implement their locked
+  Stage 2 contracts without changing either prop shape; no direct service import from page
+  or component code (only test files import fixtures directly, which is fine).
+- [x] UI rules — pass on tokens/markup: hardcoded-value scan clean across all three variants'
+  CSS. Minor, non-blocking: `WorkspaceCard.tsx` and `MathDisplay.tsx` both place their
+  `import` statements after the function body at the end of the file, rather than at the
+  top like every other file in the tree (including this same task's own `HomePage.tsx`).
+  Works fine (hoisting, lint doesn't flag it) but reads oddly — worth a quick cleanup pass
+  next time either file is touched.
+- [x] Process (gates) — pass: independently re-ran the full gate suite (92/92 cumulative).
+
+Worth flagging as a follow-up, not a finding against this task specifically: this task's
+worklog notes "corrected sidebar ids to real fixtures" in `App.tsx`'s `WORKSPACES` constant,
+which was the right fix for the ids themselves. But `WORKSPACES` is still a hardcoded
+3-entry array, not sourced from `useWorkspaces()` — so a workspace created via 023's
+`CreateWorkspacePage` will appear in `HomePage`'s own workspace grid (which does use the
+real hook) but never in the persistent sidebar tree, for the rest of the session. Not a
+"dead end" per the Stage 5 acceptance criterion — the new workspace's overview is still
+reachable by clicking its card on Home — but it's a real gap against the sidebar's own
+purpose (screen 3's nav spec lists every workspace) that should be closed before Stage 6
+leans on the sidebar reflecting live workspace state. Filing as a follow-up rather than
+blocking this task, since wiring `Application`'s sidebar to `useWorkspaces()` is composition-root
+work outside any of 022-025's stated scope.
+
+Verdict: **approved** — no blocking findings.
 
 ## Follow-ups
 
