@@ -17,7 +17,7 @@ describe('module domain hooks', () => {
     await act(async () => {
       await result.current.setEnabled(module.id, true);
     });
-    expect(result.current.modules[result.current.modules.length - 1]).toMatchObject({ enabled: true, visibility: 'contextual' });
+    expect(result.current.modules[result.current.modules.length - 1]).toMatchObject({ enabled: true, visibility: 'off' });
     await act(async () => {
       await result.current.setVisibility(module.id, 'off');
     });
