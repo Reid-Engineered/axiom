@@ -73,14 +73,14 @@ describe('Stage 3 navigation', () => {
     expect(container.querySelector(`[data-route="${route}"]`)).not.toBeNull();
   });
 
-  it('renders full visualization without AppShell chrome or a sidebar', () => {
+  it('renders full visualization with a drag strip and without a sidebar', () => {
     const { container } = render(<App />);
 
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: 'Full visualization' }));
 
     expect(container.querySelector('[data-route="fullVisualization"]')).not.toBeNull();
-    expect(container.querySelector('[data-tauri-drag-region]')).toBeNull();
+    expect(container.querySelector('[data-tauri-drag-region]')).not.toBeNull();
     expect(container.querySelector('aside')).toBeNull();
   });
 

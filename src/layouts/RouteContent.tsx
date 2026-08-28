@@ -50,7 +50,11 @@ export function RouteContent({ route, sidebar }: RouteContentProps) {
         </AppShell>
       );
     case 'fullVisualization':
-      return <FullVisualizationPage sessionId={route.sessionId} />;
+      return (
+        <AppShell>
+          <FullVisualizationPage sessionId={route.sessionId} />
+        </AppShell>
+      );
     case 'conceptView':
       return (
         <AppShell sidebar={sidebar}>

@@ -28,6 +28,11 @@ Every `pages/*` stub from 014 reachable via sidebar navigation using `Navigation
 - 2026-08-27 — Codex resolved review findings: full visualization now renders directly without
   AppShell chrome, with a regression test; task 015's duplicated history is reconciled in its
   worklog, and `124578f` is the canonical layout implementation.
+- 2026-08-28 — Codex resolved the re-review drag-region finding: Full Visualization is again
+  wrapped in `AppShell` without a sidebar, while `FullVisualizationShell` now fills the shell's
+  remaining height instead of using `100vh`. The regression test verifies both the native drag
+  region and absence of a sidebar. Typecheck, lint, all 63 tests, build, `git diff --check`, and
+  the hardcoded color scan pass. Re-requesting independent review.
 
 ## What was built / tested / left out
 
