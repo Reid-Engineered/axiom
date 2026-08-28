@@ -1,3 +1,8 @@
+import { useState } from 'react';
+
+import { Button } from '../primitives/Button';
+import styles from './ReasonedRecommendation.module.css';
+
 export interface ReasonedRecommendationObservation {
   date: string;
   text: string;
@@ -43,7 +48,3 @@ export function ReasonedRecommendation({
     </section>
   );
 }
-import { useState } from 'react';
-
-import { Button } from '../primitives/Button';
-import styles from './ReasonedRecommendation.module.css';

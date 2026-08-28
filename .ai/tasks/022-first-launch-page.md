@@ -1,7 +1,7 @@
 ---
 id: 022
 title: FirstLaunchPage implementation
-status: changes-requested
+status: review
 owner: codex
 stage: 5
 depends_on: [014, 018, 021]
@@ -27,6 +27,15 @@ Full implementation matching `screenshots/01-first-launch.png`. Codex implements
 - 2026-08-28 — Visual check against `01-first-launch.png` completed. Full gates pass:
   typecheck, lint, 79/79 tests across 31 files, build, `git diff --check`, and the hardcoded
   hex/`rgba(` scan. Moved to `review`.
+- 2026-08-28 — Picked up review finding at `9348cc6`: replace the real prefilled subject
+  value with the specified ghost placeholder while retaining Calculus II as the submit-time
+  default.
+- 2026-08-28 — Implemented the ghost behavior: empty controlled value, explicit muted
+  `placeholder="Calculus II"`, enabled Continue, and `Calculus II` normalization on untouched
+  submit. Added regression assertions for empty value and visible placeholder. Also applied
+  the review's non-blocking import-order cleanup to the four noted component files.
+- 2026-08-28 — Re-ran full gates: typecheck, lint, 92/92 tests across 38 files, build,
+  `git diff --check`, and hardcoded hex/`rgba(` scan all pass. Moved back to `review`.
 
 ## What was built / tested / left out
 

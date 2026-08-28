@@ -106,6 +106,8 @@ describe('Stage 3 navigation', () => {
 
     expect(screen.getByRole('heading', { name: 'What are you learning?' })).toBeVisible();
     expect(container.querySelector('aside')).toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Subject' })).toHaveValue('');
+    expect(screen.getByPlaceholderText('Calculus II')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(container.querySelector('[data-route="createWorkspace"]')).not.toBeNull();
   });

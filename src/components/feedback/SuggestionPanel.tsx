@@ -1,3 +1,6 @@
+import { Button } from '../primitives/Button';
+import styles from './SuggestionPanel.module.css';
+
 /**
  * Grey panel proposing one suggestion justified by observed behaviour, with an accept
  * and a dismiss action (screens 4, 8).
@@ -29,5 +32,3 @@ export function SuggestionPanel({
     </section>
   );
 }
-import { Button } from '../primitives/Button';
-import styles from './SuggestionPanel.module.css';

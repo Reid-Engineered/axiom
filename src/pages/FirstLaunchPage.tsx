@@ -10,11 +10,13 @@ export type FirstLaunchPageProps = Record<string, never>;
 /** First-run entry for choosing what the learner wants to study. */
 export function FirstLaunchPage(_props: FirstLaunchPageProps) {
   const { navigate } = useNavigation();
-  const [subject, setSubject] = useState('Calculus II');
+  const [subject, setSubject] = useState('');
 
   const continueToSetup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (subject.trim()) navigate({ type: 'createWorkspace' });
+    const submittedSubject = subject.trim() || 'Calculus II';
+    setSubject(submittedSubject);
+    navigate({ type: 'createWorkspace' });
   };
 
   return (
@@ -34,10 +36,11 @@ export function FirstLaunchPage(_props: FirstLaunchPageProps) {
         <input
           id="first-launch-subject"
           value={subject}
+          placeholder="Calculus II"
           onChange={(event) => setSubject(event.target.value)}
           autoComplete="off"
         />
-        <Button size="lg" type="submit" disabled={!subject.trim()}>Continue</Button>
+        <Button size="lg" type="submit">Continue</Button>
       </form>
 
       <nav className={styles.alternatives} aria-label="Other ways to begin">

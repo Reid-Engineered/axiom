@@ -1,3 +1,5 @@
+import styles from './MathDisplay.module.css';
+
 export interface MathSegment {
   text: string;
   /** This segment is the highlighted/selected term (screen 5: "the selected term x highlighted"). */
@@ -35,4 +37,3 @@ export function MathDisplay({ expression, onSelectTerm, className = '' }: MathDi
     </div>
   );
 }
-import styles from './MathDisplay.module.css';

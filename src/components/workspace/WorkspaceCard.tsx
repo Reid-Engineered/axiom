@@ -1,3 +1,6 @@
+import { ProgressBar } from '../primitives/ProgressBar';
+import styles from './WorkspaceCard.module.css';
+
 /**
  * Home's "Workspaces" cards — name, goal sentence, 3px unlabelled progress, last concept
  * plus relative time, or "Paused" (screen 3). No dashboard, no analytics.
@@ -36,5 +39,3 @@ export function WorkspaceCard({
     </button>
   );
 }
-import { ProgressBar } from '../primitives/ProgressBar';
-import styles from './WorkspaceCard.module.css';
