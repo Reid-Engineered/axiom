@@ -79,6 +79,31 @@ Date: 2026-08-28
 Verdict: **changes-requested** — one blocking UI-rules finding (ghost placeholder not
 implemented); everything else passes.
 
+### Re-review — 2026-08-28
+
+Fix (`FirstLaunchPage.tsx`): `subject` now starts `''`, the input carries
+`placeholder="Calculus II"`, and `.subjectForm input::placeholder` sets
+`color: var(--text-metadata)` (`rgba(28, 27, 25, 0.46)`) with `opacity: 1` to override
+browsers' default placeholder dimming — a sensible existing-token choice, not a new
+hardcoded color. Submit normalizes an empty trimmed value to `'Calculus II'` before
+navigating, matching the screenshot's enabled Continue button next to a still-empty ghost
+field. Also applied the non-blocking import-order cleanup from the prior review to all four
+files it was noted on.
+
+- [x] Correctness — pass: `subject` state and submit-time fallback behave exactly as
+  recommended.
+- [x] UI rules — pass: independently re-verified — input renders with an empty value and a
+  muted-gray placeholder, matching `01-first-launch.png`. `screen.getByRole('textbox', {
+  name: 'Subject' })` asserted `toHaveValue('')` and the placeholder text is asserted
+  visible, so this is now regression-covered, not just eyeballed. Import-order cleanup
+  confirmed on all four files (`WorkspaceCard.tsx`, `MathDisplay.tsx`,
+  `ReasonedRecommendation.tsx`, `SuggestionPanel.tsx`).
+- [x] Architecture conformance — pass: unchanged from the prior pass.
+- [x] Process (gates) — pass: independently re-ran typecheck/lint/build/test — 92/92,
+  matches the claim exactly. Hardcoded-value scan clean.
+
+Verdict: **approved** — no blocking findings remain.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
