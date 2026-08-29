@@ -1,8 +1,8 @@
 ---
 id: 037
 title: src-tauri/src/db/ SQLite schema + migrations
-status: changes-requested
-owner: codex
+status: review
+owner: claude
 stage: 7
 depends_on: [005]
 ---
@@ -58,8 +58,16 @@ Schema and migrations for Workspace, Goal, Concept, Module, Session, matching `s
   is maintained by note triggers.
 - 2026-08-29 (Codex): Updated `ARCHITECTURE.md` to reflect the new persistence layer. Verified
   the migration directly against an in-memory SQLite database (24 domain tables), then ran
-  `cargo check --locked`, `cargo fmt --check`, and `git diff --check` successfully. Per task
-  scope, command/query tests remain for 038; no frontend files or TypeScript contracts changed.
+  `cargo check --locked`, `cargo fmt --check`, and `git diff --check` successfully. This
+  initial verification was ad hoc rather than a permanent Rust test; no frontend files or
+  TypeScript contracts changed.
+- 2026-08-29 (Codex): Addressed review by adding three permanent Rust regression tests. They
+  verify that migrations apply once at the current version and create all 24 domain tables,
+  a workspace rejects a second Guiding goal, and note-count triggers handle insert, concept
+  reassignment, and delete. The shared fixture inserts the circular workspace/guiding-goal
+  pair inside an explicit transaction, giving 038 a working example of the required write
+  shape. `cargo test --locked` passes all 3 tests; `cargo check --locked`,
+  `cargo fmt --check`, and `git diff --check` also pass.
 
 ## What was built / tested / left out
 
@@ -70,9 +78,9 @@ Schema and migrations for Workspace, Goal, Concept, Module, Session, matching `s
   one-guiding-goal invariant, and note-count maintenance triggers.
 - Pinned all direct Cargo dependencies and generated a locked `rusqlite`/SQLite dependency
   graph. No `tauri-plugin-sql` dependency or frontend-visible database surface was added.
-- Tested with `cargo check --locked`; also checked Rust formatting, patch whitespace, and
-  execution of the full migration in SQLite. There are intentionally no command handlers,
-  seed data, or query tests here; those are tasks 038 and 039.
+- Tested with `cargo test --locked` (3 schema tests) and `cargo check --locked`; also checked
+  Rust formatting and patch whitespace. There are intentionally no command handlers or seed
+  data here; those are tasks 038 and 039.
 
 ## Review
 
@@ -147,3 +155,22 @@ from a silent regression, and 038/039 will build directly on top of it.
   in an explicit `connection.transaction()` for the deferred FK to succeed — a plain
   autocommit insert will fail immediately. Discovered hands-on while verifying this review,
   not theoretical.
+
+## Re-review (test coverage)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. `src-tauri/src/db/tests.rs` covers all three recommended cases,
+      plus more: migration idempotency (`migration_count == 1`, not just version), exact
+      `domain_table_count == 24`, the guiding-goal constraint asserted by specific
+      `ErrorCode::ConstraintViolation` rather than just `is_err()`, and the notes-count
+      trigger test goes beyond insert/delete to also cover **concept reassignment**
+      (`UPDATE notes SET concept_id = ...`), which I hadn't explicitly asked for. The shared
+      `insert_workspace_and_guiding_goal` fixture wraps both inserts in an explicit
+      `connection.transaction()` — exactly the pattern 038 needs and now has a working
+      example of, not just a written warning.
+- [x] Process — pass. Independently reran `cargo test --locked` (3 tests, all pass),
+      `cargo check --locked`, `cargo fmt --check`, and `git diff --check`; all clean.
+
+Verdict: approved. No blocking findings remain. 038 is unblocked.
