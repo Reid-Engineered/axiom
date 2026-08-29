@@ -1,7 +1,7 @@
 ---
 id: 031
 title: WorkspaceToolsPage + offline/modules-at-scale sheet
-status: changes-requested
+status: in-progress
 owner: antigravity
 stage: 6
 depends_on: [003, 021]
@@ -21,6 +21,12 @@ Full implementation: module rows, `Toggle`, `SuggestionPanel`. Includes the offl
 
 - 2026-08-28 — Claimed by Codex. Starting 20-module visibility grouping, per-workspace enable toggles, four-goal context, and the per-kind offline sheet. Global `Module.visibility` will be consumed as locked, without a per-workspace workaround.
 - 2026-08-28 — Codex implementation pass complete. Built module rows with real per-workspace enabled toggles, grouped modules strictly by the locked global `visibility` field, wired marketplace/module-detail navigation and the suggestion, completed the locked `Sheet` body, and built the four-kind offline flow with honest totals and the fixture's partial-video limitation. Demonstrated against the actual Calculus II fixtures: 20 modules grouped 4 In the workspace / 9 Appear when relevant / 7 Off, four goals, and four offline-kind switches. No per-workspace visibility field or workaround was introduced; the existing global behavior does not make this single-workspace screen internally contradictory. Full gates passed: typecheck, lint, production build, 95/95 tests, hardcoded color scan, component-to-service import scan, and `git diff --check`. Handed to Antigravity for fidelity against `08-workspace-tools.png` and `21-offline-modules-goals.png`; status remains `in-progress`.
+- 2026-08-29 — Codex addressed the review findings. Formatted the page, CSS Module, and
+  tests with Prettier; all three now pass `npx prettier --check`. Reworked Voice tutoring as
+  a fifth offline-sheet row with its own heading, degradation sentence, and the shared
+  dashed `Internet required` badge, with render coverage. Typecheck, lint, build, the full
+  43-file/101-test suite, token scan, and diff check pass. Status returns to `in-progress` for
+  the remaining Antigravity screenshot-fidelity pass.
 
 ## What was built / tested / left out
 
@@ -72,6 +78,27 @@ Verdict: changes-requested. Blocking: the Prettier-formatting defect. Non-blocki
 real: the offline sheet still needs its Antigravity fidelity pass (the Voice tutoring row is
 the concrete gap to start from); the worklog already says this honestly, so this isn't new
 information, just confirmation it's still true today.
+
+## Re-review
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. `npx prettier --check` on all three files now passes clean.
+- [x] UI rules — pass on the concrete gap raised. "Voice tutoring" is now its own row
+      (`WorkspaceToolsPage.tsx:193-199`) with a heading, the degradation sentence, and
+      `<OfflineChip status="required" />` (`src/components/badges/OfflineChip.tsx`) — reusing
+      the existing shared badge rather than a bespoke one, correctly matching
+      `21-offline-modules-goals.png`'s dashed "Internet required" treatment.
+      `WorkspaceToolsPage.test.tsx:35-36` asserts the new heading and badge text directly.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (43 files / 101 tests), `npm run build`, and `git diff --check`; all
+      clean. Grepped `WorkspaceToolsPage.module.css` for hardcoded px/hex/rgba: none found.
+
+Verdict: approved. Both findings resolved. Status correctly stays `in-progress` — the
+remaining Antigravity screenshot-fidelity pass (full polish against `08-workspace-tools.png`
+and `21-offline-modules-goals.png`, beyond the one row fixed here) is still outstanding, per
+the worklog.
 
 ## Follow-ups
 
