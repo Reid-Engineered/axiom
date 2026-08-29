@@ -5,8 +5,8 @@ data flow; `reference/UI/AXIOM-HANDOFF.md` is authoritative for visual design an
 behavior. When the two could be read as disagreeing, the handoff wins on *look and behavior*,
 this document wins on *how code is organized*.
 
-No implementation exists yet. This is the target shape for the code that gets written
-starting at Stage 0 of `ROADMAP.md`.
+The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema
+and migration runner; IPC commands and service integration remain to be implemented.
 
 ---
 
@@ -24,9 +24,10 @@ Any future network calls (marketplace fetch, module updates) are additive enhanc
 app must function without — this is already a product invariant (`AXIOM-HANDOFF.md` §6.12),
 not just a technical preference.
 
-**Current phase**: no Rust/SQLite code yet. The frontend is built first against mock data
-(Stages 0–6 of the roadmap) with the service layer shaped so the Stage 7 swap to real IPC
-touches only `src/services/*`, never components, hooks, or pages. See §5.
+**Current phase**: the Rust backend owns an internal `rusqlite` connection, with versioned
+migrations under `src-tauri/src/db/`. No database access is exposed to the frontend; Stage 7
+adds domain-specific IPC commands and swaps `src/services/*` from mock data to those commands,
+without changing components, hooks, or pages. See §5.
 
 ---
 
@@ -66,7 +67,8 @@ axiom/
   src-tauri/                # Rust backend (Stage 7+)
     src/
       commands/               one module per domain (workspace, goal, concept, module, session)
-      db/                      schema, migrations, queries
+      db/                      connection setup, schema, migrations, queries
+        migrations/            ordered SQL migrations embedded in the Rust binary
       main.rs
     Cargo.toml
     tauri.conf.json
