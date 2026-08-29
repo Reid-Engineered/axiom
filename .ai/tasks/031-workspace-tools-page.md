@@ -1,7 +1,7 @@
 ---
 id: 031
 title: WorkspaceToolsPage + offline/modules-at-scale sheet
-status: changes-requested
+status: review
 owner: antigravity
 stage: 6
 depends_on: [003, 021]
@@ -33,6 +33,11 @@ Full implementation: module rows, `Toggle`, `SuggestionPanel`. Includes the offl
   - Polished offline sheet (`Make available offline`): full-width bordered kind rows with per-kind sizes, Voice tutoring degradation row with dashed `OfflineChip` ("Internet required"), and footer layout with "Wi-Fi only" note.
   - Verified formatting with Prettier (`npx prettier --check` clean).
   - All quality gates passed cleanly (`typecheck`, `lint`, `build`, `test` — 43 files / 101 tests, `git diff --check`). Status moved to `review`.
+- 2026-08-29 — Codex resolved the visual-pass review blocker without introducing a
+  coincidence-driven token: `.headerText` now participates in the header flex layout with
+  `flex: 1` and `min-width: 0`, while the existing action group remains non-shrinking. Removed
+  the dead grid declaration from `.degradationRow`. The fixture-backed 1.3 GB total remains
+  intentionally unchanged because it sums raw bytes before display rounding.
 
 ## What was built / tested / left out
 
@@ -136,8 +141,9 @@ Date: 2026-08-29
 Verdict: changes-requested. Sole blocking finding: the hardcoded `600px`.
 
 Two more, non-blocking:
+
 - `.degradationRow` (`WorkspaceToolsPage.module.css:218-220`) still sets `grid-template-
-  columns`, left over from before `.offlineRow` switched to `display: flex` — dead CSS, no
+columns`, left over from before `.offlineRow` switched to `display: flex` — dead CSS, no
   visible effect, just worth deleting whenever this file is touched again.
 - The offline sheet's "Download · X GB" total (`WorkspaceToolsPage.tsx:173`) computes from
   the real fixture's raw bytes and shows **1.3 GB**, while `21-offline-modules-goals.png`'s
@@ -147,6 +153,24 @@ Two more, non-blocking:
   code's approach (sum raw bytes, then round once) is the more defensible one. Not blocking,
   flagging only since it's a real numeric mismatch against the reference and untested either
   way.
+
+## Re-review (visual-fidelity fix)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] UI rules — pass. `.headerText` now uses `flex: 1` + `min-width: 0` alongside
+      `.headerActions`' existing `flex-shrink: 0` instead of a magic `max-width` — no new
+      token needed. `.degradationRow`'s dead `grid-template-columns` rule is gone. The
+      1.3 GB total was deliberately left as-is (sums raw bytes before display rounding),
+      which matches what the prior review already concluded was the more defensible
+      approach — noted, not required to change.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (45 files / 104 tests — includes 027's new tests, all still
+      green), `npm run build`, `git diff --check`, and grepped for hardcoded
+      `px|hex|rgba` in both the `.tsx` and `.module.css`: none found.
+
+Verdict: approved. No blocking findings remain for this task.
 
 ## Follow-ups
 
