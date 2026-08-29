@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './Inspector.module.css';
 
 /**
  * Right-side inspector panel — e.g. Full Visualization's Selected shell inspector.
@@ -12,6 +13,21 @@ export interface InspectorProps {
   className?: string;
 }
 
-export function Inspector(_props: InspectorProps) {
-  return null;
+export function Inspector({ open, onClose, title, children, className = '' }: InspectorProps) {
+  if (!open) return null;
+  return (
+    <section
+      className={`${styles.inspector} ${className}`}
+      role="complementary"
+      aria-labelledby="inspector-title"
+    >
+      <header>
+        <h2 id="inspector-title">{title}</h2>
+        <button type="button" onClick={onClose} aria-label={`Close ${title}`}>
+          ×
+        </button>
+      </header>
+      <div className={styles.body}>{children}</div>
+    </section>
+  );
 }

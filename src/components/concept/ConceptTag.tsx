@@ -1,3 +1,5 @@
+import styles from './ConceptTag.module.css';
+
 /**
  * A single concept reference tag — Concept View's "Where it shows up" and Module
  * Detail's supported-concepts list (screens 7, 10). Not removable, unlike primitives/Chip.
@@ -8,6 +10,12 @@ export interface ConceptTagProps {
   className?: string;
 }
 
-export function ConceptTag(_props: ConceptTagProps) {
-  return null;
+export function ConceptTag({ label, onSelect, className = '' }: ConceptTagProps) {
+  return onSelect ? (
+    <button type="button" className={`${styles.tag} ${className}`} onClick={onSelect}>
+      {label}
+    </button>
+  ) : (
+    <span className={`${styles.tag} ${className}`}>{label}</span>
+  );
 }

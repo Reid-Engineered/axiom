@@ -1,0 +1,13 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  color: var(--text-secondary);
+  font: inherit;
+}
+button.tag {
+  cursor: pointer;
+}
