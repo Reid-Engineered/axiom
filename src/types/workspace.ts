@@ -45,3 +45,15 @@ export interface Workspace {
   offlineAvailability: OfflineKindAvailability[];
   enabledModuleIds: string[];
 }
+
+/**
+ * One dated line in "While you were away" (screen 16) — a bounded recap, not an activity
+ * feed. Callers show at most three, oldest first; there is no pagination or "load more."
+ */
+export interface WorkspaceActivityEvent {
+  id: string;
+  workspaceId: string;
+  occurredAt: string;
+  /** e.g. "Practiced 9 shell-method problems" — stated as what happened, not a log line. */
+  summary: string;
+}

@@ -118,13 +118,14 @@ requested.
 
 ```
 common.ts       MasteryState, OfflineStatus, TrustLevel, GoalState — the fixed enums
-workspace.ts    Workspace
+workspace.ts    Workspace, WorkspaceActivityEvent
 goal.ts         Goal
 concept.ts      Concept (prerequisite / related / leads-to edges live here)
-module.ts       Module
+module.ts       Module, WorkspaceTemplate
 session.ts      Session, SessionIntent
 visualization.ts VisualizationScene and its verified rendering primitives
 material.ts     Material (a workspace's textbook), ChapterSegment, MaterialResult
+note.ts         Note — a learner's own note content, linked to a concept
 index.ts        barrel re-export — the only import path components use
 ```
 
