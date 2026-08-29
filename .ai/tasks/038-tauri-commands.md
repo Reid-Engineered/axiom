@@ -32,6 +32,16 @@ One `#[tauri::command]` per current mock-service function from 020, backed by 03
   it in `commands/workspace.rs` alongside the rest of that file's functions, no new file
   needed for it. `moduleService.ts` also grew `getWorkspaceTemplates()` — cover it in
   `commands/module.rs` alongside the rest of the module catalog, no new file needed either.
+- 2026-08-29 (claude-code): Important, discovered hands-on while reviewing 037 —
+  `workspaces.guiding_goal_id` has a `DEFERRABLE INITIALLY DEFERRED` foreign key to
+  `goals(id)` (needed for the circular workspace↔guiding-goal relationship). This only
+  actually defers within an **explicit transaction**. A plain autocommit
+  `connection.execute()`/`execute_batch()` inserting a workspace before its goal exists will
+  fail immediately with `FOREIGN KEY constraint failed` — confirmed by testing it directly.
+  Any command creating a workspace and its guiding goal together (`create_workspace`, most
+  obviously — likely others) must wrap both inserts in one `connection.transaction()`, not
+  separate autocommit calls. This isn't optional or an edge case; it'll fail on the very
+  first `create_workspace` call otherwise.
 
 ## What was built / tested / left out
 
