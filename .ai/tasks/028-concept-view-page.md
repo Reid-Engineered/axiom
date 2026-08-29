@@ -1,7 +1,7 @@
 ---
 id: 028
 title: ConceptViewPage implementation
-status: changes-requested
+status: in-progress
 owner: antigravity
 stage: 6
 depends_on: [008, 021]
@@ -26,6 +26,13 @@ Full implementation matching its screenshot: `Mastery`, `MathDisplay`, `ConceptR
   with the Screen 7 detail data; and activated the already-locked ConceptTag contract needed
   by “Where it shows up.” Ownership passes to Antigravity for fidelity against
   `07-concept-view.png`; status remains `in-progress` through polish.
+- 2026-08-29 — Codex addressed the implementation review finding. The rail no longer
+  fabricates a note by repeating `learnerHeuristic`; it now summarizes only the modeled
+  `notesCount` while preserving the existing “N more notes” action. Added a regression
+  assertion that the heuristic appears exactly once, and moved ConceptTag's CSS import to
+  the top of its module. Typecheck, lint, build, the full 47-file/107-test suite,
+  `git diff --check`, and the explicit Prettier check all pass. Status returns to
+  `in-progress` with Antigravity for the remaining fidelity pass.
 
 ## What was built / tested / left out
 
@@ -66,7 +73,7 @@ covers Codex's structural pass, same shape as 026/027/031's implementation-pass 
       NOTES" card ("LIATE is a tiebreaker, not a rule..."). `Concept`
       (`src/types/concept.ts`) only models one heuristic string plus a `notesCount` number,
       with no distinct notes-content field, so a genuinely different second quote isn't
-      available — but showing the *same* text twice, framed as two different things, reads
+      available — but showing the _same_ text twice, framed as two different things, reads
       as a copy-paste bug, not a "notes summary." The worklog's own "what was built" claims
       a "notes summary" was delivered; what's there is a duplicate, not a summary. Cheapest
       fix within the current type: drop the fabricated quote from the rail and let
@@ -100,6 +107,24 @@ Anything noticed during implementation or review that's out of this task's scope
   here), trivial to fix whenever this file is next touched.
 - (claude-code, 2026-08-29) "See in concept map" (`ConceptViewPage.tsx:159-161`) has no
   handler — same dead-control category noted on 026/027/031/034.
+
+## Re-review
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. The rail's "Your notes" section now reads purely from
+      `notesCount` ("3 notes" / "No notes yet"), no fabricated quote, with the "N more
+      notes" button unchanged. `ConceptViewPage.test.tsx:47` asserts the heuristic text
+      appears exactly once (`getAllByText(...).toHaveLength(1)`), directly covering the
+      regression.
+- [x] Correctness — pass. `ConceptTag.tsx`'s CSS import now sits at the top of the file.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (47 files / 107 tests), `npm run build`, `git diff --check`, and
+      `npx prettier --check`; all clean.
+
+Verdict: approved. Status correctly stays `in-progress` — Antigravity's fidelity pass
+against `07-concept-view.png` is still outstanding.
 
 ## Follow-ups
 
