@@ -4,3 +4,5 @@ export * from './goal';
 export * from './concept';
 export * from './module';
 export * from './session';
+export * from './visualization';
+export * from './material';

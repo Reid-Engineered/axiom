@@ -123,6 +123,8 @@ goal.ts         Goal
 concept.ts      Concept (prerequisite / related / leads-to edges live here)
 module.ts       Module
 session.ts      Session, SessionIntent
+visualization.ts VisualizationScene and its verified rendering primitives
+material.ts     Material (a workspace's textbook), ChapterSegment, MaterialResult
 index.ts        barrel re-export — the only import path components use
 ```
 
