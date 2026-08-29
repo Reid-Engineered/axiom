@@ -1,7 +1,7 @@
 ---
 id: 037
 title: src-tauri/src/db/ SQLite schema + migrations
-status: review
+status: done
 owner: claude
 stage: 7
 depends_on: [005]
@@ -174,3 +174,7 @@ Date: 2026-08-29
       `cargo check --locked`, `cargo fmt --check`, and `git diff --check`; all clean.
 
 Verdict: approved. No blocking findings remain. 038 is unblocked.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `b451790`. Status moved to `done`; file archived.
