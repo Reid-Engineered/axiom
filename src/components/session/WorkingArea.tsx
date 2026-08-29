@@ -6,6 +6,17 @@ export interface WorkingAreaProps {
   className?: string;
 }
 
-export function WorkingArea(_props: WorkingAreaProps) {
-  return null;
+export function WorkingArea({ value, onChange, placeholder, className = '' }: WorkingAreaProps) {
+  return (
+    <label className={`${styles.area} ${className}`}>
+      <span>Your working</span>
+      <textarea
+        aria-label="Your working"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
 }
+import styles from './WorkingArea.module.css';

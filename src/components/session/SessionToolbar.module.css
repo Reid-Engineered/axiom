@@ -1,0 +1,75 @@
+.toolbar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.context,
+.intent,
+.progress {
+  display: flex;
+  align-items: center;
+}
+
+.context {
+  gap: var(--space-md);
+  white-space: nowrap;
+}
+
+.context strong {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+}
+
+.context span,
+.time {
+  color: var(--text-metadata);
+  font-size: var(--font-size-small-plus);
+}
+
+.intent {
+  gap: var(--space-md);
+  padding-left: var(--space-xl);
+  border-left: var(--border-width-hairline) solid var(--color-hairline-strong);
+  color: var(--text-secondary);
+}
+
+.intent span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-weight: 500;
+  font-size: var(--font-size-body);
+  color: var(--text-primary);
+}
+
+.intent span::before {
+  content: '';
+  display: inline-block;
+  width: var(--badge-dot-size);
+  height: var(--badge-dot-size);
+  border-radius: 50%;
+  background: var(--accent-action);
+}
+
+.progress {
+  margin-left: auto;
+  gap: var(--space-sm);
+}
+
+.progress span {
+  width: var(--space-2xl);
+  height: var(--progress-height);
+  border-radius: var(--progress-radius);
+  background: var(--color-recessed);
+}
+
+.progress span[data-complete='true'] {
+  background: var(--accent-action);
+}
+
+.time {
+  white-space: nowrap;
+}

@@ -1,0 +1,26 @@
+.area {
+  display: grid;
+  min-height: calc(var(--space-4xl) * 4);
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: var(--border-width-hairline) dashed var(--color-hairline-strong);
+  border-radius: var(--radius-row);
+}
+.area span {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+.area textarea {
+  min-height: calc(var(--space-4xl) * 3);
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-math);
+  font-size: var(--font-size-body-plus);
+  line-height: 1.65;
+}
