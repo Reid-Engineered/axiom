@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { StubCommandPalette } from './components/overlays/StubCommandPalette';
+import { TrustBadge } from './components/badges/TrustBadge';
+import { ConceptRow } from './components/concept/ConceptRow';
+import {
+  CommandPalette,
+  CommandPaletteMarketplaceResult,
+  CommandPaletteText,
+  type CommandPaletteResultGroup,
+} from './components/overlays/CommandPalette';
 import { Sidebar } from './components/workspace/Sidebar';
 import { Stage3StubRouteMenu } from './components/workspace/Stage3StubRouteMenu';
 import type { WorkspaceTreeProps } from './components/workspace/WorkspaceTree';
 import { NavigationProvider } from './hooks/NavigationProvider';
 import { useKeyboardShortcut } from './hooks/useKeyboardShortcut';
+import { useCommandPalette } from './hooks/useCommandPalette';
 import { useNavigation, type Route } from './hooks/useNavigation';
 import { WorkspaceProvider } from './hooks/WorkspaceProvider';
 import { useWorkspace } from './hooks/useWorkspace';
@@ -33,19 +41,64 @@ function Application() {
   const { route, overlay, navigate, openOverlay, closeOverlay } = useNavigation();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspace();
   const workspaceId = activeWorkspaceId ?? WORKSPACES[0].id;
-  const openCommandPalette = useCallback(
-    () => openOverlay({ type: 'commandPalette' }),
-    [openOverlay],
-  );
+  const palette = useCommandPalette(workspaceId);
 
-  useKeyboardShortcut('k', openCommandPalette);
+  const commandGroups: CommandPaletteResultGroup[] = [
+    {
+      label: 'Actions',
+      items: palette.actions.map((action) => ({
+        id: action.id,
+        content: <CommandPaletteText label={action.label} detail={action.detail} />,
+        shortcut: action.shortcut,
+        onSelect: action.run,
+      })),
+    },
+    {
+      label: 'Concepts',
+      items: palette.concepts.map((concept) => ({
+        id: concept.id,
+        content: (
+          <ConceptRow
+            name={concept.name}
+            masteryState={concept.masteryState}
+            statusText={concept.id === palette.concepts[0]?.id ? 'active' : 'related'}
+          />
+        ),
+        onSelect: () => navigate({ type: 'conceptView', workspaceId, conceptId: concept.id }),
+      })),
+    },
+    {
+      label: 'From your work',
+      items: palette.notes.map((note) => ({
+        id: note.id,
+        content: <CommandPaletteText label={`Note — “${note.text}”`} />,
+        onSelect: () => navigate({ type: 'conceptView', workspaceId, conceptId: note.conceptId }),
+      })),
+    },
+    {
+      label: 'Marketplace',
+      items: palette.marketplaceModules.map((module) => ({
+        id: module.id,
+        content: (
+          <CommandPaletteMarketplaceResult
+            label={`Marketplace — ${module.name}`}
+            badge={module.trust ? <TrustBadge type={module.trust} /> : null}
+          />
+        ),
+        onSelect: () =>
+          navigate({ type: 'moduleDetail', moduleId: module.id, forWorkspaceId: workspaceId }),
+      })),
+    },
+  ].filter((group) => group.items.length > 0);
+
+  useKeyboardShortcut('k', palette.open);
 
   const sidebar = (
     <Sidebar
       workspaces={WORKSPACES}
       openWorkspaceId={activeWorkspaceId ?? undefined}
       activeSubItem={activeSubItem(route)}
-      onSearch={openCommandPalette}
+      onSearch={palette.open}
       onHome={() => navigate({ type: 'home' })}
       onMarketplace={() => navigate({ type: 'marketplace', forWorkspaceId: workspaceId })}
       onCreateWorkspace={() => navigate({ type: 'createWorkspace' })}
@@ -80,7 +133,14 @@ function Application() {
       data-overlay={overlay?.type ?? undefined}
     >
       <RouteContent route={route} sidebar={sidebar} />
-      <StubCommandPalette open={overlay?.type === 'commandPalette'} onClose={closeOverlay} />
+      <CommandPalette
+        open={palette.isOpen}
+        onClose={palette.close}
+        query={palette.query}
+        onQueryChange={palette.setQuery}
+        groups={commandGroups}
+        scopeLabel={WORKSPACES.find((workspace) => workspace.id === workspaceId)?.name}
+      />
       {overlay?.type === 'goalEditing' ? (
         <GoalEditingSheet
           open

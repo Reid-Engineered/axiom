@@ -184,8 +184,15 @@ const supportingConcepts: Concept[] = [
   workspaceId,
   name,
   chapter,
-  masteryState: masteryStates[index % masteryStates.length],
-  meaning: 'Applied successfully in recent work.',
+  masteryState:
+    id === 'physics-concept-2' ? 'Developing' : masteryStates[index % masteryStates.length],
+  ...(id === 'physics-concept-2'
+    ? { wasMasteryState: 'Strong' as const, decayedAt: '2026-07-10T12:00:00.000Z' }
+    : {}),
+  meaning:
+    id === 'physics-concept-2'
+      ? 'The setup needs a short refresh after time away.'
+      : 'Applied successfully in recent work.',
   onExam: true,
   blocksConceptIds:
     index + 1 < entries.length && entries[index + 1][1] === workspaceId

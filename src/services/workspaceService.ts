@@ -1,5 +1,6 @@
-import type { OfflineContentKind, Workspace } from '../types';
+import type { OfflineContentKind, Workspace, WorkspaceActivityEvent } from '../types';
 import { mockGoals } from './mockData/goals';
+import { mockWorkspaceActivity } from './mockData/workspaceActivity';
 import { mockWorkspaces } from './mockData/workspaces';
 
 export interface CreateWorkspaceInput {
@@ -18,6 +19,16 @@ export async function getWorkspace(id: string): Promise<Workspace> {
   const workspace = mockWorkspaces.find((candidate) => candidate.id === id);
   if (!workspace) throw new Error(`Workspace not found: ${id}`);
   return structuredClone(workspace);
+}
+
+/** Returns the bounded context-recovery recap, oldest first and never more than three. */
+export async function getRecentActivity(workspaceId: string): Promise<WorkspaceActivityEvent[]> {
+  return structuredClone(
+    mockWorkspaceActivity
+      .filter((event) => event.workspaceId === workspaceId)
+      .sort((left, right) => left.occurredAt.localeCompare(right.occurredAt))
+      .slice(0, 3),
+  );
 }
 
 /** Screen 2 — Create Workspace. Also provisions the initial Guiding goal. */

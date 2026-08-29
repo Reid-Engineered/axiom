@@ -57,11 +57,15 @@ describe('Stage 3 navigation', () => {
     expect(container.querySelector('[data-route="createWorkspace"]')).not.toBeNull();
   });
 
-  it('opens the command palette from the advertised shortcut', () => {
+  it('opens real command palette results from the advertised shortcut', async () => {
     render(<App />);
 
     fireEvent.keyDown(window, { key: 'k', metaKey: true });
     expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
+    expect(await screen.findByText('Practice the Shell Method')).toBeVisible();
+    expect(screen.getByText('From your work')).toBeVisible();
+    expect(screen.getByText(/Note —/)).toBeVisible();
+    expect(screen.getByText('Marketplace')).toBeVisible();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'Command palette' })).toBeNull();
   });
@@ -120,7 +124,9 @@ describe('Stage 3 navigation', () => {
     await waitFor(() => expect(container.querySelector('[data-route="home"]')).not.toBeNull());
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Calculus II' })[0]);
-    await waitFor(() => expect(container.querySelector('[data-route="workspaceOverview"]')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('[data-route="workspaceOverview"]')).not.toBeNull(),
+    );
     expect(screen.getByText('Concepts in play')).toBeVisible();
     expect(screen.getByRole('button', { name: /Shell method/ })).toBeVisible();
   });

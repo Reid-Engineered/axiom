@@ -4,6 +4,7 @@ import {
   getMarketplaceModules,
   getModule,
   getModulesByWorkspace,
+  getWorkspaceTemplates,
   installModule,
   setModuleEnabled,
   setModuleVisibility,
@@ -16,15 +17,24 @@ export function useModules(workspaceId: string) {
   const load = useCallback(() => getModulesByWorkspace(workspaceId), [workspaceId]);
   const resource = useAsyncResource(load);
   const { setData } = resource;
-  const replace = useCallback((updated: Module) => {
-    setData((current) => current?.map((module) => module.id === updated.id ? updated : module));
-    return updated;
-  }, [setData]);
+  const replace = useCallback(
+    (updated: Module) => {
+      setData((current) => current?.map((module) => (module.id === updated.id ? updated : module)));
+      return updated;
+    },
+    [setData],
+  );
 
-  const setEnabled = useCallback(async (moduleId: string, enabled: boolean) =>
-    replace(await setModuleEnabled(workspaceId, moduleId, enabled)), [replace, workspaceId]);
-  const setVisibility = useCallback(async (moduleId: string, visibility: Module['visibility']) =>
-    replace(await setModuleVisibility(workspaceId, moduleId, visibility)), [replace, workspaceId]);
+  const setEnabled = useCallback(
+    async (moduleId: string, enabled: boolean) =>
+      replace(await setModuleEnabled(workspaceId, moduleId, enabled)),
+    [replace, workspaceId],
+  );
+  const setVisibility = useCallback(
+    async (moduleId: string, visibility: Module['visibility']) =>
+      replace(await setModuleVisibility(workspaceId, moduleId, visibility)),
+    [replace, workspaceId],
+  );
 
   return { modules: resource.data ?? [], ...resource, setEnabled, setVisibility };
 }
@@ -34,14 +44,26 @@ export function useMarketplaceModules(forWorkspaceId?: string) {
   const load = useCallback(() => getMarketplaceModules(forWorkspaceId), [forWorkspaceId]);
   const resource = useAsyncResource(load);
   const { setData } = resource;
-  const install = useCallback(async (moduleId: string) => {
-    if (!forWorkspaceId) throw new Error('A workspace is required to install a module');
-    const installed = await installModule(forWorkspaceId, moduleId);
-    setData((current) => current?.map((module) => module.id === installed.id ? installed : module));
-    return installed;
-  }, [forWorkspaceId, setData]);
+  const install = useCallback(
+    async (moduleId: string) => {
+      if (!forWorkspaceId) throw new Error('A workspace is required to install a module');
+      const installed = await installModule(forWorkspaceId, moduleId);
+      setData((current) =>
+        current?.map((module) => (module.id === installed.id ? installed : module)),
+      );
+      return installed;
+    },
+    [forWorkspaceId, setData],
+  );
 
   return { modules: resource.data ?? [], ...resource, installModule: install };
+}
+
+/** Loads the Marketplace's curated workspace starting points. */
+export function useWorkspaceTemplates() {
+  const load = useCallback(() => getWorkspaceTemplates(), []);
+  const resource = useAsyncResource(load);
+  return { templates: resource.data ?? [], ...resource };
 }
 
 /** Loads one module's learner-facing capability details. */

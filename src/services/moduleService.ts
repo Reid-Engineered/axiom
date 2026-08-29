@@ -1,5 +1,5 @@
-import type { Module } from '../types';
-import { mockModules } from './mockData/modules';
+import type { Module, WorkspaceTemplate } from '../types';
+import { mockModules, mockWorkspaceTemplates } from './mockData/modules';
 import { mockWorkspaces } from './mockData/workspaces';
 
 function findWorkspace(workspaceId: string) {
@@ -28,6 +28,10 @@ export async function getModulesByWorkspace(workspaceId: string): Promise<Module
 export async function getMarketplaceModules(forWorkspaceId?: string): Promise<Module[]> {
   if (forWorkspaceId) return getModulesByWorkspace(forWorkspaceId);
   return structuredClone(mockModules);
+}
+
+export async function getWorkspaceTemplates(): Promise<WorkspaceTemplate[]> {
+  return structuredClone(mockWorkspaceTemplates);
 }
 
 export async function getModule(id: string): Promise<Module> {
@@ -71,8 +75,9 @@ export async function setModuleVisibility(
   const module = findModule(moduleId);
 
   module.visibility = visibility;
-  workspace.enabledModuleIds = visibility !== 'off'
-    ? [...new Set([...workspace.enabledModuleIds, moduleId])]
-    : workspace.enabledModuleIds.filter((id) => id !== moduleId);
+  workspace.enabledModuleIds =
+    visibility !== 'off'
+      ? [...new Set([...workspace.enabledModuleIds, moduleId])]
+      : workspace.enabledModuleIds.filter((id) => id !== moduleId);
   return forWorkspace(module, workspace.enabledModuleIds);
 }

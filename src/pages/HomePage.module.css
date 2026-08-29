@@ -22,6 +22,116 @@
   background: var(--color-content);
 }
 
+.recovery {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  overflow: hidden;
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-content);
+  box-shadow: var(--shadow-card);
+}
+
+.recoveryMain {
+  padding: var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+}
+
+.recoveryMain h1 {
+  margin: var(--space-md) 0 0;
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+.recoveryLines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: 0;
+  margin: var(--space-2xl) 0 var(--space-3xl);
+  list-style: none;
+}
+
+.recoveryLines li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  line-height: 1.45;
+}
+
+.faded {
+  padding: var(--space-3xl);
+  background: var(--color-chrome-rail);
+  border-left: var(--border-width-hairline) solid var(--color-hairline);
+  display: flex;
+  flex-direction: column;
+}
+
+.faded h2 {
+  margin: 0;
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.faded div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+}
+
+.awayEvents {
+  grid-column: 1 / -1;
+  padding: var(--space-2xl) var(--space-3xl);
+  border-top: var(--border-width-hairline) solid var(--color-hairline);
+  background: var(--color-content);
+}
+
+.awayEvents h2 {
+  margin: 0;
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.awayEvents ol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: 0;
+  margin: var(--space-lg) 0 0;
+  list-style: none;
+}
+
+.awayEvents li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xl);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+}
+
+.awayEvents time {
+  color: var(--text-metadata);
+  font-size: var(--font-size-small);
+  min-width: var(--command-palette-top);
+}
+
 .continueCopy {
   display: grid;
   align-content: center;

@@ -2,14 +2,18 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { mockModules } from '../services/mockData/modules';
-import { useMarketplaceModules, useModule, useModules } from './useModules';
+import { useMarketplaceModules, useModule, useModules, useWorkspaceTemplates } from './useModules';
 
 describe('module domain hooks', () => {
   it('loads the real 4/9/7 grouping and toggles a module', async () => {
     const { result } = renderHook(() => useModules('workspace-calculus-ii'));
     await waitFor(() => expect(result.current.modules).toHaveLength(20));
-    expect(result.current.modules.filter((module) => module.visibility === 'workspace')).toHaveLength(4);
-    expect(result.current.modules.filter((module) => module.visibility === 'contextual')).toHaveLength(9);
+    expect(
+      result.current.modules.filter((module) => module.visibility === 'workspace'),
+    ).toHaveLength(4);
+    expect(
+      result.current.modules.filter((module) => module.visibility === 'contextual'),
+    ).toHaveLength(9);
     expect(result.current.modules.filter((module) => module.visibility === 'off')).toHaveLength(7);
 
     const module = mockModules[mockModules.length - 1];
@@ -17,7 +21,10 @@ describe('module domain hooks', () => {
     await act(async () => {
       await result.current.setEnabled(module.id, true);
     });
-    expect(result.current.modules[result.current.modules.length - 1]).toMatchObject({ enabled: true, visibility: 'off' });
+    expect(result.current.modules[result.current.modules.length - 1]).toMatchObject({
+      enabled: true,
+      visibility: 'off',
+    });
     await act(async () => {
       await result.current.setVisibility(module.id, 'off');
     });
@@ -39,5 +46,14 @@ describe('module domain hooks', () => {
     const { result } = renderHook(() => useModule(fixture.id));
     await waitFor(() => expect(result.current.module?.id).toBe(fixture.id));
     expect(result.current.module?.description).toContain('function visualizer');
+  });
+
+  it('loads the two real workspace templates', async () => {
+    const { result } = renderHook(() => useWorkspaceTemplates());
+    await waitFor(() => expect(result.current.templates).toHaveLength(2));
+    expect(result.current.templates.map((template) => template.name)).toEqual([
+      'Visual Learner',
+      'Exam Intensive',
+    ]);
   });
 });

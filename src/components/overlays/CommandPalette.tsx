@@ -71,6 +71,9 @@ export function CommandPalette({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className={styles.searchRow}>
+          <span className={styles.searchIcon} aria-hidden="true">
+            ⌕
+          </span>
           <input
             autoFocus
             className={styles.input}
@@ -101,5 +104,29 @@ export function CommandPalette({
         <footer className={styles.footer}>↑↓ move · ⏎ run · ⇥ scope · esc close</footer>
       </section>
     </div>
+  );
+}
+
+export function CommandPaletteText({ label, detail }: { label: string; detail?: string }) {
+  return (
+    <span className={styles.resultText}>
+      <span>{label}</span>
+      {detail ? <span className={styles.resultDetail}>{detail}</span> : null}
+    </span>
+  );
+}
+
+export function CommandPaletteMarketplaceResult({
+  label,
+  badge,
+}: {
+  label: string;
+  badge: ReactNode;
+}) {
+  return (
+    <span className={styles.marketplaceResult}>
+      <span>{label}</span>
+      {badge}
+    </span>
   );
 }

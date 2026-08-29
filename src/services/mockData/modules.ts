@@ -1,4 +1,4 @@
-import type { Module } from '../../types';
+import type { Module, WorkspaceTemplate } from '../../types';
 
 const moduleNames = [
   'Socratic Tutor',
@@ -22,6 +22,70 @@ const moduleNames = [
   'Notation Translator',
   'Focus Timer',
 ];
+
+const marketplaceOverrides: Partial<Record<number, Partial<Module>>> = {
+  13: {
+    name: 'Interactive Calculus Visualizer',
+    icon: 'V',
+    trust: 'verified',
+    developer: 'Axiom Labs',
+    price: 'Free',
+    description:
+      'Manipulate solids, Riemann sums, and tangent constructions while the tutor explains each step.',
+    trustDetail: 'Updated last week',
+  },
+  14: {
+    name: 'Proof Assistant',
+    icon: 'P',
+    trust: 'verified',
+    developer: 'Axiom Labs',
+    price: 'Free',
+    description:
+      'Work through a derivation step by step; it checks each move and names the rule you used.',
+    learningValueDetail:
+      'Every construction uses verified mathematical primitives, so the explanation and the visual state stay aligned.',
+    lastUpdatedLabel: 'Updated last week',
+    learnerCountLabel: '4.8k learners',
+    trustDetail: undefined,
+    offlineStatus: 'Works offline',
+    supportedConceptNames: [
+      'Solids of revolution',
+      'Riemann sums',
+      'Tangents and secants',
+      'Parametric curves',
+      'Vector fields',
+    ],
+    worksWithModuleIds: ['module-1', 'module-3', 'module-5', 'module-6'],
+    suits: ['Calculus I–III, Multivariable, Differential Equations', 'Learners who think visually'],
+    privacyNotes: [
+      'Your current problem — while the module is open',
+      'Your notes — off by default',
+      'Your workspace goal — used to keep examples relevant',
+      'Nothing leaves your device',
+    ],
+  },
+  15: {
+    name: 'Series Intuition Pack',
+    icon: 'S',
+    trust: 'community',
+    trustDetail: '4.8k learners',
+    developer: 'M. Okonkwo',
+    price: 'Free',
+    description:
+      'Treat convergence tests as decisions rather than a table, with animated partial sums.',
+  },
+  16: {
+    name: 'Quiet Mode',
+    icon: 'Q',
+    trust: 'community',
+    trustDetail: 'Accessibility',
+    developer: 'P. Lindqvist',
+    price: 'Free',
+    description:
+      'Removes timers and motion, keeps one activity on screen, and allows longer pauses before feedback.',
+    suits: ['Learners who prefer reduced motion', 'Learners who need a quieter pace'],
+  },
+};
 
 export const mockModules: Module[] = moduleNames.map((name, index) => {
   const visibility = index < 4 ? 'workspace' : index < 13 ? 'contextual' : 'off';
@@ -55,5 +119,21 @@ export const mockModules: Module[] = moduleNames.map((name, index) => {
     ],
     enabled,
     visibility,
+    ...marketplaceOverrides[index],
   };
 });
+
+export const mockWorkspaceTemplates: WorkspaceTemplate[] = [
+  {
+    id: 'template-visual-learner',
+    name: 'Visual Learner',
+    description: 'Tutor, symbolic tools, 2D and 3D visualization, practice, and spaced review.',
+    toolCount: 7,
+  },
+  {
+    id: 'template-exam-intensive',
+    name: 'Exam Intensive',
+    description: 'Timed practice, weakness detection, formula review, and exam simulation.',
+    toolCount: 5,
+  },
+];

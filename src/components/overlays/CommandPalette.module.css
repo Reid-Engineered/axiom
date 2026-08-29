@@ -27,8 +27,14 @@
 
 .searchRow {
   gap: var(--space-md);
-  padding: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
   border-bottom: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.searchIcon {
+  color: var(--text-metadata);
+  font-size: var(--font-size-title-sm);
+  line-height: 1;
 }
 
 .input {
@@ -38,16 +44,30 @@
   outline: 0;
   background: transparent;
   color: var(--text-primary);
-  font: inherit;
+  font-family: var(--font-ui);
   font-size: var(--font-size-body-plus);
 }
 
-.scope,
-.shortcut,
-.footer,
+.scope {
+  color: var(--text-metadata);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small);
+}
+
+.shortcut {
+  color: var(--text-metadata);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small);
+}
+
 .groupLabel {
   color: var(--text-metadata);
-  font-size: var(--font-size-metadata);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  padding: var(--space-sm) var(--space-lg);
 }
 
 .results {
@@ -56,12 +76,11 @@
 }
 
 .group {
-  padding: var(--space-md);
+  padding: var(--space-sm);
 }
 
-.groupLabel {
-  padding: var(--space-sm) var(--space-md);
-  text-transform: uppercase;
+.group + .group {
+  border-top: var(--border-width-hairline) solid var(--color-hairline);
 }
 
 .result {
@@ -72,7 +91,8 @@
   padding: var(--space-md) var(--space-lg);
   background: transparent;
   color: var(--text-primary);
-  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
   text-align: left;
   cursor: pointer;
 }
@@ -81,8 +101,29 @@
   background: var(--color-recessed);
 }
 
+.group:first-child .result:first-of-type {
+  background: var(--color-recessed);
+}
+
+.resultText,
+.marketplaceResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  width: 100%;
+}
+
+.resultDetail {
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+}
+
 .footer {
-  justify-content: center;
+  justify-content: space-between;
   border-top: var(--border-width-hairline) solid var(--color-hairline);
   padding: var(--space-md) var(--space-xl);
+  color: var(--text-metadata);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small);
 }

@@ -21,9 +21,9 @@
 
   /* type */
   --font-ui:
-    ui-sans-serif, system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue",
+    ui-sans-serif, system-ui, 'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue',
     sans-serif;
-  --font-math: "STIX Two Text", serif;
+  --font-math: 'STIX Two Text', serif;
 
   /* metrics */
   --sidebar-width: 232px;
@@ -37,6 +37,7 @@
   --layout-gallery-width: 900px;
   --layout-home-width: 800px;
   --gallery-placeholder-height: 100px;
+  --module-preview-height: 220px;
   --command-palette-width: 600px;
   --command-palette-top: 96px;
   --command-palette-max-height: 400px;

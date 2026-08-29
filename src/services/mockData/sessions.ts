@@ -2,16 +2,18 @@ import type { Session, TutorExchange } from '../../types';
 
 const longTutorHistory: TutorExchange[] = Array.from({ length: 40 }, (_, index) => ({
   id: `exchange-shell-${index + 1}`,
-  question: index % 3 === 0
-    ? `How should I identify the shell radius in example ${index + 1}?`
-    : index % 3 === 1
-      ? `Why does the height change at this boundary in example ${index + 1}?`
-      : `Can I check this setup before integrating example ${index + 1}?`,
-  answer: index % 3 === 0
-    ? 'Measure from the axis of rotation to the representative shell, then keep that direction consistent.'
-    : index % 3 === 1
-      ? 'The top or bottom curve changes where the region’s boundary changes; split the integral there.'
-      : 'Check radius, height, thickness, and bounds against the picture before simplifying.',
+  question:
+    index % 3 === 0
+      ? `How should I identify the shell radius in example ${index + 1}?`
+      : index % 3 === 1
+        ? `Why does the height change at this boundary in example ${index + 1}?`
+        : `Can I check this setup before integrating example ${index + 1}?`,
+  answer:
+    index % 3 === 0
+      ? 'Measure from the axis of rotation to the representative shell, then keep that direction consistent.'
+      : index % 3 === 1
+        ? 'The top or bottom curve changes where the region’s boundary changes; split the integral there.'
+        : 'Check radius, height, thickness, and bounds against the picture before simplifying.',
   occurredAt: `2026-08-27T${String(17 + Math.floor(index / 12)).padStart(2, '0')}:${String((index * 5) % 60).padStart(2, '0')}:00.000Z`,
   pinnedToVisualization: index === 18 || index === 34,
 }));
@@ -66,5 +68,21 @@ export const mockSessions: Session[] = [
     settledConclusions: ['Eigenvectors keep their direction under the transformation.'],
     openQuestion: 'What does a repeated eigenvalue imply geometrically?',
     startedAt: '2026-08-28T13:00:00.000Z',
+  },
+  {
+    id: 'session-angular-momentum',
+    workspaceId: 'workspace-physics',
+    conceptId: 'physics-concept-2',
+    status: 'paused',
+    intent: { activity: 'Practising', detail: 'Set up angular-momentum conservation' },
+    resumeSummary: 'You were checking which external torques belong in the system.',
+    elapsedMinutes: 26,
+    problemIndex: 3,
+    problemCount: 7,
+    exchanges: [],
+    settledConclusions: ['Internal forces do not change the system’s total angular momentum.'],
+    openQuestion: 'Does the support force create an external torque about the chosen origin?',
+    startedAt: '2026-05-12T16:00:00.000Z',
+    pausedAt: '2026-05-12T16:45:00.000Z',
   },
 ];
