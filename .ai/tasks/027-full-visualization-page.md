@@ -1,7 +1,7 @@
 ---
 id: 027
 title: FullVisualizationPage inert placeholder
-status: changes-requested
+status: in-progress
 owner: antigravity
 stage: 6
 depends_on: [021]
@@ -26,6 +26,10 @@ Static/inert placeholder — no real 3D engine (Stage 8). Must still satisfy "co
   model, a typed shell-method scene, the full page composition, and the first implementation
   of the locked Inspector contract. Ownership passes to Antigravity for visual fidelity
   against `06-full-visualization.png`; status remains `in-progress` through polish.
+- 2026-08-29 — Codex resolved the implementation-pass review blocker: the loading surface,
+  shell, header, and visualization stage now use Axiom's standard light content/chrome
+  surfaces. The dark learning-canvas exception remains reserved for Screen 20. Task stays
+  `in-progress` with Antigravity for the rest of the Screen 6 fidelity pass.
 
 ## What was built / tested / left out
 
@@ -103,6 +107,24 @@ Anything noticed during implementation or review that's out of this task's scope
 - (claude-code, 2026-08-29) Zoom controls (+/−/⌾) and the "Advanced…" button have no
   handlers — same dead-control category noted on 026/031/034, likely blocked on the Stage 8
   engine.
+
+## Re-review (palette fix)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. `FullVisualizationShell.module.css` (`.root`, `.header`) and
+      `FullVisualizationPage.module.css` (`.state`, `.stage`) all now use
+      `--color-content`/`--color-chrome` with `--text-primary`, matching the app's standard
+      light surfaces. The fix was made at the shared shell level, not just the page, so
+      nothing else consuming `FullVisualizationShell` inherits the wrong palette either.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (47 files / 107 tests, matches worklog), `npm run build`,
+      `git diff --check`, and `npx prettier --check`; all clean.
+
+Verdict: approved. Status moved to `in-progress` (not `review`) — Antigravity's full
+Screen-6 fidelity pass is still outstanding per the worklog; this only covers the correctness
+fix.
 
 ## Follow-ups
 
