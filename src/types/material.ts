@@ -17,6 +17,12 @@ export interface MaterialResult {
   /** Quoted excerpt (section) or the learner-specific reason this result surfaced. */
   reason: string;
   conceptId: string;
+  /**
+   * False when this result's page falls in an `outOfSyllabus` chapter segment. Out-of-
+   * syllabus material stays in the book but must never appear in search-first results
+   * (AXIOM-HANDOFF.md, screen 18) — `searchMaterial` filters on this, it isn't cosmetic.
+   */
+  inSyllabus: boolean;
   /** Present if the learner has highlighted this passage. */
   highlightedAt?: string;
   /** `exerciseRange` kind only — "14 exercises on non-zero axes · 3 attempted". */
