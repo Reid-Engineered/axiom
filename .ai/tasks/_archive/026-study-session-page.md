@@ -1,7 +1,7 @@
 ---
 id: 026
 title: StudySessionPage + tutor-exchange collapsing
-status: review
+status: done
 owner: antigravity
 stage: 6
 depends_on: [010, 021]
@@ -130,6 +130,13 @@ Date: 2026-08-29
 
 Verdict: approved. The toolbar long-session-layout observation and the other three
 Follow-ups below remain open but non-blocking.
+
+## Merge
+
+2026-08-29 — Committed to `master` at `93f3815` (no feature branch existed for this task —
+the work was done directly on `master`'s working tree). Gates rerun clean on the committed
+result (`test` — 43 files / 101 tests). Status moved to `done` per `.ai/lifecycle.md`; file
+archived.
 
 ## Follow-ups
 
