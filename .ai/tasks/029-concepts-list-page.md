@@ -38,7 +38,8 @@ Full implementation: `ChapterStateProfile`, `ConceptRow`, filter chips. Includes
   - Polished toolbar (search input and List/Graph segmented control pill) and filter chip styles (pill shape, active dark ink styling, hairline borders).
   - Polished section headers (`NEEDS WORK` with hairline line and `ordered by what it blocks` note, `BY CHAPTER` with hairline line) and card containers.
   - Polished chapter summary layout with chapter state profile dots and concept count metadata.
-  - Formatted touched files with Prettier (`npx prettier --check` clean) and passed all quality gates (`typecheck`, `lint`, `build`, `test`: 48 files/110 tests, `git diff --check`). Status moved to `review`.
+  - Added regression test suite in `ConceptsListPage.test.tsx` verifying all 6 actionable filter chips, inclusion of needs-work concepts in chapter groups without exclusion, and interactive filtering by in-progress and not-started.
+  - Formatted touched files with Prettier (`npx prettier --check` clean) and passed all quality gates (`typecheck`, `lint`, `build`, `test`: 51 files/117 tests, `git diff --check`). Status moved to `review`.
 
 ## What was built / tested / left out
 
@@ -141,3 +142,27 @@ Anything noticed during implementation or review that's out of this task's scope
   filter derivation) were made by Antigravity, whose lane per `OWNERSHIP.md` is UI/styling —
   not a finding against the fixes (they're correct), just noting the pattern in case it's
   worth reinforcing that logic changes should go through Codex where the pipeline allows it.
+
+## Re-review (regression tests)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. `ConceptsListPage.test.tsx`'s new
+      "includes needs-work concepts inside their chapter groups without exclusion" test is a
+      genuine regression test — verified it actually exercises the fix: it reads the first
+      needs-work concept's name and asserts a matching button exists within the "By chapter"
+      section, which would have failed under the old `needsWorkIds` exclusion and passes now
+      that it's removed. The filter test also directly clicks "In progress" and "Not started"
+      and asserts `aria-pressed` toggles.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (51 files / 117 tests, matches worklog), `npm run build`,
+      `git diff --check`, and `npx prettier --check`; all clean.
+
+Verdict: approved. No blocking findings remain.
+
+Minor, non-blocking note: the new test derives the concept name via
+`textContent?.split('blocks')[0].trim()`, which assumes the top needs-work concept's status
+text contains "blocks" — true today since needs-work is sorted by `blocksConceptIds.length`
+descending, but would silently produce a less useful assertion if the top item ever has no
+blocking edges. Not worth blocking on; flagging in case this file is touched again.
