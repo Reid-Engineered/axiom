@@ -33,3 +33,12 @@ Filled in by the reviewing agent. See `.ai/review-checklist.md`.
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
+
+- 2026-08-29 (claude-code) — Heads up, not a finding against the work itself: while finishing
+  branch `agent/codex/034-goal-editing-sheet` (fast-forward merge to `master` at `6077a2a`),
+  this task's implementation commit (`6ed2412`, "feat: implement workspace tools at scale")
+  came along underneath it, since 034 was built on top of it on the same branch. It is now in
+  `master` even though this file still reads `status: in-progress`. Marcus's call: leave it
+  landed rather than un-merge/re-split. This task still needs its normal review pass — just
+  run it against current `master` instead of a feature branch — before flipping status to
+  `review`/`done`.

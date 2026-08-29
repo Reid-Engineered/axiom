@@ -1,7 +1,7 @@
 ---
 id: 034
 title: GoalEditingSheet implementation
-status: review
+status: done
 owner: antigravity
 stage: 6
 depends_on: [011, 021]
@@ -120,10 +120,21 @@ Date: 2026-08-29
       `npm test -- --run` (41 files / 97 tests), `npm run build`, and `git diff --check`; all
       clean.
 
-Verdict: approved — both prior findings fixed and independently verified. Leaving `status:
-review` rather than `done` since per `.ai/lifecycle.md` that transition happens on merge to
-`main`, which hasn't happened yet. The "+ Add" follow-up above remains open as non-blocking,
-for a future task if wanted.
+Verdict: approved — both prior findings fixed and independently verified.
+
+## Merge
+
+2026-08-29 — Merged (fast-forward) to `master` at `6077a2a`, gates rerun clean on the merged
+result (`typecheck`, `lint`, `test` — 41 files / 97 tests, `build`), feature branch
+`agent/codex/034-goal-editing-sheet` deleted locally. Status moved to `done` per
+`.ai/lifecycle.md`; file archived.
+
+Note: this branch's history had task 031's implementation commit (`6ed2412`, "implement
+workspace tools at scale") underneath 034's commit, so the fast-forward brought 031's code
+into `master` too even though `031-workspace-tools-page.md` still reads `status: in-progress`.
+Decision (Marcus, 2026-08-29): leave it landed rather than un-merge/re-split — 031 should be
+reviewed against the current `master`, not held back, since its code is already there. See
+[[031-workspace-tools-page]] follow-up.
 
 ## Follow-ups
 
