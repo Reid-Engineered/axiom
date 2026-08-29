@@ -1,7 +1,7 @@
 ---
 id: 029
 title: ConceptsListPage + chapter-collapse behavior
-status: changes-requested
+status: review
 owner: antigravity
 stage: 6
 depends_on: [008, 021]
