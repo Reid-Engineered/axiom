@@ -1,7 +1,7 @@
 ---
 id: 036
 title: HomePage "returning after time away" context recovery
-status: review
+status: done
 owner: claude
 stage: 6
 depends_on: [024]
@@ -121,3 +121,7 @@ Verdict: approved. No blocking findings.
   regardless of the concept's actual mastery state — defensible as generic "pick up where
   you left off" copy, but worth a second look if a workspace ever has its current concept at
   a high mastery state, where "still needs support" would read oddly.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `8763fb6` (035 fixed and re-approved at `f36edd1`). Status moved to `done`; file archived.

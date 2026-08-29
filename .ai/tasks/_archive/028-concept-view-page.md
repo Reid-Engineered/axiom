@@ -1,7 +1,7 @@
 ---
 id: 028
 title: ConceptViewPage implementation
-status: review
+status: done
 owner: antigravity
 stage: 6
 depends_on: [008, 021]
@@ -153,3 +153,7 @@ against `07-concept-view.png` is still outstanding.
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
+
+## Merge
+
+2026-08-29 — Code committed to `master` (dc7a306, with a follow-up fix for 027 at `0375a47`). Status moved to `done`; file archived.

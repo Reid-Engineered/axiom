@@ -8,7 +8,7 @@ can go stale, not the source of truth. See `.ai/README.md` for why the split exi
 Codex, and Antigravity don't share a context window, so `.ai/tasks/` is how they hand off work
 to each other; this file is for a human skimming the same thing.
 
-_Last updated: 2026-08-28 (Stage 5 merge)._
+_Last updated: 2026-08-29 (Stage 6 merge)._
 
 ## Who does what, by default
 
@@ -36,8 +36,8 @@ in the same task — no separate Codex "implement" pass.
 | 3 | Layouts and navigation | [015–018](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
 | 4 | Mock data, services, hooks | [019–021](.ai/tasks/_archive/) | Codex | **Done**, merged to `master` |
 | 5 | First vertical slice | [022–025](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
-| 6 | Remaining pages | [026–036](.ai/tasks/) | Codex (+ Antigravity polish) | Proposed, unblocked — Stage 5 merged |
-| 7 | Real persistence (Rust/SQLite) | [037–040](.ai/tasks/) | Codex | Proposed, blocked on Stage 2 types (unblocked in principle, not started) |
+| 6 | Remaining pages | [026–036](.ai/tasks/_archive/) | Codex (+ Antigravity polish) | **Done**, merged to `master` |
+| 7 | Real persistence (Rust/SQLite) | [037–040](.ai/tasks/) | Codex | Proposed, unblocked — Stage 6 merged; `CORE.md` now informs this work |
 
 Full per-task detail — scope, exact files, dependency ids — lives in `.ai/tasks/<id>-<slug>.md`
 (or `.ai/tasks/_archive/<id>-<slug>.md` once a task is `done`).
@@ -140,6 +140,50 @@ tests pass on `master`. Task files archived, `status: done`.
 Full findings history: `.ai/tasks/_archive/022-first-launch-page.md`,
 `.ai/tasks/_archive/023-create-workspace-page.md`, `.ai/tasks/_archive/024-home-page.md`,
 `.ai/tasks/_archive/025-workspace-overview-page.md` (`## Review`).
+
+### Stage 6 — closed out
+
+All eleven tasks (026–036) merged to `master` across this session's commits (026 and 034
+first; 027/028/029/031 together at `dc7a306`; 030 at `50e39b8`; 032/033/035/036 together at
+`8763fb6`, with 035 fixed and re-approved at `f36edd1`). Every task went through at least one
+Claude review pass; several went through two or three rounds before approval. Task files
+archived, `status: done`.
+
+- **Reinstated the Antigravity polish pass by default.** Stage 5's process note asked for
+  this; Stage 6 did it — every page task ran Codex (structure) → Antigravity (fidelity) →
+  Claude (review), and the split caught real things a single pass would have missed.
+- **Codex's contract audits were consistently strong.** Five separate tasks (030, 032, 033,
+  035, 036) hit a genuine data-model gap and paused rather than fabricating page-local
+  stand-ins — `Material`/`MaterialResult`, `WorkspaceTemplate`, `Module`'s
+  `lastUpdatedLabel`/`learnerCountLabel`/`learningValueDetail`, `Note`, and
+  `WorkspaceActivityEvent` were all added by Claude in response, each additive to the locked
+  types rather than a rename or a breaking change.
+- **Recurring finding: fabricated/hardcoded-to-one-scenario content**, not just visual gaps.
+  028 showed the same quote twice on one screen; 030's visual pass added a "4 more sections"
+  footer with a hardcoded count and an entire fabricated "All material" rail outside the
+  task's contracted scope; 035's hook special-cased three behaviors to the literal query
+  `'shell'` (a static action label, a query-gated concept expansion, and a sort pinning one
+  named module) in a way the test suite couldn't catch because it only ever tried that one
+  query. All were treated as blocking, same bar as a functional bug — not a styling nit.
+- **029 also surfaced a process point worth repeating**: a review round can fix the
+  underlying bug correctly while leaving zero regression-test coverage for it. Automated
+  gates all passed both times; catching the gap required reading the diff directly, not
+  trusting the gate summary.
+- **027's fix nearly got lost during an unrelated incident**: a repo-wide accidental
+  `prettier --write .` (unscoped `npm run format`) touched ~90 files with pure cosmetic
+  reformatting, and one of them — `FullVisualizationShell.module.css` — also carried a real,
+  approved palette fix mixed in with the noise. Caught before discarding the batch; the file
+  was pulled out and committed separately (`0375a47`). Worth remembering next time a broad
+  format sweep shows up unannounced: check every file that looks unrelated to any task before
+  bulk-reverting, not just the ones that look suspicious.
+- **Open, pre-existing fixture issue surfaced by 035's review, not this task's to fix**:
+  `mockData/modules.ts`'s generator applies the same literal `supportedConceptNames: ['Shell
+  method', 'Integration by parts', 'Taylor series']` to nearly every module that doesn't
+  explicitly override it (dating to Stage 4), making "does this module support concept X"
+  checks nearly meaningless for most of the catalog. Worth a real fixture pass at some point.
+
+Full findings history: `.ai/tasks/_archive/026-study-session-page.md` through
+`.ai/tasks/_archive/036-home-context-recovery.md` (`## Review`).
 
 ## Where to look for more
 

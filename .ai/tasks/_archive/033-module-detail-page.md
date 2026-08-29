@@ -1,7 +1,7 @@
 ---
 id: 033
 title: ModuleDetailPage implementation
-status: review
+status: done
 owner: claude
 stage: 6
 depends_on: [003, 021]
@@ -112,3 +112,7 @@ Verdict: approved. No blocking findings.
 - "Change what it sees," "Try it first," and "Add to another workspace" are all non-wired —
   expected per the worklog's own note that those flows aren't designed yet, same
   dead-control category as elsewhere this stage, not blocking.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `8763fb6` (035 fixed and re-approved at `f36edd1`). Status moved to `done`; file archived.

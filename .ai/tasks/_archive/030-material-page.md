@@ -1,7 +1,7 @@
 ---
 id: 030
 title: MaterialPage implementation
-status: review
+status: done
 owner: claude
 stage: 6
 depends_on: [021]
@@ -253,3 +253,7 @@ visual polish — the syllabus fix and onOpen wiring are both correctly done.
     then the page itself. Unblocked — pick this back up.
 - The screenshot's multi-source “All material” rail and Add material flow remain outside
   this task's named scope, per the contract handoff above.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `50e39b8`. Status moved to `done`; file archived.

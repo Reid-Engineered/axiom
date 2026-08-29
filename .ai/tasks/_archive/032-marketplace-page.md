@@ -1,7 +1,7 @@
 ---
 id: 032
 title: MarketplacePage implementation
-status: review
+status: done
 owner: claude
 stage: 6
 depends_on: [001, 003, 021]
@@ -118,3 +118,7 @@ Verdict: approved. No blocking findings.
 - The search input (`placeholder="Search modules and templates"`) has no `onChange`/state —
   same non-wired-decorative-control category as other Stage 6 pages (categories nav, "Load
   local module", "Use template"), not blocking.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `8763fb6` (035 fixed and re-approved at `f36edd1`). Status moved to `done`; file archived.

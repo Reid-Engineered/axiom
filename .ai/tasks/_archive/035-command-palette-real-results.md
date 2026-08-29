@@ -1,7 +1,7 @@
 ---
 id: 035
 title: CommandPalette real results
-status: review
+status: done
 owner: claude
 stage: 6
 depends_on: [011, 021, 018]
@@ -176,3 +176,7 @@ Date: 2026-08-29
       `git diff --check`, and `npx prettier --check`; all clean.
 
 Verdict: approved. No blocking findings remain.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `8763fb6` (035 fixed and re-approved at `f36edd1`). Status moved to `done`; file archived.
