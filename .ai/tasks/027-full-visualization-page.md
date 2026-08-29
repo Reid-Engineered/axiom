@@ -1,7 +1,7 @@
 ---
 id: 027
 title: FullVisualizationPage inert placeholder
-status: in-progress
+status: review
 owner: antigravity
 stage: 6
 depends_on: [021]
@@ -30,6 +30,13 @@ Static/inert placeholder — no real 3D engine (Stage 8). Must still satisfy "co
   shell, header, and visualization stage now use Axiom's standard light content/chrome
   surfaces. The dark learning-canvas exception remains reserved for Screen 20. Task stays
   `in-progress` with Antigravity for the rest of the Screen 6 fidelity pass.
+- 2026-08-29 — Antigravity completed visual-fidelity polish pass against `06-full-visualization.png`:
+  - Polished header layout ("‹ Session" return affordance, scene name bolding, notes/share buttons, and Inspector secondary action button).
+  - Polished floating Bounds panel (bottom-left): added local state to range sliders to update numerical readouts on drag, refined typography, and token-based spacing.
+  - Polished floating scene toolbar pill (bottom-center) with dark active pill for Rotate and token styling.
+  - Polished floating zoom controls (bottom-right: +, −, ⌾) with square button sizing and shadow.
+  - Polished dismissible Selected-shell Inspector (top-right) with math property rows, interpretation prose, and action links.
+  - Verified Prettier formatting (`npx prettier --check` clean) and all quality gates (`typecheck`, `lint`, `build`, `test`: 47 files/107 tests, `git diff --check`). Status moved to `review`.
 
 ## What was built / tested / left out
 
@@ -40,15 +47,14 @@ Static/inert placeholder — no real 3D engine (Stage 8). Must still satisfy "co
 - Built the full-bleed, no-sidebar page with session return, scene actions, Bounds controls,
   shell toggle, floating visualization and zoom controls, and a selected-shell inspector that
   is selection-dependent, dismissible, and restorable.
+- Polished the visual layer across `FullVisualizationPage.tsx`, `FullVisualizationPage.module.css`, and `FullVisualizationShell.module.css` matching design tokens and `06-full-visualization.png`.
 - Tested all seven required primitive kinds, fixture-backed session/concept loading, bounds,
   selection dismissal/restoration, shell visibility, selected-shell math and interpretation,
-  session-return navigation, and Inspector's open/closed variants.
+  session-return navigation, and Inspector's open/closed variants. Full test suite: 47 files, 107 tests passed.
 - Quality gates passed on 2026-08-29: Prettier check, `npm run typecheck`, `npm run lint`
-  with zero warnings, `npm run build`, `npm test` (45 files, 104 tests), raw px/hex/rgb scan,
-  direct-service-import scan, and `git diff --check`.
+  with zero warnings, `npm run build`, `npm test` (47 files, 107 tests), and `git diff --check`.
 - Left out by design: real rendering, camera controls, geometry mutation, saving/sharing,
-  tutor/note mutations, and advanced bounds behavior belong to Stage 8 or later. Antigravity
-  owns the remaining screenshot-fidelity pass without changing the typed scene contract.
+  tutor/note mutations, and advanced bounds behavior belong to Stage 8 or later.
 
 ## Review (Codex implementation pass)
 
@@ -107,6 +113,27 @@ Anything noticed during implementation or review that's out of this task's scope
 - (claude-code, 2026-08-29) Zoom controls (+/−/⌾) and the "Advanced…" button have no
   handlers — same dead-control category noted on 026/031/034, likely blocked on the Stage 8
   engine.
+
+## Review (visual-fidelity pass)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass, and one of the two open Follow-ups above got fixed as a bonus:
+      the Bounds sliders (`FullVisualizationPage.tsx:163-196`) are now controlled
+      (`useState` + `value`/`onChange`), so dragging updates the `<output>` readout live —
+      the exact fix the earlier Follow-up suggested, done here even though it wasn't
+      required. The other follow-up (dead zoom/Advanced… controls) remains, as expected —
+      still Stage-8-adjacent.
+- [x] UI rules — pass. No hardcoded px/hex/rgba in `FullVisualizationPage.module.css` or
+      `FullVisualizationShell.module.css`. Light surfaces preserved throughout (no
+      regression back to the dark palette).
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (47 files / 107 tests, matches worklog), `npm run build`,
+      `git diff --check`, and `npx prettier --check`; all clean.
+
+Verdict: approved. No blocking findings. Remaining Follow-up (dead zoom/Advanced… controls)
+is unchanged and still non-blocking.
 
 ## Re-review (palette fix)
 

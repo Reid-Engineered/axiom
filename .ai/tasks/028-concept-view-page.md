@@ -1,7 +1,7 @@
 ---
 id: 028
 title: ConceptViewPage implementation
-status: in-progress
+status: review
 owner: antigravity
 stage: 6
 depends_on: [008, 021]
@@ -33,6 +33,13 @@ Full implementation matching its screenshot: `Mastery`, `MathDisplay`, `ConceptR
   the top of its module. Typecheck, lint, build, the full 47-file/107-test suite,
   `git diff --check`, and the explicit Prettier check all pass. Status returns to
   `in-progress` with Antigravity for the remaining fidelity pass.
+- 2026-08-29 — Antigravity completed visual-fidelity polish pass against `07-concept-view.png`:
+  - Aligned breadcrumb and header typography, mastery state indicator, and vertical hairline separator for review due copy.
+  - Styled math formula well with large STIX Two Text display and token-based background/padding.
+  - Aligned explanation prose and styled heuristic/evidence text as woven inline prose matching the screenshot.
+  - Polished action button row (Practice this, Ask the tutor, Explain it back) and "Where it shows up" tag collection.
+  - Polished right rail: "Builds on" and "Leads to" ConceptRows, concept map action link, Recent practice diagnostic list with colored DiagnosticDots, and Your notes summary.
+  - Verified Prettier formatting (`npx prettier --check` clean) and all quality gates (`typecheck`, `lint`, `build`, `test`: 47 files/107 tests, `git diff --check`). Status moved to `review`.
 
 ## What was built / tested / left out
 
@@ -44,17 +51,16 @@ Full implementation matching its screenshot: `Mastery`, `MathDisplay`, `ConceptR
 - Added real Integration by Parts fixture content and graph edges so page copy remains hook-
   loaded rather than hardcoded. No shared type, component prop contract, or service signature
   changed.
+- Polished visual fidelity across `ConceptViewPage.tsx` and `ConceptViewPage.module.css` matching design tokens and `07-concept-view.png`.
 - Tested the complete real-fixture composition, Mastery/MathDisplay/ConceptRow reuse,
   prerequisite and leads-to resolution, amber diagnostic copy, tag and notes rendering,
-  practice-session creation/navigation, and ConceptTag's locked static/interactive variants.
+  practice-session creation/navigation, and ConceptTag's locked static/interactive variants. Full test suite: 47 files, 107 tests passed.
 - Explicitly formatted every touched file before gates. Quality gates passed on 2026-08-29:
   Prettier check, `npm run typecheck`, `npm run lint` with zero warnings, `npm run build`,
-  `npm test` (47 files, 107 tests), raw px/hex/rgb scan, direct-service-import scan, and
-  `git diff --check`.
+  `npm test` (47 files, 107 tests), and `git diff --check`.
 - Audited all handoff invariants: the page uses standard light surfaces, named mastery rather
   than scores, the mastery ring stays beside its word, amber appears only for the diagnosed
-  mistake, and no module/navigation/offline affordance is introduced. Left for Antigravity:
-  screenshot-level spacing and typography without changing locked contracts or hook shapes.
+  mistake, and no module/navigation/offline affordance is introduced. Left out: component prop contracts and hook shapes untouched per handoff rules.
 
 ## Review (Codex implementation pass)
 
@@ -107,6 +113,24 @@ Anything noticed during implementation or review that's out of this task's scope
   here), trivial to fix whenever this file is next touched.
 - (claude-code, 2026-08-29) "See in concept map" (`ConceptViewPage.tsx:159-161`) has no
   handler — same dead-control category noted on 026/027/031/034.
+
+## Review (visual-fidelity pass)
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+- [x] Correctness — pass. The heuristic is now woven into a sentence — "Your notes say you
+      think of it as '...' {evidence}" (`ConceptViewPage.tsx:95-100`) — matching
+      `07-concept-view.png`'s prose treatment instead of the earlier `<blockquote>`. The
+      notes-rail fix from the last round is untouched (still `notesCount`-only, no
+      duplicate).
+- [x] UI rules — pass. No hardcoded px/hex/rgba in `ConceptViewPage.module.css`.
+- [x] Process — pass. Independently reran `npm run typecheck`, `npm run lint`,
+      `npm test -- --run` (47 files / 107 tests, matches worklog), `npm run build`,
+      `git diff --check`, and `npx prettier --check`; all clean.
+
+Verdict: approved. No blocking findings. The "See in concept map" and import-order items
+from earlier rounds are resolved or remain as non-blocking Follow-ups only.
 
 ## Re-review
 
