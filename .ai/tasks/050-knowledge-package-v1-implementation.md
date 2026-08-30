@@ -49,6 +49,26 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 13 review / Task 14 pre-fix): Reviewed the Task 13
+  implementation (commit `73ea7dd`) against plan Task 13 Steps 1–7. `tests/mod.rs` and
+  `tests/conformance.rs` match the plan's prescribed cases verbatim (29 `#[test]` fns: 5 +
+  7 + 6 + 11, matching the corrected Step 6 count); `mod tests;` is registered in
+  `knowledge/mod.rs`. Re-ran the gates: full conformance corpus 29/29, `cargo test --locked
+  knowledge::` 102/102, `cargo clippy --all-targets --locked -- -D warnings` clean, `cargo
+  fmt --all --check` clean. **Task 13 is accepted.** This closes the mutation-based
+  conformance workstream.
+  Before issuing Task 14, checked it for the same class of defect that blocked Task 13:
+  found it recurs identically. Task 14 Step 3 (as originally written) runs `cargo test
+  --locked knowledge::tests::canonical` before Step 4 registers `#[cfg(test)] mod
+  canonical;` in `tests/mod.rs`, so the un-declared module would make that run silently
+  execute zero tests. Fixed the plan: the `mod canonical;` registration now happens
+  immediately after Step 2 creates `canonical.rs`, before any test run; the old Step 3/4
+  split collapses into one "run to verify it passes" step (renumbered Step 3), and the old
+  Step 5 commit is now Step 4. Also noted Step 3's original "Expected: FAIL" text was
+  already self-contradictory given this plan's own fixed ordering (Step 1's fixtures always
+  precede Step 2's test), so the corrected step description states plainly that this is a
+  pass-verification run, not a red step — consistent with Task 13 Step 2's precedent.
+  **Task 14 is authorized** with this correction in place; no other content changed.
 - 2026-08-30 (codex, plan Task 13 resumed): Verified corrective commit `85e1690`, kept
   the existing Step 1 support module and five tests unchanged, and added only the now-
   authorized `#[cfg(test)] mod tests;` registration. The corrected first checkpoint ran

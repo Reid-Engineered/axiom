@@ -4014,19 +4014,24 @@ fn canonical_fixture_loads_and_matches_spec_17() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+In `src-tauri/src/knowledge/tests/mod.rs`, add `#[cfg(test)] mod canonical;` alongside the
+existing `mod conformance;` now, not after the test run below — Rust does not discover
+`canonical.rs` at all until the parent module declares it (the same ordering defect Task
+13 hit at its own Step 6; see this task file's Task 13 blocker-triage worklog entry), so
+running `cargo test` first would silently execute zero tests instead of compiling and
+running this one.
 
-Run: `cd src-tauri && cargo test --locked knowledge::tests::canonical`
-Expected: FAIL — fixture files not written to disk yet at this point in a from-scratch execution. (If Step 1 was already completed, this instead serves as the pass-verification step; run it anyway to confirm.)
+- [ ] **Step 3: Run test to verify it passes**
 
-- [ ] **Step 4: Register the module and run to verify it passes**
-
-In `src-tauri/src/knowledge/tests/mod.rs`, add `#[cfg(test)] mod canonical;` alongside the existing `mod conformance;`.
+Since Step 1 already wrote the fixture files to disk before this test was written, there
+is no red step here (the same deliberate exception Task 13 Step 2 used) — this test either
+passes immediately against the already-committed-to-disk fixture, or its failure is a real
+defect in the fixture content or the loader, not an expected intermediate state.
 
 Run: `cd src-tauri && cargo test --locked knowledge::tests::canonical -- --nocapture && cargo clippy --all-targets --locked -- -D warnings`
 Expected: PASS; clippy clean.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add src-tauri/src/knowledge/tests/fixtures/canonical/ src-tauri/src/knowledge/tests/canonical.rs src-tauri/src/knowledge/tests/mod.rs
