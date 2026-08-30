@@ -1,7 +1,7 @@
 ---
 id: 042
 title: Restart-persistence E2E coverage
-status: review
+status: done
 owner: codex
 stage: 7
 depends_on: [040]
