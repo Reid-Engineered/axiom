@@ -360,7 +360,7 @@ pub struct SourceLocator {
 }
 ```
 
-`KnowledgePackage` carries `concepts`/`objectives`/`examples`/`sources` as `Vec`s — this is the *validated, loaded* representation (§13 step 12 of the spec: "produce the typed validated KnowledgePackage value"), distinct from `package.toml` itself, which never hand-authors these inventories (spec §3, §4). Task 9 (discovery) and Task 13 (loader) are what actually populate these fields from disk.
+`KnowledgePackage` carries `concepts`/`objectives`/`examples`/`sources` as `Vec`s — this is the *validated, loaded* representation (§13 step 12 of the spec: "produce the typed validated KnowledgePackage value"), distinct from `package.toml` itself, which never hand-authors these inventories (spec §3, §4). Task 9 (discovery) and Task 12 (loader) are what actually populate these fields from disk.
 
 - [ ] **Step 4: Re-export from `mod.rs`**
 
@@ -401,7 +401,7 @@ git commit -m "feat(knowledge): add domain types"
 - Test: inline `#[cfg(test)]` in `src-tauri/src/knowledge/raw.rs`
 
 **Interfaces:**
-- Produces: `RawKnowledgePackage`, `RawSourcesFile`, `RawSource`, `RawConceptFrontmatter`, `RawObjectiveFrontmatter`, `RawExampleFrontmatter`, `RawProvenanceRef`, `RawSourceLocator` — parse-layer-only structs. Never exported from `mod.rs`; consumed only by Tasks 4, 6, 8.
+- Produces: `RawKnowledgePackage`, `RawSourcesFile`, `RawSource`, `RawConceptFrontmatter`, `RawObjectiveFrontmatter`, `RawExampleFrontmatter`, `RawProvenanceRef`, `RawSourceLocator` — parse-layer-only structs. Never exported from `mod.rs`; consumed only by Tasks 4, 6, 8. Carries a temporary `#![allow(dead_code)]` (see Step 3) since this task's own tests don't exercise every struct/field and no production consumer exists yet — Task 8 removes it once all three consuming tasks are done.
 
 Mirrors `modules::manifest::RawModuleManifest`'s pattern exactly: raw structs are plain `Deserialize`, string-typed where the domain type is a validated wrapper, and never propagate past the parse boundary (spec §1 constraint: "raw form never propagates past this boundary"). `#[serde(deny_unknown_fields)]` is what mechanically enforces spec §4/§5/§6's "unknown keys MUST be rejected" — a TOML deserialization simply fails if an unrecognized key is present, folding that requirement into the existing `TomlSyntax` error path rather than needing hand-rolled key-checking.
 
@@ -474,7 +474,36 @@ Expected: FAIL to compile — none of the raw structs exist yet.
 
 - [ ] **Step 3: Write the raw structs**
 
-Prepend to `src-tauri/src/knowledge/raw.rs`:
+This is the first task whose `pub(crate)` items have no production caller yet — these eight
+structs are consumed by Tasks 4, 6, and 8, not this one, and Task 3's own tests only
+construct three of them (`RawKnowledgePackage`, `RawConceptFrontmatter`, `RawSource`),
+reading only some of each one's fields. `pub(crate)` items are genuinely subject to
+dead-code analysis (unlike the `pub`, publicly-re-exported items Tasks 1–2 produced, which
+are exempt because the compiler can't prove a public API path is unreachable) — so
+`cargo clippy --all-targets --locked -- -D warnings` will fail here with `dead_code`/"field
+is never read" errors on both the lib and lib-test targets. This is not specific to Task 3:
+it recurs for every task through Task 11, each of which produces `pub(crate)` functions or
+types whose only real caller doesn't land until a *later* task (mostly Task 9 for Tasks 6/8's
+parsers, Task 12 for almost everything else). Handling this per-file, per-task would mean
+juggling several separate `#[allow(...)]`s with separate removal points — fragile, and easy
+to under- or over-scope. Instead, Task 3 adds one suppression at the `knowledge` module
+root, covering every descendant module for the whole incremental build-out; Task 12 removes
+it once the loader wires every `pub(crate)` item to a real caller and the lint is satisfied
+on its own. Do not export any of these types, and do not implement Tasks 4/6/8 early, to
+work around this instead.
+
+Add this as the first line of `src-tauri/src/knowledge/mod.rs` (Step 4 below adds the rest
+of this task's wiring below it):
+
+```rust
+// Several tasks in this plan produce pub(crate) items with no production caller until a
+// later task (see docs/superpowers/plans/2026-08-30-knowledge-package-v1.md Task 3 Step 3
+// for the full reasoning). This is removed in Task 12, once the loader wires everything
+// together and every item has a real caller.
+#![allow(dead_code)]
+```
+
+Then write `src-tauri/src/knowledge/raw.rs`:
 
 ```rust
 use serde::Deserialize;
@@ -569,12 +598,36 @@ pub(crate) struct RawSourceLocator {
 
 - [ ] **Step 4: Register the module**
 
-In `src-tauri/src/knowledge/mod.rs`, add `mod raw;` after `mod identifier;`. Do not add a `pub use` for it — raw types stay crate-internal.
+Replace `src-tauri/src/knowledge/mod.rs` in full:
+
+```rust
+// Several tasks in this plan produce pub(crate) items with no production caller until a
+// later task (see docs/superpowers/plans/2026-08-30-knowledge-package-v1.md Task 3 Step 3
+// for the full reasoning). This is removed in Task 12, once the loader wires everything
+// together and every item has a real caller.
+#![allow(dead_code)]
+
+mod error;
+mod identifier;
+mod raw;
+mod types;
+
+pub use error::KnowledgeError;
+pub use identifier::{ConceptId, ExampleId, KnowledgePackageId, ObjectiveId, SourceId};
+pub use types::{
+    Concept, Example, KnowledgePackage, Objective, ProvenanceKind, ProvenanceRef, Source,
+    SourceLocator,
+};
+```
+
+No `pub use` for `raw` — raw types stay crate-internal, per spec §1.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `cd src-tauri && cargo test --locked knowledge::raw && cargo clippy --all-targets --locked -- -D warnings`
-Expected: PASS; clippy clean.
+Run: `cd src-tauri && cargo test --locked knowledge:: && cargo clippy --all-targets --locked -- -D warnings`
+Expected: PASS (8 tests: the 4 from Tasks 1–2 plus this task's 4); clippy clean — the
+`#![allow(dead_code)]` just added is what makes it clean despite these structs having no
+production caller yet.
 
 - [ ] **Step 6: Commit**
 
@@ -595,9 +648,9 @@ git commit -m "feat(knowledge): add raw parse-layer structs"
 
 **Interfaces:**
 - Consumes: `RawKnowledgePackage`, `RawSourcesFile`, `RawSource` (Task 3); `KnowledgePackageId`, `SourceId` (Task 1); `Source` (Task 2); `KnowledgeError` (Task 1, extended by this task — see Step 3).
-- Produces: `pub(crate) fn parse_package_toml(raw_toml: &str) -> Result<PackageIdentity, KnowledgeError>` where `PackageIdentity { id: KnowledgePackageId, schema_version: u32, version: semver::Version, title: String, description: String }`; `pub(crate) fn parse_sources_toml(raw_toml: &str) -> Result<Vec<Source>, KnowledgeError>`. Task 13 (loader) calls both and assembles the final `KnowledgePackage`.
+- Produces: `pub(crate) fn parse_package_toml(raw_toml: &str) -> Result<PackageIdentity, KnowledgeError>` where `PackageIdentity { id: KnowledgePackageId, schema_version: u32, version: semver::Version, title: String, description: String }`; `pub(crate) fn parse_sources_toml(raw_toml: &str) -> Result<Vec<Source>, KnowledgeError>`. Task 12 (loader) calls both and assembles the final `KnowledgePackage`.
 
-`PackageIdentity` exists because `KnowledgePackage` (Task 2) also carries `concepts`/`objectives`/`examples`/`sources`, which this task doesn't have yet — Task 13 combines `PackageIdentity` with the results of Tasks 9–12 to build the final value.
+`PackageIdentity` exists because `KnowledgePackage` (Task 2) also carries `concepts`/`objectives`/`examples`/`sources`, which this task doesn't have yet — Task 12 combines `PackageIdentity` with the results of Tasks 9–11 to build the final value.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2005,7 +2058,7 @@ git commit -m "feat(knowledge): parse Example entity files"
 
 **Interfaces:**
 - Consumes: `parse_concept_file`, `parse_objective_file`, `parse_example_file` (Tasks 6, 8); `Concept`, `Objective`, `Example` (Task 2).
-- Produces: `pub(crate) struct DiscoveredEntities { pub concepts: Vec<Concept>, pub objectives: Vec<Objective>, pub examples: Vec<Example> }`; `pub(crate) fn read_package_toml(root: &Path) -> Result<String, KnowledgeError>`; `pub(crate) fn read_sources_toml(root: &Path) -> Result<String, KnowledgeError>`; `pub(crate) fn discover_entities(root: &Path) -> Result<DiscoveredEntities, KnowledgeError>`. Used by Task 13 (loader).
+- Produces: `pub(crate) struct DiscoveredEntities { pub concepts: Vec<Concept>, pub objectives: Vec<Objective>, pub examples: Vec<Example> }`; `pub(crate) fn read_package_toml(root: &Path) -> Result<String, KnowledgeError>`; `pub(crate) fn read_sources_toml(root: &Path) -> Result<String, KnowledgeError>`; `pub(crate) fn discover_entities(root: &Path) -> Result<DiscoveredEntities, KnowledgeError>`. Used by Task 12 (loader).
 
 Enforces spec §3: sorted deterministic discovery, filename/ID agreement, rejection of non-`.md` files and nested directories inside `concepts/`/`objectives`/`examples/`, and `concepts/`/`objectives/`/`examples/` each being optional when empty. Files at the package root other than `package.toml`/`sources.toml`/the three entity directories are never touched by this code at all, which is what satisfies spec §15's "ignored, not rejected" rule for root documentation files — there's no code path that would reject them because nothing here looks at them.
 
@@ -2326,7 +2379,7 @@ git commit -m "feat(knowledge): add deterministic package discovery"
 
 **Interfaces:**
 - Consumes: `DiscoveredEntities` (Task 9); `Concept`, `Objective`, `Example`, `Source`, `ProvenanceRef` (Task 2).
-- Produces: `pub(crate) fn validate_references(entities: &DiscoveredEntities, sources: &[Source]) -> Result<(), KnowledgeError>`. Used by Task 13 (loader).
+- Produces: `pub(crate) fn validate_references(entities: &DiscoveredEntities, sources: &[Source]) -> Result<(), KnowledgeError>`. Used by Task 12 (loader).
 
 Implements spec §12's reference table: `Objective.concept_id`, `Example.concept_id`, `Example.objective_ids` (including the cross-concept constraint from spec §9), and every entity's `provenance_refs[].source_id`. Does not touch `prerequisite_ids`/`related_ids` — those are Task 11.
 
@@ -2616,7 +2669,7 @@ git commit -m "feat(knowledge): validate cross-entity references"
 
 **Interfaces:**
 - Consumes: `Concept` (Task 2).
-- Produces: `pub(crate) fn validate_relationships(concepts: &[Concept]) -> Result<(), KnowledgeError>`; `pub fn related_concepts<'a>(concepts: &'a [Concept], id: &ConceptId) -> Vec<&'a ConceptId>` (the normalized symmetric query view spec §10 requires — this is the one function in this task that *is* part of the public API, since it's how a consumer queries "related to X" without needing to know which side authored the edge). Used by Task 13 (loader calls `validate_relationships`) and re-exported from `mod.rs` for consumers.
+- Produces: `pub(crate) fn validate_relationships(concepts: &[Concept]) -> Result<(), KnowledgeError>`; `pub fn related_concepts<'a>(concepts: &'a [Concept], id: &ConceptId) -> Vec<&'a ConceptId>` (the normalized symmetric query view spec §10 requires — this is the one function in this task that *is* part of the public API, since it's how a consumer queries "related to X" without needing to know which side authored the edge). Used by Task 12 (loader calls `validate_relationships`) and re-exported from `mod.rs` for consumers.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -3100,10 +3153,12 @@ pub use types::{
 
 This is the module's entire public API: one loading function, `related_concepts` for the one query the domain model can't answer by direct field access (spec §10's symmetric `related` view), the domain types, and the error enum. No raw parser types, no `discover`/`validate`/`package`/`frontmatter`/`provenance`/`relationships`' internal validation functions beyond `related_concepts` are exported — a caller outside this module cannot construct a `KnowledgePackage` any way other than `load_knowledge_package` succeeding.
 
+Note what's *not* in this replacement: the `#![allow(dead_code)]` line Task 3 Step 4 added is gone. That's deliberate, not an oversight — `load_knowledge_package` above is what finally calls every `pub(crate)` function this plan built (`parse_package_toml`, `parse_sources_toml`, `discover_entities`, `read_package_toml`, `read_sources_toml`, `validate_references`, `validate_relationships`), so every one of them now has a real caller and the lint should pass on its own. If `cargo clippy` still reports dead code here, that's a real signal something got wired incorrectly (a function this task's loader was supposed to call but doesn't) — fix the wiring, don't put the allow back.
+
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `cd src-tauri && cargo test --locked knowledge:: && cargo clippy --all-targets --locked -- -D warnings && cargo build --locked`
-Expected: all `knowledge::` tests PASS (should be roughly 55-60 tests across Tasks 1-12 by this point); clippy clean; crate builds.
+Expected: all `knowledge::` tests PASS (should be roughly 55-60 tests across Tasks 1-12 by this point); clippy clean **without** the `#![allow(dead_code)]` present; crate builds.
 
 - [ ] **Step 6: Commit**
 

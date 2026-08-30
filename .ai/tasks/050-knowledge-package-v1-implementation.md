@@ -49,6 +49,25 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 3): Task 2 is accepted and Task 3 authorized. Read only
+  plan Task 3 in full. Its interface and implementation code consistently prescribe eight
+  raw structs, so I am treating the prompt's “seven” as a counting typo. Added the four
+  exact parse-layer tests before the structs and registered the private `raw` module so
+  Cargo compiles the red tests; no Task 4+ or `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 3): The red run, `cargo test --locked knowledge::raw`,
+  failed as intended because `RawKnowledgePackage`, `RawConceptFrontmatter`, and
+  `RawSource` were undefined. Added exactly the eight prescribed crate-internal
+  deserialization structs, with the plan's field types, defaults, and unknown-field
+  rejection attributes; added no conversions, validation, relationships, or error variants.
+- 2026-08-30 (codex, plan Task 3 blocker): `cargo test --locked knowledge::` passes all
+  8 expected tests, but the exact prescribed code emits `dead_code` warnings because all
+  eight raw structs are `pub(crate)` and their production consumers are deliberately
+  deferred to Tasks 4, 6, and 8. Consequently,
+  `cargo clippy --all-targets --locked -- -D warnings` fails with eight dead-code errors.
+  The available fixes each exceed or contradict Task 3's locked scope: add an unprescribed
+  lint exemption, export parse-layer types the plan says must never be public, or implement
+  later-task consumers. `cargo fmt --all --check` passes. Stopped without choosing a new
+  contract and without committing; Task 4+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 2): Task 1 is accepted and Task 2 authorized. Read only
   plan Task 2 in full and confirmed its domain-type contract is consistent. Added the
   prescribed `Example` JSON round-trip test before the types, with the final `mod types;`
@@ -107,6 +126,23 @@ Files expected to change, per the implementation plan's own file lists:
   Step 1 to also widen `mod identifier;` → `pub(crate) mod identifier;` in `modules/mod.rs`,
   and added that file to Task 1's Files list. Re-issuing Task 1 to Codex with the corrected
   plan; still nothing committed for this task.
+
+- 2026-08-30 (claude-code): Confirmed Codex's Task 3 blocker as real, then found it was
+  broader than reported — reproduced the exact clippy failure (`cargo clippy --all-targets`
+  → 8 "field is never read" errors, both lib and lib-test targets), and checked why: Task
+  3's own tests construct only 3 of the 8 raw structs and don't read every field even on
+  those. Traced the same shape (`pub(crate)` item, no production caller until a later task)
+  across the rest of the plan and confirmed it recurs through Task 11 — Tasks 1–2 are exempt
+  because their items are `pub` and reachable from the crate's public surface, which the
+  compiler can't prove unreachable; `pub(crate)` items have no such exemption. A per-file
+  `#[allow(dead_code)]` (my first attempt, on `raw.rs` alone) would only have deferred the
+  identical failure onto Task 4, then 5, then 6... one at a time. Replaced it with a single
+  `#![allow(dead_code)]` at the `knowledge` module root, added in Task 3 (first task that
+  needs it), lint-inherited by every descendant module for the rest of the build-out, removed
+  explicitly in Task 12 once the loader wires every `pub(crate)` item to a real caller. Also
+  found and fixed four stale "Task 13 (loader)" references in the plan (loader is Task 12;
+  these were leftover from an earlier numbering pass) plus one resulting off-by-one ("Tasks
+  9–12" → "Tasks 9–11"). Plan re-committed; nothing in `src-tauri/` touched by this fix.
 
 ## What was built / tested / left out
 
