@@ -49,6 +49,26 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 11 resumed): Verified commit `13cc869` corrected Step 6's
+  commit scope to include `error.rs`; the issuing authorization also includes this Worklog.
+  Added all eight prescribed relationship tests before implementation and registered the
+  private module so Cargo compiles the red step. Task 12+ and `knowledge-package/` remain
+  out of scope.
+- 2026-08-30 (codex, plan Task 11 resumed): The red run,
+  `cargo test --locked knowledge::relationships`, failed as intended because
+  `validate_relationships`, `related_concepts`, `Concept` through the outer production
+  import, and the four relationship error variants were undefined. Added the exact
+  self/duplicate/existence validation order, reverse-authorship check, three-color DFS,
+  normalized public query, error/Display additions, and public re-export.
+- 2026-08-30 (codex, plan Task 11 resumed): Green/gates complete.
+  `cargo test --locked knowledge::relationships` passed all 8 scoped tests, and the final
+  `cargo test --locked knowledge::` run passed all 70 expected tests with 0 failures and 40
+  filtered out. `cargo clippy --all-targets --locked -- -D warnings` passed with zero
+  warnings, and `cargo fmt --all --check` passed after mechanical wrapping/module sorting.
+  Built prerequisite/related self and duplicate checks, target resolution, reverse-related
+  authorship rejection, three-color prerequisite cycle detection, and the normalized
+  symmetric `related_concepts` public query. Task 12+ and `knowledge-package/` remain
+  untouched.
 - 2026-08-30 (claude-code, plan Task 11 blocker triage): Confirmed the blocker: Step 6's
   `git add` line for every plan Task that touches `error.rs` lists only the entity-specific
   file plus `mod.rs`, omitting `error.rs` itself even though the immediately preceding

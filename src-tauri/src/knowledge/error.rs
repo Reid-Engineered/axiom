@@ -113,6 +113,22 @@ pub enum KnowledgeError {
         example_id: String,
         objective_id: String,
     },
+    SelfReference {
+        entity_id: String,
+        field: &'static str,
+    },
+    DuplicateReferenceInList {
+        entity_id: String,
+        field: &'static str,
+        target: String,
+    },
+    PrerequisiteCycle {
+        cycle: Vec<String>,
+    },
+    ReverseDuplicateRelated {
+        first: String,
+        second: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -188,6 +204,13 @@ impl fmt::Display for KnowledgeError {
             Self::CrossConceptObjective { example_id, objective_id } => write!(
                 f,
                 "example {example_id} references objective {objective_id} belonging to a different concept"
+            ),
+            Self::SelfReference { entity_id, field } => write!(f, "{entity_id}.{field} references itself"),
+            Self::DuplicateReferenceInList { entity_id, field, target } => write!(f, "{entity_id}.{field} lists {target} more than once"),
+            Self::PrerequisiteCycle { cycle } => write!(f, "prerequisite cycle detected: {}", cycle.join(" -> ")),
+            Self::ReverseDuplicateRelated { first, second } => write!(
+                f,
+                "related_ids declared on both {first} and {second}; author it on exactly one side"
             ),
         }
     }
