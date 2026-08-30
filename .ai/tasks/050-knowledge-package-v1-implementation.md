@@ -49,6 +49,23 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 8): Task 7 is accepted and Task 8 authorized. Read only
+  plan Task 8 in full and confirmed its composition-only parser contract, production
+  imports, and three-test list are internally consistent. Added all three prescribed tests
+  before the parser and registered the private `example` module so Cargo compiles the red
+  step; no Task 9+ or `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 8): The red run,
+  `cargo test --locked knowledge::example`, failed as intended because
+  `parse_example_file` was undefined. Added the exact composition-only implementation,
+  reusing Tasks 5–7 without adding error variants, reference resolution, cross-concept
+  validation, or discovery logic.
+- 2026-08-30 (codex, plan Task 8): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed all 49 expected tests—the prior 46 plus the
+  3 Example entity tests—with 0 failures and 40 filtered out.
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, and
+  `cargo fmt --all --check` passed after mechanical test-expression wrapping. The parser
+  remains a single-entity composition layer; Task 9+ and `knowledge-package/` remain
+  untouched.
 - 2026-08-30 (codex, plan Task 7): Task 6 is accepted and Task 7 authorized. Read only
   plan Task 7 in full and confirmed its closed-heading grammar, helper contract, and
   fifteen-test list are internally consistent. Added all 15 prescribed tests before the
