@@ -49,6 +49,25 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 12): Task 11 is accepted and Task 12 authorized. Read the
+  full task file and only plan Task 12 in full; its loader composition, final public API,
+  three-test list, and commit scope are internally consistent. Added the prescribed loader
+  tests before implementation and registered the private module for the red compile check.
+  Task 13+ and `knowledge-package/` remain untouched.
+- 2026-08-30 (codex, plan Task 12): The red run,
+  `cargo test --locked knowledge::loader`, failed as expected because
+  `load_knowledge_package` and the future outer-scope `KnowledgeError` import were not yet
+  defined. Added the exact atomic loader chain and finalized the public module surface,
+  removing Task 3's temporary module-root dead-code allowance rather than suppressing any
+  newly exposed lint.
+- 2026-08-30 (codex, plan Task 12): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed all 73 tests—the prior 70 plus the 3 loader
+  tests—with 0 failures and 40 filtered out. `cargo clippy --all-targets --locked -- -D
+  warnings` passed with zero warnings without a dead-code allowance, `cargo build --locked`
+  completed successfully, and `cargo fmt --all --check` passed. Built the one public,
+  atomic loading boundary and exposed only that loader, `related_concepts`, domain types,
+  identifiers, and `KnowledgeError`; all parsing/discovery/validation helpers remain
+  internal. Task 13+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (claude-code, plan Task 11 review): Reviewed the Task 11 implementation
   (commit `272e73b`) against plan Task 11 Steps 1–4 and spec §10. `relationships.rs`
   matches the plan's prescribed test module and implementation verbatim (rustfmt wrapping
