@@ -16,6 +16,7 @@ mod package;
 mod provenance;
 mod raw;
 mod types;
+mod validate;
 
 pub use error::KnowledgeError;
 pub use identifier::{ConceptId, ExampleId, KnowledgePackageId, ObjectiveId, SourceId};

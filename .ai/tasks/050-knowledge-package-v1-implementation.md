@@ -70,6 +70,13 @@ Files expected to change, per the implementation plan's own file lists:
   test module alongside its other test-only domain imports. Stopped without changing the
   locked import contract, without running later gates, and without committing; Task 11+
   and `knowledge-package/` remain untouched.
+- 2026-08-30 (codex, plan Task 10 resumed): Verified plan-fix commit `39b8e71` and added
+  the corrected test-only imports for `Concept`, `Example`, and `Objective`, leaving the
+  validator implementation unchanged. The final `cargo test --locked knowledge::` run
+  passed all 62 expected tests with 0 failures and 40 filtered out,
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, and
+  `cargo fmt --all --check` passed after mechanical iterator wrapping/module sorting. The
+  prior import blocker is resolved; Task 11+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (claude-code, plan Task 10 blocker triage): Confirmed the blocker is a real
   plan defect, not a Codex error. `validate_references`'s production code in `validate.rs`
   never names `Concept`/`Objective`/`Example` — it only reaches them through

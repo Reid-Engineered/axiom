@@ -95,6 +95,24 @@ pub enum KnowledgeError {
         filename_id: String,
         frontmatter_id: String,
     },
+    UnresolvedConcept {
+        entity_id: String,
+        field: &'static str,
+        target: String,
+    },
+    UnresolvedObjective {
+        entity_id: String,
+        field: &'static str,
+        target: String,
+    },
+    UnresolvedSource {
+        entity_id: String,
+        target: String,
+    },
+    CrossConceptObjective {
+        example_id: String,
+        objective_id: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -163,6 +181,13 @@ impl fmt::Display for KnowledgeError {
                 f,
                 "{}: filename implies id \"{filename_id}\" but frontmatter declares \"{frontmatter_id}\"",
                 path.display()
+            ),
+            Self::UnresolvedConcept { entity_id, field, target } => write!(f, "{entity_id}.{field} references unknown Concept: {target}"),
+            Self::UnresolvedObjective { entity_id, field, target } => write!(f, "{entity_id}.{field} references unknown Objective: {target}"),
+            Self::UnresolvedSource { entity_id, target } => write!(f, "{entity_id} references unknown Source: {target}"),
+            Self::CrossConceptObjective { example_id, objective_id } => write!(
+                f,
+                "example {example_id} references objective {objective_id} belonging to a different concept"
             ),
         }
     }
