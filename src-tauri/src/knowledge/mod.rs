@@ -4,10 +4,13 @@
 // together and every item has a real caller.
 #![allow(dead_code)]
 
+mod concept;
 mod error;
 mod frontmatter;
 mod identifier;
+mod objective;
 mod package;
+mod provenance;
 mod raw;
 mod types;
 

@@ -34,6 +34,20 @@ pub enum KnowledgeError {
     DuplicateSourceId {
         id: String,
     },
+    MissingProvenance {
+        entity_id: String,
+    },
+    DuplicateProvenanceRef {
+        entity_id: String,
+        source_id: String,
+    },
+    UnknownProvenanceKind {
+        entity_id: String,
+        value: String,
+    },
+    EmptySourceLocator {
+        entity_id: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -68,6 +82,24 @@ impl fmt::Display for KnowledgeError {
                 write!(f, "{} has an empty required field: {field}", path.display())
             }
             Self::DuplicateSourceId { id } => write!(f, "duplicate Source id: {id}"),
+            Self::MissingProvenance { entity_id } => write!(
+                f,
+                "{entity_id} has no provenance_refs; at least one is required"
+            ),
+            Self::DuplicateProvenanceRef {
+                entity_id,
+                source_id,
+            } => write!(
+                f,
+                "{entity_id} declares a duplicate provenance reference to {source_id}"
+            ),
+            Self::UnknownProvenanceKind { entity_id, value } => {
+                write!(f, "{entity_id} declares unknown ProvenanceKind: {value}")
+            }
+            Self::EmptySourceLocator { entity_id } => write!(
+                f,
+                "{entity_id} declares a provenance locator with no section, pages, or label"
+            ),
         }
     }
 }

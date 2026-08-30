@@ -49,6 +49,34 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 6): Task 5 is accepted and Task 6 authorized. Read only
+  plan Task 6 in full. The corrected import placement is internally consistent, but the
+  current Step 1 contains six Concept tests rather than the prompt's five; together with
+  Step 5's two Objective tests, the green total should be 31 rather than 30. Following all
+  eight locked tests. Added the six Concept tests first and registered the private module
+  so Cargo compiles the Concept red step; no Task 7+ or `knowledge-package/` work is in
+  scope.
+- 2026-08-30 (codex, plan Task 6): The Concept red run,
+  `cargo test --locked knowledge::concept`, failed as intended because
+  `parse_concept_file` and the four provenance error variants were undefined. Added the
+  exact shared `convert_provenance_refs` helper and error/Display additions, then the
+  Concept parser. The production import list contains `Concept` alone; `ProvenanceKind`
+  remains inside the test module as required.
+- 2026-08-30 (codex, plan Task 6): The six Concept tests passed after their green step.
+  Added the two prescribed Objective tests before `parse_objective_file` and registered the
+  private `objective` module so Cargo compiles the second red step independently.
+- 2026-08-30 (codex, plan Task 6): The Objective red run,
+  `cargo test --locked knowledge::objective`, failed as intended because
+  `parse_objective_file` was undefined. Added the exact Objective parser, reusing the shared
+  provenance converter and Task 4's `EmptyField`; no cross-entity resolution or discovery
+  work was added.
+- 2026-08-30 (codex, plan Task 6): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed 31 tests—the prior 23 plus the six Concept
+  and two Objective tests in the current plan—with 0 failures and 40 filtered out.
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, including
+  the corrected test-only `ProvenanceKind` import placement, and
+  `cargo fmt --all --check` passed after mechanical wrapping/module sorting. Task 7+ and
+  `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 5): Task 4 is accepted and Task 5 authorized. Read only
   plan Task 5 in full and confirmed its splitter contract and seven-test list are
   consistent. Added all seven prescribed tests before implementation and registered the
