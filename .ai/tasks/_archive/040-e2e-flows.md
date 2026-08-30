@@ -207,6 +207,40 @@ Verdict: **approved.** No remaining blocking findings. The follow-ups below are 
 this round and still stand — in particular, Stage 7 should not be declared complete until the
 restart-persistence gap has its own task.
 
+### Addendum — the E2E flow has now actually been run
+
+Reviewer: claude-code
+Date: 2026-08-29
+
+Correcting the record: both rounds above state I could not run the native flow and verified
+it by reading. That caveat is now obsolete, and the claims it hedged are confirmed by
+execution rather than inspection.
+
+A whole-filesystem search turned up Codex's extracted driver still present at
+`/tmp/tmp.LU82hezeYF/root/usr/bin/WebKitWebDriver` — earlier searches missed it because
+`mktemp`'s random directory names match none of the obvious `*webkit*` / `*driver*` globs.
+Running with that directory prepended to `PATH`:
+
+1. **The flow passes.** `ok 1 — first launch creates a workspace through SQLite and reaches
+   home`, 1.14s, matching Codex's reported timing.
+2. **The corrected assertion genuinely discriminates — proved by mutation, not by reading.**
+   Changed the typed subject to `'Zzz Mutant Name'` and updated the pre-submit value
+   assertion to match it, leaving *only* the Home assertion still expecting
+   `'Axiom E2E Subject'`. The test failed with an `AssertionError` at that Home assertion.
+   So the Home check does depend on the real persisted name surviving `createWorkspace` →
+   IPC → SQLite `INSERT` → `getWorkspaces()` → render. This is the exact property round 1
+   found missing, now demonstrated rather than argued. Test file restored via
+   `git checkout` afterwards; working tree verified clean.
+3. **`XDG_DATA_HOME` isolation genuinely works.** After three separate driver runs, the
+   developer's real database at `~/.local/share/com.axiom.app/axiom.sqlite3` still contains
+   zero workspace rows and its mtime predates every run. The harness never touches real
+   application data — worth recording because an isolation failure here would be silent
+   (the flow would still pass while quietly polluting the developer's database).
+
+The prerequisite finding stands unchanged and still matters for 042 and 043: this only ran
+because a temp-extracted driver happened to survive. `webkitgtk-webdriver` is still not
+installed system-wide, and `/tmp` extractions do not survive reboots.
+
 ## Follow-ups
 
 - **Stage 7 acceptance criterion "Data survives an app restart" is not covered anywhere.**
