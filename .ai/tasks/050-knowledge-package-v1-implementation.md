@@ -49,6 +49,17 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 10 review): Reviewed the Task 10 implementation
+  (commit `8eb70e6`) against plan Task 10 Steps 1–4 and spec §9/§12. `validate.rs` matches
+  the plan's prescribed test module and implementation verbatim (only rustfmt wrapping
+  differs); the four new `KnowledgeError` variants and their `Display` arms in `error.rs`
+  match Step 3's code exactly; `mod validate;` is registered in `mod.rs` with no `pub use`,
+  as specified. Re-ran the gates: `cargo test --locked knowledge::` passes 62/62,
+  `cargo clippy --all-targets --locked -- -D warnings` is clean, `cargo fmt --all --check`
+  passes. **Task 10 is accepted.** Plan Task 11 (`relationships.rs`) is authorized next;
+  its test-module import list was already pre-checked for the class of gap that hit Task 10
+  (see the Task 10 blocker-triage entry below) and found clean, so no plan fix is needed
+  before issuing it.
 - 2026-08-30 (codex, plan Task 10): Task 9 is accepted and Task 10 authorized. Read only
   plan Task 10 in full and confirmed its cross-entity reference table, shared-lifetime
   helper signature, and five-test list are internally consistent. Added all five prescribed
