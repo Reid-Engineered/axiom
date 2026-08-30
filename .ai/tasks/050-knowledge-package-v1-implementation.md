@@ -1,7 +1,7 @@
 ---
 id: 050
 title: Knowledge Package v1 — runtime implementation and Calc II migration
-status: proposed
+status: in-progress
 owner: codex
 stage: 8
 depends_on: []
@@ -40,15 +40,47 @@ Files expected to change, per the implementation plan's own file lists:
   `package.rs`, `frontmatter.rs`, `concept.rs`, `objective.rs`, `provenance.rs`,
   `example_body.rs`, `example.rs`, `discover.rs`, `validate.rs`, `relationships.rs`,
   `loader.rs`, `mod.rs`, `tests/`)
-- `src-tauri/src/modules/identifier.rs` (widen `validate_identifier` visibility only)
+- `src-tauri/src/modules/identifier.rs` (widen `validate_identifier` visibility)
+- `src-tauri/src/modules/mod.rs` (widen the `identifier` module's own visibility — required
+  alongside the function widening; module privacy in Rust is transitive along the path)
 - `src-tauri/src/lib.rs` (register `pub mod knowledge;`)
 - `knowledge-package/` (migrated to v1 format — plan Tasks 15–17 only, not before)
 - `ARCHITECTURE.md`, `knowledge-package/synthesis-report.md` (plan Task 17 only)
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 1): Claimed task 050 after re-reading spec §§1–2,
+  `modules/identifier.rs`, and only the corrected plan preamble/Global Constraints/Task 1.
+  The prior error-taxonomy contradiction is resolved: this step will add exactly
+  `InvalidIdentifier` and the five distinct wrapper types, with no Task 2+ implementation
+  and no changes to `knowledge-package/`. The corrected plan directory is currently
+  untracked user content and will remain unchanged and excluded from this step's commit.
+- 2026-08-30 (codex, plan Task 1): Added the prescribed identifier tests before the
+  implementation. Because the plan wires the module after its red-test step, I temporarily
+  exposed `knowledge::identifier` so Cargo would actually compile the tests rather than run
+  zero tests. `cargo test --locked knowledge::identifier` then failed as expected with the
+  five wrapper types and `KnowledgeError` undefined. Final module wiring will match the plan
+  exactly.
+- 2026-08-30 (codex, plan Task 1 blocker): The implemented plan code does not compile:
+  `crate::modules::identifier::validate_identifier` fails with Rust E0603 because
+  `modules/mod.rs` declares `mod identifier;` privately. Making the function `pub(crate)` is
+  insufficient across sibling modules when its containing module remains private. Resolving
+  this requires a contract-authorized change not present in Task 1's exact file list: either
+  `pub(crate) mod identifier;`, or a `pub(crate) use identifier::validate_identifier;`
+  re-export plus a different import path. Stopped without choosing between them, without
+  running later gates, and without touching `knowledge-package/` or plan Task 2+.
 - 2026-08-30 (claude-code): Task created and proposed. Plan Task 1 (error taxonomy +
   identifier types) prompt issued to Codex.
+
+- 2026-08-30 (claude-code): Confirmed Codex's blocker report as a genuine gap in the plan,
+  not a Codex error — verified directly against `modules/mod.rs:1`'s `mod identifier;`
+  (private) and Rust's transitive module-privacy rule (a private module is reachable only
+  from its defining module and that module's descendants; `knowledge` is a sibling of
+  `modules`, not a descendant, so `E0603` is the correct compiler behavior, not a mistake on
+  Codex's part). Fixed `docs/superpowers/plans/2026-08-30-knowledge-package-v1.md` Task 1
+  Step 1 to also widen `mod identifier;` → `pub(crate) mod identifier;` in `modules/mod.rs`,
+  and added that file to Task 1's Files list. Re-issuing Task 1 to Codex with the corrected
+  plan; still nothing committed for this task.
 
 ## What was built / tested / left out
 
