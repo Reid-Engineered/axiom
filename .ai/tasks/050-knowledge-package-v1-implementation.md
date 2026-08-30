@@ -443,6 +443,17 @@ task in a row with none.
 
 **Verdict: accepted.** Plan Task 8 (Example entity parser) authorized.
 
+### Plan Task 8 — Example entity parser (commit `11c4662`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 49 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. Diffed `example.rs`/`mod.rs` against the plan — matches verbatim. Confirms
+the pre-trace held. Third task in a row with no blocker.
+
+**Verdict: accepted.** Plan Task 9 (package discovery) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
