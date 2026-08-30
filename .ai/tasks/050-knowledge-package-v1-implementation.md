@@ -201,6 +201,20 @@ constructors, no validation, no new `KnowledgeError` variants, no Task 3+ or
 
 **Verdict: accepted.** Plan Task 3 (raw serialization structs) authorized.
 
+### Plan Task 3 — Raw serialization structs (commit `a5b0f08`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 8 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. Diffed `mod.rs` and `raw.rs` against the corrected plan — `#![allow(dead_
+code)]` placement/comment and all eight `Raw*` structs match exactly, `#[serde(deny_unknown_
+fields)]` present on every one, no `pub use` for `raw` (confirmed via diff — only `mod raw;`
+added). This is the task that surfaced the dead-code gap in the first place, now resolved at
+the plan level rather than patched around; nothing further needed here.
+
+**Verdict: accepted.** Plan Task 4 (`package.toml`/`sources.toml` parsing) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
