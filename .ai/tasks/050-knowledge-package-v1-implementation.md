@@ -68,6 +68,14 @@ Files expected to change, per the implementation plan's own file lists:
   lint exemption, export parse-layer types the plan says must never be public, or implement
   later-task consumers. `cargo fmt --all --check` passes. Stopped without choosing a new
   contract and without committing; Task 4+ and `knowledge-package/` remain untouched.
+- 2026-08-30 (codex, plan Task 3 resumed): Re-read corrected Task 3 after commit `ee7d9e5`
+  authorized a temporary knowledge-module-root `#![allow(dead_code)]`, inherited by the
+  incremental crate-private implementation and explicitly scheduled for removal once the
+  loader provides production callers. Applied Task 3 Step 4's exact full `mod.rs` shape.
+  `cargo test --locked knowledge::` passed all 8 expected tests with 0 failures and 40
+  filtered out; `cargo clippy --all-targets --locked -- -D warnings` passed cleanly; and
+  `cargo fmt --all --check` passed. The prior blocker is resolved without exporting raw
+  types or implementing Task 4+; `knowledge-package/` remains untouched.
 - 2026-08-30 (codex, plan Task 2): Task 1 is accepted and Task 2 authorized. Read only
   plan Task 2 in full and confirmed its domain-type contract is consistent. Added the
   prescribed `Example` JSON round-trip test before the types, with the final `mod types;`
