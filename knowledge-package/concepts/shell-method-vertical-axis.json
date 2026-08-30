@@ -1,0 +1,24 @@
+{
+  "id": "shell-method-vertical-axis",
+  "name": "The Method of Cylindrical Shells (Vertical Axis of Revolution)",
+  "description": "A method for calculating the volume of a solid of revolution by decomposing the region into representative vertical cylindrical shells and integrating with respect to x. For rotation around the y-axis, the volume is V = \\int_a^b 2\\pi x f(x) dx (or 2\\pi x (f(x) - g(x)) between two curves), and for rotation around a vertical line x = k, the radius is adjusted to |x - k|.",
+  "prerequisiteIds": [],
+  "relatedConceptIds": [
+    "shell-method-horizontal-axis",
+    "method-selection-volume-of-revolution"
+  ],
+  "objectiveIds": [
+    "shell.setup-radius-height-y-axis",
+    "shell.compute-volume-y-axis-single-curve",
+    "shell.compute-volume-y-axis-between-curves",
+    "shell.compute-volume-shifted-vertical-axis"
+  ],
+  "provenanceRefs": [
+    "src-openstax-calc2-sec2-3",
+    "src-openstax-calc2-rule2-6",
+    "src-openstax-calc2-ex2-12",
+    "src-openstax-calc2-ex2-13",
+    "src-openstax-calc2-ex2-15",
+    "src-openstax-calc2-ex2-16"
+  ]
+}

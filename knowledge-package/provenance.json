@@ -1,0 +1,156 @@
+[
+  {
+    "id": "src-openstax-calc2-book",
+    "sourceType": "OpenStax",
+    "title": "Calculus Volume 2",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "General Reference",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "OpenStax introductory calculus textbook covering integration, techniques, and applications. Digital ISBN-13: 978-1-947172-14-2; Hardcover ISBN-13: 978-1-938168-06-2."
+  },
+  {
+    "id": "src-openstax-calc2-sec2-2",
+    "sourceType": "OpenStax",
+    "title": "Determining Volumes by Slicing",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.2",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Covers disk method and washer method (cross-sections perpendicular to axis of revolution, pp. 118-137)."
+  },
+  {
+    "id": "src-openstax-calc2-sec2-3",
+    "sourceType": "OpenStax",
+    "title": "Volumes of Revolution: Cylindrical Shells",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Comprehensive treatment of the cylindrical shells method for vertical, horizontal, and shifted axes of revolution, including comparison with slicing methods (pp. 137-152)."
+  },
+  {
+    "id": "src-openstax-calc2-rule2-6",
+    "sourceType": "OpenStax",
+    "title": "Rule: The Method of Cylindrical Shells",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Defines volume V = \\int_a^b 2*pi*x*f(x) dx for continuous nonnegative f(x) revolved around the y-axis (p. 140, Rule 2.6)."
+  },
+  {
+    "id": "src-openstax-calc2-rule-xaxis",
+    "sourceType": "OpenStax",
+    "title": "Rule: The Method of Cylindrical Shells for Solids of Revolution around the x-axis",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Defines volume V = \\int_c^d 2*pi*y*g(y) dy for continuous nonnegative g(y) revolved around the x-axis (p. 142)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-12",
+    "sourceType": "OpenStax",
+    "title": "Example 2.12: The Method of Cylindrical Shells 1",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Revolving y = 1/x over [1, 3] around the y-axis, yielding V = \\int_1^3 2*pi*x*(1/x) dx = 4*pi (p. 140)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-13",
+    "sourceType": "OpenStax",
+    "title": "Example 2.13: The Method of Cylindrical Shells 2",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Revolving y = 2*x - x^2 over [0, 2] around the y-axis, yielding V = \\int_0^2 2*pi*x*(2*x - x^2) dx = 8*pi/3 (p. 141)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-14",
+    "sourceType": "OpenStax",
+    "title": "Example 2.14: The Method of Cylindrical Shells for a Solid Revolved around the x-axis",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Revolving x = 2*sqrt(y) over [0, 4] around the x-axis, yielding V = \\int_0^4 2*pi*y*(2*sqrt(y)) dy = 256*pi/5 (p. 142)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-15",
+    "sourceType": "OpenStax",
+    "title": "Example 2.15: A Region of Revolution Revolved around a Line",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Revolving y = x over [1, 2] around the line x = -1, yielding shell radius (x + 1) and V = \\int_1^2 2*pi*(x + 1)*x dx = 23*pi/3 (pp. 142-144)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-16",
+    "sourceType": "OpenStax",
+    "title": "Example 2.16: A Region of Revolution Bounded by the Graphs of Two Functions",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Revolving region between y = sqrt(x) and y = 1/x over [1, 4] around the y-axis, yielding V = \\int_1^4 2*pi*x*(sqrt(x) - 1/x) dx = 94*pi/5 (pp. 144-145)."
+  },
+  {
+    "id": "src-openstax-calc2-ex2-17",
+    "sourceType": "OpenStax",
+    "title": "Example 2.17: Selecting the Best Method",
+    "authors": [
+      "Gilbert Strang",
+      "Edwin \"Jed\" Herman"
+    ],
+    "book": "Calculus Volume 2",
+    "chapter": "2 Applications of Integration",
+    "section": "2.3",
+    "license": "CC BY-NC-SA 4.0",
+    "notes": "Comparing disk vs. shell setup for region bounded by y = x, y = 2 - x, and x-axis revolved around y-axis (disks require 2 integrals, shells require 1 integral, pp. 145-147)."
+  }
+]

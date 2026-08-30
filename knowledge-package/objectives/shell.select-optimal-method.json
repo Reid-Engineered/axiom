@@ -1,0 +1,11 @@
+{
+  "id": "shell.select-optimal-method",
+  "conceptId": "method-selection-volume-of-revolution",
+  "description": "Determine the most efficient method (disks/washers vs. cylindrical shells) for finding a volume of revolution by comparing integral count and algebraic complexity.",
+  "evidence": [
+    "Identifies when slicing requires splitting into multiple integrals whereas shells requires a single integral (or vice-versa)."
+  ],
+  "provenanceRefs": [
+    "src-openstax-calc2-ex2-17"
+  ]
+}

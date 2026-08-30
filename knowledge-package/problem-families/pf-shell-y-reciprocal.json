@@ -1,0 +1,78 @@
+{
+  "id": "pf-shell-y-reciprocal",
+  "conceptId": "shell-method-vertical-axis",
+  "objectiveIds": [
+    "shell.setup-radius-height-y-axis",
+    "shell.compute-volume-y-axis-single-curve"
+  ],
+  "difficulty": {
+    "min": 1,
+    "max": 1
+  },
+  "generator": {
+    "id": "gen-shell-y-reciprocal",
+    "version": 1
+  },
+  "parameters": {
+    "k": {
+      "type": "integer",
+      "min": 1,
+      "max": 8,
+      "description": "Numerator constant for reciprocal function f(x) = k/x"
+    },
+    "a": {
+      "type": "integer",
+      "min": 1,
+      "max": 4,
+      "description": "Left boundary, strictly positive to avoid singularity at x = 0"
+    },
+    "b": {
+      "type": "integer",
+      "min": {
+        "parameter": "a",
+        "offset": 1
+      },
+      "max": 10,
+      "description": "Right boundary; its inclusive minimum is the sampled a value plus 1"
+    }
+  },
+  "constraints": [
+    "k >= 1 and k <= 8",
+    "a >= 1",
+    "b > a and b <= 10",
+    "Interval [a, b] is strictly positive, excluding x = 0 division by zero"
+  ],
+  "promptTemplate": "Define R as the region bounded above by the graph of f(x) = {k}/x and below by the x-axis over the interval [{a}, {b}]. Find the volume of the solid of revolution formed by revolving R around the y-axis.",
+  "responseType": "symbolic-expression",
+  "canonicalSolution": {
+    "structure": "V = \\int_{a}^{b} 2\\pi x (k/x) dx = 2\\pi k \\int_{a}^{b} 1 dx = 2\\pi k (b - a)",
+    "expression": "2*pi*k*(b - a)"
+  },
+  "validator": {
+    "capability": "math.verify",
+    "version": 1,
+    "mode": "symbolic-equivalence"
+  },
+  "hints": [
+    {
+      "level": 1,
+      "kind": "prompt",
+      "template": "Write the formula for the volume of a cylindrical shell with radius x and height f(x)."
+    },
+    {
+      "level": 2,
+      "kind": "principle",
+      "template": "The shell volume is given by V = \\int_{a}^{b} 2\\pi x f(x) dx. Notice that x * ({k}/x) simplifies to the constant {k}."
+    },
+    {
+      "level": 3,
+      "kind": "setup",
+      "template": "Integrate the constant: V = 2\\pi \\int_{{a}}^{{b}} {k} dx = 2\\pi * {k} * ({b} - {a})."
+    }
+  ],
+  "provenanceRefs": [
+    "src-openstax-calc2-rule2-6",
+    "src-openstax-calc2-ex2-12"
+  ],
+  "status": "verified"
+}

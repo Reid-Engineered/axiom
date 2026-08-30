@@ -74,6 +74,7 @@ axiom/
       main.rs
     Cargo.toml
     tauri.conf.json
+  knowledge-package/        # Stage 8 reference content; ad hoc until Knowledge Package v1
   e2e/                     # native Tauri WebDriver flow + Linux setup notes
   reference/UI/              design source of truth (mockups, handoff doc) — do not edit
   .ai/                      multi-agent handoff system, see .ai/README.md

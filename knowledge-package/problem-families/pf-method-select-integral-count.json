@@ -1,0 +1,61 @@
+{
+  "id": "pf-method-select-integral-count",
+  "conceptId": "method-selection-volume-of-revolution",
+  "objectiveIds": [
+    "shell.select-optimal-method"
+  ],
+  "difficulty": {
+    "min": 1,
+    "max": 2
+  },
+  "generator": {
+    "id": "gen-method-select-count",
+    "version": 1
+  },
+  "parameters": {
+    "intercept": {
+      "type": "integer",
+      "min": 2,
+      "max": 6,
+      "description": "Intersection sum constant for region bounded by y = x, y = C - x, and y = 0"
+    }
+  },
+  "constraints": [
+    "intercept >= 2 and intercept <= 6",
+    "The region is bounded by y = x, y = intercept - x, and y = 0",
+    "For 0 <= y <= intercept/2, a horizontal slice runs from x = y to x = intercept - y",
+    "Revolving around the y-axis requires 1 integral with the disk/washer method (integrating with respect to y) and 2 integrals with the cylindrical shell method (integrating with respect to x)"
+  ],
+  "promptTemplate": "Consider the region bounded by y = x, y = {intercept} - x, and the x-axis (y = 0). When calculating the volume of revolution about the y-axis, how many separate non-overlapping integrals are required using the disk/washer method (integrating with respect to y)?",
+  "responseType": "numeric",
+  "canonicalSolution": {
+    "structure": "At height y, the region runs from x = y to x = {intercept} - y. Revolving this horizontal slice around the y-axis gives a washer with inner radius y and outer radius {intercept} - y. The volume is the single integral \\int_0^{{intercept}/2} \\pi [({intercept} - y)^2 - y^2] dy. Thus, exactly 1 integral is required.",
+    "value": 1
+  },
+  "validator": {
+    "capability": "math.verify",
+    "version": 1,
+    "mode": "exact-numeric"
+  },
+  "hints": [
+    {
+      "level": 1,
+      "kind": "prompt",
+      "template": "A disk or washer is perpendicular to the y-axis. At a fixed height y, what are the left and right x-boundaries of the region?"
+    },
+    {
+      "level": 2,
+      "kind": "principle",
+      "template": "For 0 <= y <= {intercept}/2, solve the boundary equations for x: the inner radius is x = y and the outer radius is x = {intercept} - y."
+    },
+    {
+      "level": 3,
+      "kind": "evaluation",
+      "template": "The washer description is valid throughout 0 <= y <= {intercept}/2, so the disk/washer method requires 1 integral."
+    }
+  ],
+  "provenanceRefs": [
+    "src-openstax-calc2-ex2-17"
+  ],
+  "status": "needs-review"
+}
