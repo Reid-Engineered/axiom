@@ -6,6 +6,7 @@
 
 mod error;
 mod identifier;
+mod package;
 mod raw;
 mod types;
 

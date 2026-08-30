@@ -49,6 +49,26 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 4): Task 3 is accepted and Task 4 authorized. Read only
+  plan Task 4 in full. Its current Step 1 contains eight mandatory tests—the original six
+  cases plus the two structural `schema_version` cases added during review—so the green
+  total will be 16 rather than the prompt's stale count of 14. Added all eight tests before
+  implementation and registered the private `package` module so Cargo compiles the red
+  tests; no Task 5+ or `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 4): The red run,
+  `cargo test --locked knowledge::package`, failed as intended because
+  `parse_package_toml`, `parse_sources_toml`, `PackageIdentity`, and the five new error
+  variants were undefined. Applied Task 4 Step 3's full `KnowledgeError` replacement and
+  added exactly `PackageIdentity` plus the two private parsing/validation functions, with
+  no later-task conversion or loader work.
+- 2026-08-30 (codex, plan Task 4): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed 16 tests—the prior 8 plus all 8 tests in the
+  corrected Step 1—with 0 failures and 40 filtered out.
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, and
+  `cargo fmt --all --check` passed after applying rustfmt's mechanical wrapping and module
+  sorting. Rustfmt places `mod package;` before `mod raw;`, rather than literally after it
+  as Step 4 says; this is the repository's canonical formatter behavior and does not change
+  module privacy or semantics. Task 5+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 3): Task 2 is accepted and Task 3 authorized. Read only
   plan Task 3 in full. Its interface and implementation code consistently prescribe eight
   raw structs, so I am treating the prompt's “seven” as a counting typo. Added the four
