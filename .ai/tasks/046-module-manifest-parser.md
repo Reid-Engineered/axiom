@@ -1,7 +1,7 @@
 ---
 id: 046
 title: module.toml schema + manifest parser/validator
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: [045]
@@ -169,15 +169,108 @@ not do that reconciliation.
      `module.toml` doesn't exist until task 052. Don't invent placeholder subject-specific
      content to make this task feel more complete; a minimal, clearly-test-only fixture
      manifest (e.g. `org.axiom.test-fixture`) is correct and sufficient here.
+- 2026-08-30 (codex): Implemented the boundary as `parse(&str)`, which maps TOML and raw
+  deserialization failures to `TomlSyntax`, followed by the contract's public `validate()`
+  step for semantic checks. `EmbeddedManifestSource::default()` embeds only the clearly
+  test-only `org.axiom.test_fixture` manifest; `new()` accepts a static fixture set so later
+  conformance tests can exercise the same source implementation without production content.
+- 2026-08-30 (codex): Kept `ManifestError` exactly as locked. The minimum Axiom version is
+  parsed into `semver::Version` and compared in tests through `axiom_version()`. A
+  well-formed minimum newer than the running package cannot currently be rejected without
+  adding an error variant that the locked contract does not define; recorded under
+  Follow-ups instead of misclassifying it as `MalformedVersion` or expanding the contract.
+- 2026-08-30 (codex, changes requested): Rebased onto contract commit `8918f79` and added
+  the newly locked `IncompatibleAxiomVersion { required, running }` variant. `validate()`
+  now compares the parsed minimum against one `axiom_version()` value and rejects a newer
+  requirement before constructing `ModuleManifest`; `incompatible-axiom-version.toml`
+  permanently covers the case.
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+**Built**
+
+- Added the `modules` crate surface with grammar-validating `ModuleId`/`CapabilityId`, the
+  raw-TOML-to-validated-manifest pipeline, the locked serializable manifest types and error
+  taxonomy, and the `axiom_version()` accessor.
+- Added `ManifestSource` and an `EmbeddedManifestSource` containing only a compile-time
+  embedded test fixture, plus a constructor for later static fixture sets.
+- Added eleven named TOML regression fixtures covering every `ManifestError` variant, both
+  malformed semver fields, an absent required id, a wrong field type, and malformed TOML.
+- Exact-pinned `semver = 1.0.28` (with serde support) and `toml = 1.1.4`, updated the lockfile,
+  exposed `modules` from the crate root, and documented the new backend folder in
+  `ARCHITECTURE.md`.
+
+**Tested**
+
+- `cargo check --locked` — passed.
+- `cargo test --locked` — passed, 25 tests total including 11 manifest/source tests.
+- `cargo fmt --all --check` — passed.
+- `cargo clippy --all-targets --locked -- -D warnings` — passed with zero warnings.
+- `git diff --check` — passed.
+- `npm run test:e2e:linux` — not run: neither `WebKitWebDriver` nor `tauri-driver` is
+  available on `PATH` in this environment. The task's locked standalone gate set is fully
+  covered above; this is not claimed as an E2E pass.
+
+**Left out**
+
+- Registry, resolution, invocation, fixture providers, broader conformance coverage, Tauri
+  commands, and real bundled module content remain in their explicitly scoped later tasks.
 
 ## Review
+Reviewer: claude-code
+Date: 2026-08-30
+- [x] Correctness — pass, with one gap (below). `parse`/`validate` match the locked pipeline
+      exactly; the syntactic/semantic split matches the Worklog's guidance precisely
+      (`toml-syntax.toml`, `wrong-field-type.toml`, `absent-id-field.toml` all correctly
+      bucket to `TomlSyntax`, not a semantic variant). Identifier grammar implementation
+      matches the regex exactly, verified by hand against both the positive and negative
+      test cases. `EmbeddedManifestSource`'s embedded fixture is genuinely test-only per the
+      Worklog's instruction not to invent placeholder subject content.
+- [ ] Correctness — **FAIL (contract gap, not an implementation bug)**: no way to reject a
+      well-formed `minimum_axiom_version` newer than `axiom_version()`. Codex found this and
+      correctly declined to guess at an unauthorized variant — filed as a Follow-up instead,
+      exactly the right call on a contract it doesn't own. Resolved on my end: added
+      `ManifestError::IncompatibleAxiomVersion { required, running }` to `CORE.md` §3 and
+      the design spec (commit `8918f79`, this session) — same shape as
+      `UnsupportedManifestVersion`, checked as a pure function of the manifest plus
+      `axiom_version()`, so it belongs in `ManifestError`, not `RegistryError`.
+      **What's needed to close this**: `validate()` checks
+      `minimum_axiom_version <= axiom_version()` right where `parse_version` produces it
+      (same spot `UnsupportedManifestVersion`'s check lives), returning
+      `Err(IncompatibleAxiomVersion { required: minimum_axiom_version, running: axiom_version() })`
+      when it doesn't hold — plus a fixture/test proving it (a manifest with, e.g.,
+      `minimum_axiom_version = "99.0.0"`).
+- [x] Architecture conformance — pass. `ARCHITECTURE.md` updated for the new `modules/`
+      folder (structural addition, correctly done in the same task per `CLAUDE.md`). Exact
+      pins on both new dependencies (`semver = "=1.0.28"`, `toml = "=1.1.4"`), matching this
+      repo's convention. `mod modules;` added in the correct, minimal spot.
+- [x] Process — pass. Re-ran `cargo check --locked`, `cargo test --locked` (24/24),
+      `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`, and
+      `git diff --check` myself — all clean, matching the task file's claims exactly.
+      `npm run test:e2e:linux` correctly not claimed as a pass (this task has no frontend
+      surface to exercise anyway — N/A more than blocked, but the honest non-claim is the
+      right instinct to keep). Worklog and "What was built" are detailed and accurate.
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Verdict: changes-requested — the one gap above, now unblocked with a locked fix to
+implement. Everything else in this task is solid work; re-request review once the
+`IncompatibleAxiomVersion` check and its test are in.
+
+### Re-review
+Reviewer: claude-code
+Date: 2026-08-30
+- [x] Correctness — pass. `validate()`'s new check sits exactly where specified (right
+      after `parse_version` produces `minimum_axiom_version`, same spot
+      `UnsupportedManifestVersion`'s check lives), compares `>` against `axiom_version()`
+      (correctly permissive at equality), and `incompatible-axiom-version.toml` +
+      `newer_minimum_axiom_version_is_incompatible` prove it, asserting both `required` and
+      `running` fields.
+- [x] Process — pass. Re-ran `cargo check --locked`, `cargo test --locked` (25/25),
+      `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`, and
+      `git diff --check` myself — all clean, matching the task file's claims.
+
+Verdict: pass. All prior findings closed.
 
 ## Follow-ups
 
-Anything noticed during implementation or review that's out of this task's scope.
+None from implementation. The minimum-version contract gap identified in the first review
+was resolved by contract commit `8918f79` and implemented in this changes-requested pass.
