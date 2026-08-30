@@ -1,7 +1,7 @@
 ---
 id: 045
 title: Stage 8 architecture lock — rewrite CORE.md into the active Rust contract
-status: proposed
+status: review
 owner: claude
 stage: 8
 depends_on: []
@@ -75,11 +75,51 @@ the design spec changes that. Leave those three sections as-is.
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+**Built**
+
+- Rewrote `CORE.md` per the Worklog's eight points: header no longer claims code-inertness;
+  §3 now covers the full `module.toml` schema, identifier grammar, Rust types
+  (`ModuleManifest`, `CapabilityDescriptor`, `CapabilityRequirement`, `OfflineCapability`),
+  `ManifestError`, `ManifestSource`/`EmbeddedManifestSource`, and the lifecycle; §4 replaced
+  the TS `CapabilityCall`/`ModuleRegistry` sketch with the Rust versions plus the
+  `CapabilityProvider` trait and `RegistryError`/`InvocationError`; §5 gained the concrete
+  `ModuleInstallation` type and its in-memory-for-now scoping note; §6 points at task 048's
+  conformance harness as the enforcement mechanism; §7's open question is resolved to the
+  three-layer split (`ModuleMetadata`/`ModuleManifest`/`ModuleInstallation`); §8 splits
+  "done" between the now-implemented §§1–5 and the still-aspirational three subsystems.
+- Also noted in §3: `CapabilityDescriptor` dropped the original draft's placeholder
+  `input`/`output: unknown` fields (a struct field can't hold a type) — explained why the
+  Rust design defers the same way through `CapabilityCall<Input>`'s generic and each
+  provider's typed deserialization instead, so a future reader doesn't mistake the removal
+  for an oversight.
+
+**Tested**
+
+- Read the full rewritten document twice for internal consistency (type names/signatures
+  match between §3 and §4's uses of them) and for stray TypeScript-isms
+  (`grep -n "typescript\|interface "` — no matches).
+- No `src/`, `src-tauri/`, or `.ai/` code changed — a docs-only task, per
+  `.ai/quality-gates.md`'s own opening line the typecheck/lint/build/`cargo` gates don't
+  apply.
+
+**Left out**
+
+- Renaming `Module` → `ModuleMetadata` in `src/types/module.ts` — filed as a Follow-up
+  below, not this task's job (a TypeScript change with its own blast radius).
+  `ROADMAP.md`'s stale "Playwright/Tauri-driver" line, noticed in passing — also a
+  Follow-up, unrelated to Stage 8.
+- The event bus, storage abstraction, and permissions sections — explicitly out of scope,
+  unchanged.
 
 ## Review
+Reviewer: Marcus (human sign-off — `CORE.md` is the shared cross-agent module contract;
+not literally named in `.ai/merge-strategy.md`'s sign-off list, given the same treatment as
+`ARCHITECTURE.md`/`AGENTS.md` for that reason. Docs-only tasks have no second AI reviewer
+per `AGENTS.md` §Roles).
+Date: 2026-08-30
+- [x] Process — pass. Full diff reviewed and approved before commit.
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Verdict: pass
 
 ## Follow-ups
 
