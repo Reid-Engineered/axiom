@@ -1,7 +1,7 @@
 ---
 id: 038
 title: src-tauri/src/commands/* handlers
-status: review
+status: done
 owner: claude
 stage: 7
 depends_on: [037, 020]
@@ -125,3 +125,7 @@ registered in `lib.rs`'s `invoke_handler!` — exact 1:1 match, nothing missing,
       `cargo clippy --all-targets --locked -- -D warnings`, and `git diff --check`; all clean.
 
 Verdict: approved. No blocking findings. 039 is unblocked.
+
+## Merge
+
+2026-08-29 — Code committed to `master` at `9bd050c`. Status moved to `done`; file archived.
