@@ -1,7 +1,7 @@
 ---
 id: 047
 title: Module + capability registry runtime
-status: proposed
+status: done
 owner: codex
 stage: 8
 depends_on: [046]
@@ -145,6 +145,31 @@ match by `enabled_module_ids` order is correct behavior, not something to reject
 
 ## Worklog
 
+- 2026-08-30 (codex, changes requested): Started the single blocking review fix. Updating
+  `ARCHITECTURE.md`'s `modules/` responsibility to include the capability registry runtime;
+  no registry code or 048 scope changes are needed.
+- 2026-08-30 (codex, changes requested): Updated the backend folder inventory to describe
+  `modules/` as owning validated manifests, discovery, and the capability registry runtime.
+  `git diff --check` passes; returning 047 to review with 048 still untouched and blocked.
+- 2026-08-30 (codex): Claimed the task after confirming 046 is done and archived, reading
+  the locked contract, design spec §6–§8, and the manifest parser/validator implementation.
+  Beginning the registry implementation with the locked trait/struct shapes; the task-local
+  tests will cover Loaded/Rejected registration outcomes and Enabled/Disabled installation
+  behavior without expanding into 048's conformance suite.
+- 2026-08-30 (codex): Implemented `invoke<Input: Serialize, Output: DeserializeOwned>`
+  exactly as sketched: caller input is converted with `serde_json::to_value`, providers see
+  only `serde_json::Value`, and provider output is converted with
+  `serde_json::from_value`. Serialization/deserialization failures stay within the locked
+  error taxonomy as wrapped `InvalidInput`/`Failed` causes. Task-local tests now exercise a
+  successful Loaded registration, a Rejected duplicate followed by another successful
+  registration, resolution across Enabled and Disabled installations, a stale handle after
+  disablement, typed invocation, and wrapped provider failure. These signature and lifecycle
+  notes remain guidance for 048's eventual conformance coverage, not blockers for 047.
+- 2026-08-30 (codex): Implementation and task-local tests are complete. All standalone
+  Rust gates pass. The required native E2E command built the frontend and release Tauri
+  binary, then both flows stopped before application launch because `tauri-driver` is not
+  installed (`spawn tauri-driver ENOENT`); recorded below as an environment blocker, not an
+  E2E pass. Moving 047 to review without starting blocked task 048.
 - 2026-08-30 (claude-code): Contract locked from the design spec §6–§8. `invoke`'s exact
   generic signature above (`Input: Serialize, Output: DeserializeOwned`, serializing to/from
   `serde_json::Value` internally before calling `CapabilityProvider::invoke`) is a
@@ -161,11 +186,86 @@ match by `enabled_module_ids` order is correct behavior, not something to reject
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+**Built**
+
+- Added `ModuleRegistry`, backed by validated manifests paired with
+  `Box<dyn CapabilityProvider>`, with duplicate-ID rejection that leaves subsequent
+  registrations unaffected.
+- Added ordered, workspace-installation-scoped capability resolution with minimum-version
+  matching and opaque `CapabilityHandle`s.
+- Added typed async invocation across the JSON-only provider boundary, including stale
+  enablement checks and `InvocationFailed` wrapping that retains module, capability, and
+  provider-error context.
+- Added the locked call/envelope, installation, provider, handle, and error types; re-exported
+  them from `modules`; and exact-pinned `async-trait = 0.1.92`.
+- Added five registry unit tests covering registration isolation, ordered resolution,
+  disabled/incompatible providers, typed dispatch, stale handles, and provider failures.
+- Updated `ARCHITECTURE.md`'s backend inventory to include the registry runtime responsibility.
+
+**Tested**
+
+- `cargo fmt --all --check` — passed.
+- `cargo check --locked` — passed.
+- `cargo test --locked` — passed, 30 tests total including five registry tests.
+- `cargo clippy --all-targets --locked -- -D warnings` — passed with zero warnings.
+- `git diff --check` — passed.
+- Changes-requested documentation fix: `git diff --check` — passed.
+- `npm run test:e2e:linux` — release frontend and Tauri binary built successfully; both
+  native flows were blocked before launch because `tauri-driver` is unavailable on `PATH`
+  (`spawn tauri-driver ENOENT`). This is not claimed as an E2E pass.
+
+**Left out**
+
+- The reusable conformance harness, broader regression fixtures, and every row in 048's
+  locked coverage table remain in blocked task 048.
+- `ModuleInstallation` persistence, any Tauri command surface, dynamic module loading, and
+  real first-party module implementations remain outside this task's scope.
 
 ## Review
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Reviewer: claude-code
+Date: 2026-08-30
+
+- [x] Correctness — pass. `register`/`resolve`/`invoke` match the locked contract exactly
+      (types, error taxonomy, `NoCompatibleProvider` collapsing missing-vs-incompatible per
+      spec §7). `resolve()` walks `enabled_module_ids` — a `Vec`, not the internal
+      `HashMap` — so first-match ordering is deterministic, which is the one easy way to get
+      this silently wrong. The five tests are real assertions on outcomes (registration
+      isolation after a rejected duplicate, priority flip on reordering, stale-handle
+      `ModuleDisabled` after disablement, wrapped `InvocationFailed` with cause intact), not
+      happy-path-only.
+- [x] Architecture conformance (`ARCHITECTURE.md` §5 rules) — N/A, no frontend data-flow
+      rules apply to `src-tauri/`; no new global state, no `src/types/` changes.
+- [x] UI rules (`AGENTS.md`) — N/A, backend-only change, no markup/tokens touched.
+- [ ] Process — FAIL: `ARCHITECTURE.md:72` still describes `modules/` as "validated module
+      manifests + discovery boundary" (046's scope). This task added the capability registry
+      — resolution and typed async invocation across the provider boundary — which is a
+      distinct runtime responsibility the current one-liner doesn't mention. Per
+      `.ai/quality-gates.md` "Structural changes" and this checklist's own "ARCHITECTURE.md
+      updated if structure changed," that line needs a one-word-ish addition (e.g.
+      "validated module manifests, discovery boundary, and the capability registry
+      runtime"). Everything else under Process is solid: gates actually ran (`cargo fmt`,
+      `cargo check --locked`, `cargo test --locked` — 30 tests, `clippy -D warnings`, `git
+      diff --check`, all recorded truthfully); E2E was correctly recorded as an environment
+      blocker (`tauri-driver` missing) rather than claimed as a pass, consistent with
+      `.ai/quality-gates.md`'s explicit carve-out and the 040/042/044 precedent; worklog is
+      detailed enough to follow without the diff; scope stayed inside 047, 048 untouched.
+
+Verdict: changes-requested
+
+### Re-review (f586abb)
+
+- [x] Process — PASS: `ARCHITECTURE.md:72–73` now reads "validated module manifests,
+      discovery boundary, and capability registry runtime," column-aligned with the rest of
+      the tree's wrapped descriptions (e.g. `hooks/` at line 58). No registry code or 048
+      scope touched — fix matched exactly what was requested. `git diff --check` re-run,
+      passes.
+
+All four checklist sections now pass. Note for the human: per `.ai/merge-strategy.md` §"Who
+can merge what," the `ARCHITECTURE.md` edit means this merge needs human sign-off — a
+reviewing agent can approve the task but not merge it unilaterally.
+
+Verdict: done
 
 ## Follow-ups
 

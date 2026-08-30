@@ -1,11 +1,16 @@
 mod identifier;
 mod manifest;
+mod registry;
 mod source;
 
 pub use identifier::{CapabilityId, ModuleId};
 pub use manifest::{
     parse, validate, CapabilityDescriptor, CapabilityRequirement, ManifestError, ModuleManifest,
     OfflineCapability, RawCapabilityDescriptor, RawCapabilityRequirement, RawModuleManifest,
+};
+pub use registry::{
+    CallEnvelope, CapabilityCall, CapabilityHandle, CapabilityProvider, InvocationError,
+    ModuleInstallation, ModuleRegistry, RegistryError,
 };
 pub use source::{EmbeddedManifestSource, ManifestSource};
 
