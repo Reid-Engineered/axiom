@@ -2136,8 +2136,10 @@ mod tests {
         let concepts_dir = root.join("concepts");
         fs::create_dir_all(&concepts_dir).unwrap();
         fs::write(concepts_dir.join("shell.a.md"), VALID_CONCEPT).unwrap();
-        let colliding = VALID_CONCEPT.replace("id = \"shell.a\"", "id = \"shell.a\"");
-        fs::write(concepts_dir.join("shell.b.md"), colliding).unwrap();
+        // Deliberately the same content, same declared id — the point of this test is
+        // that shell.b.md's filename never matches "shell.a" regardless of what id it
+        // declares, so this doesn't need a distinct id to make the case.
+        fs::write(concepts_dir.join("shell.b.md"), VALID_CONCEPT).unwrap();
         assert!(matches!(
             discover_entities(&root),
             Err(KnowledgeError::FilenameIdMismatch { .. })
