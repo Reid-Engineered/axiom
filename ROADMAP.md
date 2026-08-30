@@ -221,12 +221,77 @@ IPC/SQLite latency). If that happens, fix the contract deliberately and update
 
 ---
 
-## Stage 8 and beyond — explicitly not planned here
+## Stage 8 — Capability runtime + Practice Core Utility
 
-Real 3D visualization engine, tutor/AI integration, marketplace backend, module sandboxing,
-offline packaging and sync, and everything listed in `AXIOM-HANDOFF.md` §7 ("Not yet
-designed": empty states, notifications, concept-graph view, tutor voice mode, in-app
-reading mode, settings, module authoring, import onboarding, responsive behavior below
-~1100px). Each gets its own design pass through the brainstorming process and its own
-architecture addendum before it gets a stage here — this roadmap does not pre-decide their
-shape.
+By the end of Stage 8, Axiom discovers and loads an official Practice module from a
+versioned `module.toml` manifest, parses and validates that manifest into a typed runtime
+representation, registers its capabilities through a generic capability runtime, and
+invokes Practice without any Practice-specific logic in Core. Practice consumes a
+subject-independent Knowledge Package, generates a valid deterministic calculus problem,
+delegates mathematical verification through a replaceable capability, evaluates a learner
+attempt, and returns structured diagnostic evidence — offline, surviving the appropriate
+persistence boundaries, with no layer containing an undocumented first-party shortcut.
+Stage 7 proved Axiom's application architecture; Stage 8 proves its modular
+learning-platform architecture.
+
+Stage 8 is large enough that it's designed and scheduled incrementally, one sub-project at a
+time, each through its own brainstorming pass — the same discipline the previous version of
+this section applied to Stage 8 as a whole. Only the first sub-project is locked below; the
+rest get their own **Deliverables**/**Acceptance criteria** appended here once designed,
+not pre-decided now.
+
+### Sub-project 1 — Module & Capability runtime (locked)
+
+Design: `docs/superpowers/specs/2026-08-30-module-capability-runtime-design.md`.
+Tasks: `.ai/tasks/045-048`.
+
+**Deliverables**
+- `src-tauri/src/modules/` — the `module.toml` schema, its Rust parser/validator producing
+  a typed `ModuleManifest` (raw TOML never propagates past this boundary), and the
+  `ModuleRegistry`/capability resolution runtime, entirely first-party and in-process.
+- `CORE.md` rewritten from a forward-looking, code-inert draft into Stage 8's active
+  contract, with its own §5 (provider selection) and §7 (`Module` vs. `ModuleManifest`)
+  open questions resolved.
+- A conformance/regression test suite strong enough that a future third-party module (and
+  the bundled Practice module, once it exists) can be checked against it directly.
+
+**Acceptance criteria**
+- `cargo test` covers manifest parsing/validation, registration, resolution, invocation,
+  and serialization — see the design doc §9 for the full test-class breakdown.
+- A manifest with an unsupported version, a missing required field, an invalid capability
+  identifier, or a duplicate capability fails with a structured error; one broken manifest
+  never blocks the rest of the bundle from registering.
+- Two modules providing the same capability resolve deterministically by a workspace's
+  enabled-module order (CORE.md §5), not by registration order or an arbitrary tiebreak.
+- No UI and no real subject module are required to satisfy this sub-project — it is
+  provable entirely through `cargo test` against fixture modules.
+
+**Risk**: this is the piece every later Stage 8 sub-project depends on. A contract mistake
+found here is cheap; the same mistake found after Practice (sub-project 4+) depends on it is
+not. That's why it gets Claude's direct architectural review (task 045) before any
+capability-consuming code is built against it.
+
+### Remaining Stage 8 scope (not yet designed)
+
+Each of the following becomes its own brainstorm → spec → plan cycle, built against
+sub-project 1's locked contract, roughly in this order: Knowledge Package v1 schema,
+canonical Problem schema, the `math.verify` verification capability (deterministic +
+Symbolica-CAS providers), a tiny reference Calculus II knowledge package, deterministic
+seeded problem generation, the Practice Core Utility itself
+(`practice.generate`/`practice.evaluate`/`practice.hint`), Practice's own heavy testing bar
+(property/generative tests, a permanent regression corpus), minimal Study Session UI
+integration (Antigravity, presentation only — no engine/contract changes), and an explicit
+network-disabled offline acceptance test end to end. None of these get deliverables or
+acceptance criteria here until they're designed.
+
+---
+
+## Stage 9 and beyond — explicitly not planned here
+
+Real 3D visualization engine, tutor/AI integration, the mastery engine, the event bus,
+marketplace backend and module downloads, module sandboxing and signing, offline packaging
+and sync, and everything listed in `AXIOM-HANDOFF.md` §7 ("Not yet designed": empty states,
+notifications, concept-graph view, tutor voice mode, in-app reading mode, settings, module
+authoring, import onboarding, responsive behavior below ~1100px). Each gets its own design
+pass through the brainstorming process and its own architecture addendum before it gets a
+stage here — this roadmap does not pre-decide their shape.

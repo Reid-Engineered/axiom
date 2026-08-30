@@ -87,9 +87,13 @@ name = "Axiom Practice"       # required; display-only, no semantic meaning to t
 version = "0.1.0"             # required; the module's own semver
 
 minimum_axiom_version = "0.8.0"   # required; semver, compared per §2
-offline = "full"                  # enum: "full" | "enhanced" | "required" — reuses the
-                                   # OfflineStatus vocabulary already in
-                                   # src/types/common.ts rather than inventing a second one
+offline = "full"                  # enum: "full" | "enhanced" | "required" — a machine
+                                   # contract value, deliberately distinct from
+                                   # src/types/common.ts's OfflineStatus ("Works offline" /
+                                   # "Online enhanced" / "Internet required"), which is
+                                   # human-facing display copy for the catalog layer (§3).
+                                   # The manifest shouldn't couple to UI wording; see §6's
+                                   # OfflineCapability.
 
 [[provides]]
 id = "practice.generate"      # capability id; validated against the identifier grammar
@@ -140,15 +144,39 @@ serializes its own typed `Output` at the edge, the same pattern
 `src-tauri/src/commands/*` already uses for Tauri commands.
 
 ```rust
+pub enum InvocationError {
+    UnknownCapability { capability_id: CapabilityId, version: u32 }, // manifest declared it,
+                                                                       // provider doesn't
+                                                                       // actually handle it
+    InvalidInput { capability_id: CapabilityId, message: String },   // input didn't
+                                                                       // deserialize into
+                                                                       // the provider's
+                                                                       // expected type
+    Failed { message: String }, // the provider's own internal failure — a fixture provider
+                                 // built purely to test this path returns it deliberately
+}
+```
+
+A `CapabilityProvider`'s own failure; `RegistryError::InvocationFailed` (§7) wraps it rather
+than replacing it, so a caller can see both "which module/capability failed" (registry-level
+context) and "why" (this enum).
+
+```rust
 pub struct ModuleId(String);          // validated at construction against §5's grammar
 pub struct CapabilityId(String);      // validated at construction against §5's grammar
+
+/// Deliberately distinct from src/types/common.ts's OfflineStatus ("Works offline" /
+/// "Online enhanced" / "Internet required"), which is human-facing catalog display copy.
+/// A manifest is a machine contract and shouldn't couple to UI wording.
+#[serde(rename_all = "lowercase")]
+pub enum OfflineCapability { Full, Enhanced, Required }
 
 pub struct ModuleManifest {
     pub id: ModuleId,
     pub name: String,
     pub version: semver::Version,
     pub minimum_axiom_version: semver::Version,
-    pub offline: OfflineStatus,
+    pub offline: OfflineCapability,
     pub provides: Vec<CapabilityDescriptor>,
     pub requires: Vec<CapabilityRequirement>,
 }
