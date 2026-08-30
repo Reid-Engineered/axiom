@@ -235,6 +235,23 @@ the plan level rather than patched around; nothing further needed here.
 
 **Verdict: accepted.** Plan Task 4 (`package.toml`/`sources.toml` parsing) authorized.
 
+### Plan Task 4 — `package.toml`/`sources.toml` parsing and validation (commit `2876ea2`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 16 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. Diffed `error.rs` and `package.rs` against the plan — the five new variants,
+the now-real `Error::source()` handling `TomlSyntax`, and `parse_package_toml`/`parse_
+sources_toml` all match exactly, field for field. The "14 vs 16" test-count mismatch in the
+issuing prompt was my own arithmetic error (miscounted the plan's already-6+2=8-test Step 1
+as "six"), not a plan defect — Codex correctly followed the plan's actual test list rather
+than my prompt's summary, which is the right call when the two disagree. `mod package;`
+landing before `mod raw;` in `mod.rs` is the same well-reasoned rustfmt-driven deviation
+pattern as Task 1's `lib.rs` ordering — noted, not an issue.
+
+**Verdict: accepted.** Plan Task 5 (TOML frontmatter splitter) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
