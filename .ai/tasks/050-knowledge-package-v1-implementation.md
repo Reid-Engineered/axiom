@@ -101,6 +101,29 @@ Filled in when moving to `review`, after plan Task 17 (the plan's last task) is 
 Per-plan-Task review notes accumulate here as each one is accepted, before the final
 task-level review.
 
+### Plan Task 1 — Knowledge error taxonomy and identifier types (commit `e30ebc3`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced rather than trusted: `cargo test --locked` → 43 passed (40
+pre-existing `modules::` + 3 new `knowledge::`, no regression), `cargo clippy --all-targets
+--locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git status` → clean.
+Diffed all six changed files against the corrected plan's Task 1 line-by-line — content
+matches exactly. `ModuleId`/`CapabilityId`'s public API is untouched (confirmed via diff —
+only the one `mod`/`fn` visibility widening each, nothing else in either `modules/` file).
+`KnowledgeError` has exactly the one `InvalidIdentifier` variant the corrected plan calls
+for, not the original 34. No duplicate-entity-ID variant added. No Task 2+ or
+`knowledge-package/` scope creep.
+
+One reported deviation, accepted: `pub mod knowledge;` placed before `pub mod modules;` in
+`lib.rs`, not after as the plan's Step 5 literally said. Correct call, not a shortcut —
+rustfmt's `reorder_modules` default (true) alphabetically sorts contiguous same-visibility
+`mod` declarations, so "after modules" was fighting a formatter default that would just
+reintroduce churn on the next `cargo fmt`. Smallest change consistent with the plan's actual
+intent (register the module), reported with reasoning.
+
+**Verdict: accepted.** Plan Task 2 (domain types) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
