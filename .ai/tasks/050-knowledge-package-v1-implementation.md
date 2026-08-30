@@ -1,7 +1,7 @@
 ---
 id: 050
 title: Knowledge Package v1 — runtime implementation and Calc II migration
-status: in-progress
+status: review
 owner: codex
 stage: 8
 depends_on: []
@@ -49,6 +49,22 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 14 review): Reviewed the Task 14 implementation
+  (commit `ba2cddd`) against plan Task 14 Steps 1–4 and spec §17. The seven fixture files
+  transcribe the canonical example verbatim (package/sources manifests, three Concepts, one
+  Objective, one Example); `canonical.rs` matches the corrected assertion form; `mod
+  canonical;` is registered in `tests/mod.rs`. Re-ran the gates: `cargo test --locked
+  knowledge::tests::canonical -- --nocapture` passes 1/1, `cargo test --locked knowledge::`
+  passes 103/103, `cargo clippy --all-targets --locked -- -D warnings` is clean, `cargo fmt
+  --all --check` passes. **Task 14 is accepted.** This closes the runtime workstream
+  (Tasks 1–14) in full — identifiers, error taxonomy, domain types, raw/entity parsing,
+  discovery, cross-reference and relationship validation, the atomic loader, and both
+  conformance suites (mutation-based and committed-fixture) are done and gate-clean.
+  Per the plan's own process note (end of Task 14, before Task 15), Tasks 15–17 (migrating
+  the real `knowledge-package/` Calc II content to v1 format) are a separate workstream that
+  must be tracked as its own `.ai/tasks/0NN-knowledge-package-v1-migration.md` file — the
+  next available id — and reviewed by a different agent than whoever implements it. This
+  task (050) is not the vehicle for that work; 050 is done pending that split.
 - 2026-08-30 (codex, plan Task 14 resumed): Verified corrective commit `2b1f3ef` and
   changed only the canonical test's boolean assertion to the authorized Clippy-clean form.
   The seven on-disk files remain the verbatim spec §17 canonical package: package and
@@ -567,7 +583,33 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`, after plan Task 17 (the plan's last task) is accepted.
+Filled in when moving to `review`. Per the plan's own process note (end of its Task 14
+section), Tasks 15–17 (migrating the real `knowledge-package/` content to v1 format) are a
+separate workstream tracked in a new task file, not part of 050 — so this task's actual
+scope is plan Tasks 1–14, not all 17, and it is complete.
+
+**Built:** the full `src-tauri/src/knowledge/` module — identifier/error types, domain
+types, raw TOML deserialization, `package.toml`/`sources.toml` parsing, the TOML+Markdown
+frontmatter splitter, `Concept`/`Objective`/`Example` entity parsers, the `Example` body
+grammar parser, deterministic filesystem discovery, cross-entity reference validation,
+prerequisite-DAG/related-symmetry validation, and the single public
+`load_knowledge_package` loader. `knowledge::` is registered in `lib.rs`.
+
+**Tested:** 34 unit tests across Tasks 1–12 (one per parser/validator, inline
+`#[cfg(test)]`), a 29-case mutation-based end-to-end conformance corpus (Task 13, every
+spec §18 failure mode entered only through the public loader), and one committed canonical
+fixture transcribed verbatim from spec §17 (Task 14). 103 `knowledge::` tests total, all
+passing.
+
+**Gates:** `cargo test --locked knowledge::` (103/103), `cargo clippy --all-targets
+--locked -- -D warnings` (clean, no lint allowances), `cargo build --locked` (succeeds),
+`cargo fmt --all --check` (clean) — all independently reproduced by the reviewer at each
+plan Task's acceptance, not just taken on the implementer's report.
+
+**Left out, deliberately:** Canonical Problem, `math.verify`, Practice, Tutor integration,
+UI, Docling ingestion, `knowledge.query` — all explicitly out of scope per this task's
+Scope section and the plan itself. The real `knowledge-package/` (Calc II) migration
+(plan Tasks 15–17) is left for the follow-up task noted below.
 
 ## Review
 
@@ -712,6 +754,95 @@ blocker; the pre-trace on the first real-filesystem task held.
 
 **Verdict: accepted.** Plan Task 10 (cross-entity reference validation) authorized.
 
+### Plan Task 10 — Cross-entity reference validation (commit `8eb70e6`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 62 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean. Diffed
+`validate.rs`/`error.rs`/`mod.rs` against the plan — matches verbatim (rustfmt wrapping
+only). This task took one review round: a real plan defect where the Step 1 test module's
+import line omitted `Concept`/`Objective`/`Example`, which `use super::*` cannot supply
+since production code only reaches those types through `DiscoveredEntities` field access.
+Fixed at the plan level (commit `39b8e71`) before re-issuing.
+
+**Verdict: accepted.** Plan Task 11 (relationship validation) authorized.
+
+### Plan Task 11 — Relationship validation (commit `272e73b`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 70 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean. Diffed
+`relationships.rs`/`error.rs`/`mod.rs` against the plan — matches verbatim. One blocker: my
+own issuing prompt turned Step 6's illustrative `git add relationships.rs mod.rs` line into
+a hard "commit only these two files" instruction, which doesn't compile without `error.rs`
+(a plan-wide Step 6 omission present since Task 4, previously absorbed by implementer
+judgment rather than literal instruction). Fixed the plan's Step 6 line and re-issued
+(commit `13cc869`).
+
+**Verdict: accepted.** Plan Task 12 (top-level loader and public API) authorized.
+
+### Plan Task 12 — Top-level loader and public API (commit `58e4fea`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 73 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean with no `#![allow(dead_code)]` present,
+`cargo build --locked` → succeeds, `cargo fmt --all --check` → clean. Diffed `loader.rs`
+and the full `mod.rs` replacement against the plan — matches exactly; only
+`load_knowledge_package`, `related_concepts`, domain/identifier types, and `KnowledgeError`
+are exported. No blocker. This closes the runtime module proper — every `pub(crate)`
+function built in Tasks 1–11 now has a real caller.
+
+**Verdict: accepted.** Plan Task 13 (end-to-end conformance corpus) authorized.
+
+### Plan Task 13 — End-to-end conformance corpus (commit `73ea7dd`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: full 29-case conformance corpus passed 29/29, `cargo test
+--locked knowledge::` → 102 passed, `cargo clippy --all-targets --locked -- -D warnings` →
+clean, `cargo fmt --all --check` → clean. Diffed `tests/mod.rs`/`tests/conformance.rs`
+against the plan — 29 `#[test]` fns matching the corrected count (5+7+6+11). One blocker: a
+real plan ordering defect — Step 6 was the only place `#[cfg(test)] mod tests;` got
+declared in `mod.rs`, but Step 2's `cargo test` ran before Step 6, so Rust silently
+discovered zero tests under the undeclared module instead of erroring. Fixed at the plan
+level (moved the declaration into Step 1, commit `85e1690`) and re-issued. Proactively
+checked Task 14 for the same defect class before issuing it (found it, pre-fixed before the
+prompt went out — see Task 14's review below).
+
+**Verdict: accepted.** Plan Task 14 (committed canonical valid fixture) authorized, with
+Task 14's own Step 3/4 registration-ordering pre-fixed in the same pass.
+
+### Plan Task 14 — Committed canonical valid fixture (commit `ba2cddd`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::tests::canonical -- --nocapture`
+→ 1/1 passed, `cargo test --locked knowledge::` → 103 passed, `cargo clippy --all-targets
+--locked -- -D warnings` → clean, `cargo fmt --all --check` → clean. Diffed the seven
+fixture files against spec §17 — verbatim transcription, no re-derivation. One blocker,
+caught even after the Task 13-class ordering defect was pre-fixed: the plan's literal
+`assert_eq!(x.contains(y), true)` trips `clippy::bool_assert_comparison` under `-D
+warnings`. Fixed to `assert!(x.contains(y))` at the plan level (commit `2b1f3ef`) and
+re-issued; only that one line changed on resumption.
+
+**Verdict: accepted.**
+
+---
+
+**Task-level verdict: 050 is complete for its actual scope (plan Tasks 1–14).** All 14
+plan Tasks reviewed and accepted, each independently gate-verified by the reviewer, not
+just taken on the implementer's report. Six plan-level defects were found and fixed during
+execution (Tasks 5 ×2, 10, 11, 13, 14), each a genuine inconsistency in the plan document
+itself, never routed around in the implementation. Status set to `review`, pending human
+merge decision — see Follow-ups for the next task.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
+
+- Plan Tasks 15–17 (migrate `knowledge-package/` to v1 format, migration validation,
+  documentation cleanup) are out of scope for 050 per the plan's own process note and are
+  now tracked as [051](051-knowledge-package-v1-migration.md).
