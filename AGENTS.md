@@ -69,23 +69,26 @@ worth a second look — it's either misplaced domain data or missing from a hook
 
 ## Testing
 
-Current phase (mock data, no backend):
+Current phase (real backend, Stage 7+):
 
 - **Hooks**: `renderHook` (Vitest + React Testing Library) against real mock fixtures, not
   hand-rolled test doubles — the fixtures in `services/mockData/` are the test data.
 - **Components**: render tests for anything with conditional rendering or prop-driven
   variants (`Mastery`'s five states, `TrustBadge`'s three levels). Pure layout components
   (`CenteredColumnLayout`) don't need a dedicated test.
-- **No E2E yet.** Nothing end-to-end is worth automating until there's a real IPC boundary
-  to cross (Stage 7+). A manual click-through against the roadmap's per-stage acceptance
-  criteria is the check until then.
+- **Backend**: `cargo test` covers Rust command handlers and DB queries.
+- **E2E**: `e2e/*.test.mjs` — a small number of native flows for the highest-value paths
+  (first launch → create workspace → home; restart persistence), not full-screen coverage.
+  Driven against the release Tauri binary through `tauri-driver`'s W3C WebDriver transport,
+  with `selenium-webdriver` as the client — Playwright cannot attach to Tauri's native
+  WebDriver transport (see `e2e/README.md` for why, and for setup). Gated per
+  `.ai/quality-gates.md`: required for any task touching `src-tauri/` or `src/services/`,
+  advisory elsewhere — it needs `WebKitWebDriver` plus `xvfb` on `PATH`, which isn't
+  guaranteed in every agent's environment, and there's no CI provider wired up yet to run it
+  automatically for every task.
 - Every task in `.ai/tasks/` states what got tested and how in its handoff doc — "tests
   pass" without naming which ones is not sufficient for the quality gate in
   `.ai/quality-gates.md`.
-
-Once Stage 7 lands: `cargo test` for Rust command handlers and DB queries; a small number
-of Playwright/Tauri-driver E2E flows for the highest-value paths (first launch → create
-workspace → home), not full-screen coverage.
 
 ## Docs
 

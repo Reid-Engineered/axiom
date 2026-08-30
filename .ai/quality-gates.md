@@ -36,10 +36,22 @@ Rust code it didn't touch. State in the task file which gates were run.
 - Any new `#[tauri::command]` has a corresponding frontend service function already wired,
   not left as a dangling backend-only addition.
 
-## Explicitly not a gate (yet)
+## End-to-end (Stage 7+)
 
-- End-to-end tests — not required until Stage 7 introduces a real IPC boundary. See
-  `AGENTS.md` §Testing.
+- Any task touching `src-tauri/` or `src/services/`: `npm run test:e2e:linux` passes. This
+  is where an IPC or persistence regression would actually surface, so it's a hard gate for
+  this surface specifically, not the whole repo.
+- Any other task: advisory. Run it if `e2e/README.md`'s prerequisites
+  (`WebKitWebDriver` + `xvfb`) are available in the environment; if not, state that plainly
+  in the task file as an environment blocker rather than claiming a pass — see 040's, 042's,
+  and 044's `## Review` sections for the pattern.
+- No CI provider runs this automatically yet. Once one exists, widen the first bullet to
+  every task touching `src/` — the scoping here is a concession to agents not reliably
+  having the native WebKit driver installed, not a statement that other surfaces are exempt
+  from regressions an E2E flow could catch.
+
+## Explicitly not a gate
+
 - Visual/pixel-diff checks against the mockup screenshots — done by eye against
   `reference/UI/screenshots/` per stage, not automated. Revisit if visual regressions start
   slipping through.
