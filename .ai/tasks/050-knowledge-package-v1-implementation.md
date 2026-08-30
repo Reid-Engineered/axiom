@@ -49,6 +49,18 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 11 review): Reviewed the Task 11 implementation
+  (commit `272e73b`) against plan Task 11 Steps 1–4 and spec §10. `relationships.rs`
+  matches the plan's prescribed test module and implementation verbatim (rustfmt wrapping
+  only); the four new `KnowledgeError` variants and `Display` arms match Step 3 exactly;
+  `mod relationships;` and `pub use relationships::related_concepts;` are wired in `mod.rs`
+  per Step 4. Re-ran the gates: `cargo test --locked knowledge::` passes 70/70 (8 new
+  relationship tests), `cargo clippy --all-targets --locked -- -D warnings` is clean,
+  `cargo fmt --all --check` passes. **Task 11 is accepted.** Plan Task 12 (`loader.rs`,
+  finalizing `mod.rs`'s public surface) is authorized next. Task 12's own file list
+  (`loader.rs`, `mod.rs` only — no `error.rs`) matches its Step 6 commit line exactly, so
+  the Task 11 commit-scope gap does not recur here; confirmed `KnowledgeError::
+  MissingPackageToml`, which Task 12's tests construct, already exists from Task 9.
 - 2026-08-30 (codex, plan Task 11 resumed): Verified commit `13cc869` corrected Step 6's
   commit scope to include `error.rs`; the issuing authorization also includes this Worklog.
   Added all eight prescribed relationship tests before implementation and registered the
