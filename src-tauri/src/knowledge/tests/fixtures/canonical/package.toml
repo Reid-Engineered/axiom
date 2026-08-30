@@ -1,0 +1,5 @@
+id = "org.axiom.calculus_shells"
+schema_version = 1
+version = "1.0.0"
+title = "Cylindrical Shells (Reference Example)"
+description = "A minimal conforming Knowledge Package v1 example, drawn from OpenStax Calculus Volume 2 §2.3."

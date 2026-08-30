@@ -49,6 +49,15 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 14 resumed): Verified corrective commit `2b1f3ef` and
+  changed only the canonical test's boolean assertion to the authorized Clippy-clean form.
+  The seven on-disk files remain the verbatim spec §17 canonical package: package and
+  source manifests, three Concepts, one Objective, and one Example. The corrected scoped
+  gate, `cargo test --locked knowledge::tests::canonical -- --nocapture`, passed 1/1 with
+  142 filtered out, and `cargo clippy --all-targets --locked -- -D warnings` passed with
+  zero warnings. The full `cargo test --locked knowledge::` gate passed 103/103 with 40
+  filtered out, and `cargo fmt --all --check` passed. Task 15+ and the real
+  `knowledge-package/` migration remain untouched.
 - 2026-08-30 (claude-code, plan Task 14 blocker triage): Confirmed the blocker: Step 2's
   literal `assert_eq!(example.solution.contains("63"), true)` trips
   `clippy::bool_assert_comparison` under `-D warnings`, and Task 14's own Step 3 gate chains

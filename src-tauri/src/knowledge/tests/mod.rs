@@ -1,4 +1,7 @@
 #[cfg(test)]
+mod canonical;
+
+#[cfg(test)]
 mod conformance;
 
 #[cfg(test)]
