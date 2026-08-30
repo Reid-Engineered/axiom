@@ -240,6 +240,21 @@ Files expected to change, per the implementation plan's own file lists:
   touched by this fix; Codex's uncommitted Task 5 work (including its already-correct
   `split_terminator` fix from the previous round) stays as-is for it to pick back up.
 
+- 2026-08-30 (claude-code): Before issuing Task 6, traced its code by hand rather than
+  waiting for another Codex round-trip, given the last two tasks each surfaced a real bug in
+  the plan's literal code. Found one: `concept.rs` Step 4 imports `use super::types::
+  {Concept, ProvenanceKind};`, but `ProvenanceKind` is never referenced in
+  `parse_concept_file`'s body — only in Step 1's test assertion
+  (`concept.provenance_refs[0].kind, ProvenanceKind::Direct`), which doesn't exist in a
+  non-test compilation. `#![allow(dead_code)]` (the Task 3 fix) does not cover this — `unused
+  _imports` is a separate lint, and `cargo clippy -- -D warnings` denies it the same way.
+  Fixed `docs/superpowers/plans/2026-08-30-knowledge-package-v1.md`: removed `ProvenanceKind`
+  from Step 4's outer-scope import, added `use crate::knowledge::ProvenanceKind;` inside
+  Step 1's test module instead (via the existing `pub use` re-export from Task 2, not a new
+  path). Then checked every other remaining task (7 through 12) for the same shape by hand —
+  every import in each is genuinely used by that task's own production code, not just its
+  tests; no further instances found. Nothing in `src-tauri/` touched by this fix.
+
 ## What was built / tested / left out
 
 Filled in when moving to `review`, after plan Task 17 (the plan's last task) is accepted.

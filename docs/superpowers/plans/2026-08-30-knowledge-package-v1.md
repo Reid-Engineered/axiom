@@ -1160,6 +1160,12 @@ mod tests {
     use super::*;
     use std::path::Path;
 
+    // ProvenanceKind is only needed here, in this test module, not by
+    // parse_concept_file's own body — imported here rather than at the file's outer
+    // scope, which would trigger unused_imports on a non-test build (the #[cfg(test)]
+    // module that actually uses it doesn't exist in that compilation).
+    use crate::knowledge::ProvenanceKind;
+
     const VALID_CONCEPT: &str = r#"+++
 id = "shell.method_vertical_axis"
 name = "The Method of Cylindrical Shells"
@@ -1369,7 +1375,7 @@ use super::frontmatter::split_frontmatter;
 use super::identifier::ConceptId;
 use super::provenance::convert_provenance_refs;
 use super::raw::RawConceptFrontmatter;
-use super::types::{Concept, ProvenanceKind};
+use super::types::Concept;
 
 pub(crate) fn parse_concept_file(path: &Path, raw: &str) -> Result<Concept, KnowledgeError> {
     let (toml_text, body) = split_frontmatter(path, raw)?;
