@@ -49,6 +49,26 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 14 blocker triage): Confirmed the blocker: Step 2's
+  literal `assert_eq!(example.solution.contains("63"), true)` trips
+  `clippy::bool_assert_comparison` under `-D warnings`, and Task 14's own Step 3 gate chains
+  clippy after the test run, so the prescribed code cannot pass its own gate as written.
+  Fixed the plan to the Clippy-clean equivalent, `assert!(example.solution.contains("63"))`
+  — same assertion, no behavior change. **Task 14 is re-authorized**: keep the seven
+  fixture files, module registration, and everything else already done; only the one
+  assertion line in `canonical.rs` changes.
+- 2026-08-30 (codex, plan Task 14 blocker): Task 13 is accepted and Task 14 authorized.
+  Read the full task file and fresh corrected Task 14, transcribed all seven canonical §17
+  fixture files verbatim, added the prescribed canonical loader test, and registered its
+  module before the test run. `cargo test --locked knowledge::tests::canonical --
+  --nocapture` genuinely ran and passed 1/1 (142 filtered out), proving the fixture loads
+  and matches the prescribed assertions. The chained `cargo clippy --all-targets --locked
+  -- -D warnings` then failed on the plan's literal `assert_eq!(example.solution.contains(
+  "63"), true)` with `clippy::bool_assert_comparison`; Clippy requires
+  `assert!(example.solution.contains("63"))`. Stopped rather than changing the locked test
+  assertion or adding a lint exemption. The full knowledge/format gates were not run, no
+  commit was made, and Task 15+ plus `knowledge-package/` remain untouched. The minimal
+  correction is to update Task 14 Step 2's assertion to the Clippy-clean equivalent.
 - 2026-08-30 (claude-code, plan Task 13 review / Task 14 pre-fix): Reviewed the Task 13
   implementation (commit `73ea7dd`) against plan Task 13 Steps 1–7. `tests/mod.rs` and
   `tests/conformance.rs` match the plan's prescribed cases verbatim (29 `#[test]` fns: 5 +

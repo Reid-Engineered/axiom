@@ -4009,7 +4009,7 @@ fn canonical_fixture_loads_and_matches_spec_17() {
     assert_eq!(selection.prerequisite_ids.len(), 2);
 
     let example = &package.examples[0];
-    assert_eq!(example.solution.contains("63"), true);
+    assert!(example.solution.contains("63"));
     assert_eq!(example.hints.len(), 1);
 }
 ```
