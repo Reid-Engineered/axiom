@@ -1,4 +1,4 @@
-mod identifier;
+pub(crate) mod identifier;
 mod manifest;
 mod registry;
 mod source;

@@ -69,6 +69,16 @@ Files expected to change, per the implementation plan's own file lists:
   `pub(crate) mod identifier;`, or a `pub(crate) use identifier::validate_identifier;`
   re-export plus a different import path. Stopped without choosing between them, without
   running later gates, and without touching `knowledge-package/` or plan Task 2+.
+- 2026-08-30 (codex, plan Task 1 resumed): Applied the now-authorized
+  `pub(crate) mod identifier;` change. `knowledge/mod.rs` already matched Task 1 Step 5's
+  final `error`/`identifier` wiring exactly, so no temporary wiring remained to remove.
+  `cargo test --locked knowledge::identifier` passed all 3 tests and
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings.
+  `cargo fmt --all --check` initially required `pub mod knowledge;` before
+  `pub mod modules;`; I adopted rustfmt's canonical ordering because the plan's requested
+  "after modules" placement is semantically irrelevant and cannot coexist with the required
+  formatting gate. The subsequent format check passed. Plan Task 1 is ready for its internal
+  review checkpoint; Task 2 and `knowledge-package/` remain untouched.
 - 2026-08-30 (claude-code): Task created and proposed. Plan Task 1 (error taxonomy +
   identifier types) prompt issued to Codex.
 

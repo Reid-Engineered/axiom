@@ -32,7 +32,7 @@ impl CapabilityId {
     }
 }
 
-fn validate_identifier(value: &str) -> Result<(), ManifestError> {
+pub(crate) fn validate_identifier(value: &str) -> Result<(), ManifestError> {
     let mut segment_count = 0;
 
     for segment in value.split('.') {
