@@ -49,6 +49,25 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 9): Task 8 is accepted and Task 9 authorized. Read only
+  corrected plan Task 9 in full and confirmed its filesystem discovery contract, sorting,
+  rejection logic, and eight-test list are internally consistent. Added all eight
+  prescribed temp-directory tests before implementation and registered the private
+  `discover` module so Cargo compiles the red step; no Task 10+ or `knowledge-package/`
+  work is in scope.
+- 2026-08-30 (codex, plan Task 9): The red run,
+  `cargo test --locked knowledge::discover`, failed as intended because
+  `discover_entities`, both root-file readers, `DiscoveredEntities`, and the six filesystem
+  error variants were undefined. Added the exact deterministic discovery/read helpers,
+  filename-ID enforcement, new errors/Display arms, and the `Io` arm in `Error::source`;
+  no Task 10 reference validation or Task 12 loader assembly was added.
+- 2026-08-30 (codex, plan Task 9): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed all 57 expected tests—the prior 49 plus the
+  8 real-filesystem discovery tests—with 0 failures and 40 filtered out.
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, and
+  `cargo fmt --all --check` passed after mechanical wrapping. Tests cover optional entity
+  directories, deterministic filename sorting, filename/ID enforcement, invalid entries,
+  and missing required root TOML files. Task 10+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 8): Task 7 is accepted and Task 8 authorized. Read only
   plan Task 8 in full and confirmed its composition-only parser contract, production
   imports, and three-test list are internally consistent. Added all three prescribed tests

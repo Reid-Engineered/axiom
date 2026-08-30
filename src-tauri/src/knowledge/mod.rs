@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 
 mod concept;
+mod discover;
 mod error;
 mod example;
 mod example_body;

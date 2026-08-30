@@ -74,6 +74,27 @@ pub enum KnowledgeError {
     EmptyHintsSection {
         entity_id: String,
     },
+    Io {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    MissingPackageToml {
+        path: PathBuf,
+    },
+    MissingSourcesToml {
+        path: PathBuf,
+    },
+    UnexpectedEntityFile {
+        path: PathBuf,
+    },
+    NestedEntityDirectory {
+        path: PathBuf,
+    },
+    FilenameIdMismatch {
+        path: PathBuf,
+        filename_id: String,
+        frontmatter_id: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -133,6 +154,16 @@ impl fmt::Display for KnowledgeError {
             Self::ContentBeforeProblem { entity_id } => write!(f, "example {entity_id} has non-whitespace content before ## Problem"),
             Self::InvalidHintLine { entity_id, line } => write!(f, "example {entity_id}: invalid line under ## Hints (expected \"- <hint>\"): {line}"),
             Self::EmptyHintsSection { entity_id } => write!(f, "example {entity_id} declares ## Hints with no hint items"),
+            Self::Io { path, source } => write!(f, "I/O error reading {}: {source}", path.display()),
+            Self::MissingPackageToml { path } => write!(f, "{} is missing package.toml", path.display()),
+            Self::MissingSourcesToml { path } => write!(f, "{} is missing sources.toml", path.display()),
+            Self::UnexpectedEntityFile { path } => write!(f, "{} is not a recognized entity file (expected <id>.md)", path.display()),
+            Self::NestedEntityDirectory { path } => write!(f, "{} is a nested directory, not permitted inside an entity directory", path.display()),
+            Self::FilenameIdMismatch { path, filename_id, frontmatter_id } => write!(
+                f,
+                "{}: filename implies id \"{filename_id}\" but frontmatter declares \"{frontmatter_id}\"",
+                path.display()
+            ),
         }
     }
 }
@@ -141,6 +172,7 @@ impl Error for KnowledgeError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::TomlSyntax { source, .. } => Some(source),
+            Self::Io { source, .. } => Some(source),
             _ => None,
         }
     }
