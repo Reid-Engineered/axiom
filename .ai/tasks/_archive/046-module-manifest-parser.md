@@ -1,7 +1,7 @@
 ---
 id: 046
 title: module.toml schema + manifest parser/validator
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [045]
