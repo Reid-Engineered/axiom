@@ -1,7 +1,7 @@
 ---
 id: 039
 title: src/services/* swap to invoke() calls
-status: review
+status: done
 owner: claude
 stage: 7
 depends_on: [038]
