@@ -1,49 +1,28 @@
+import { invoke } from '@tauri-apps/api/core';
+
 import type { Module, WorkspaceTemplate } from '../types';
-import { mockModules, mockWorkspaceTemplates } from './mockData/modules';
-import { mockWorkspaces } from './mockData/workspaces';
-
-function findWorkspace(workspaceId: string) {
-  const workspace = mockWorkspaces.find((candidate) => candidate.id === workspaceId);
-  if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`);
-  return workspace;
-}
-
-function findModule(moduleId: string) {
-  const module = mockModules.find((candidate) => candidate.id === moduleId);
-  if (!module) throw new Error(`Module not found: ${moduleId}`);
-  return module;
-}
-
-function forWorkspace(module: Module, enabledModuleIds: string[]): Module {
-  return { ...structuredClone(module), enabled: enabledModuleIds.includes(module.id) };
-}
 
 /** A workspace's modules with enabled state derived from that workspace's installed ids. */
 export async function getModulesByWorkspace(workspaceId: string): Promise<Module[]> {
-  const workspace = findWorkspace(workspaceId);
-  return mockModules.map((module) => forWorkspace(module, workspace.enabledModuleIds));
+  return invoke<Module[]>('getModulesByWorkspace', { workspaceId });
 }
 
 /** Marketplace catalog (screen 9), optionally personalized "for your workspace". */
 export async function getMarketplaceModules(forWorkspaceId?: string): Promise<Module[]> {
-  if (forWorkspaceId) return getModulesByWorkspace(forWorkspaceId);
-  return structuredClone(mockModules);
+  return invoke<Module[]>('getMarketplaceModules', { forWorkspaceId });
 }
 
 export async function getWorkspaceTemplates(): Promise<WorkspaceTemplate[]> {
-  return structuredClone(mockWorkspaceTemplates);
+  return invoke<WorkspaceTemplate[]>('getWorkspaceTemplates');
 }
 
 export async function getModule(id: string): Promise<Module> {
-  return structuredClone(findModule(id));
+  return invoke<Module>('getModule', { id });
 }
 
 /** "Install to Calculus II" (screen 10) — install is always workspace-scoped. */
 export async function installModule(workspaceId: string, moduleId: string): Promise<Module> {
-  const workspace = findWorkspace(workspaceId);
-  const module = findModule(moduleId);
-  if (!workspace.enabledModuleIds.includes(moduleId)) workspace.enabledModuleIds.push(moduleId);
-  return forWorkspace(module, workspace.enabledModuleIds);
+  return invoke<Module>('installModule', { workspaceId, moduleId });
 }
 
 /** Workspace Tools on/off toggle (screen 8). */
@@ -52,13 +31,7 @@ export async function setModuleEnabled(
   moduleId: string,
   enabled: boolean,
 ): Promise<Module> {
-  const workspace = findWorkspace(workspaceId);
-  const module = findModule(moduleId);
-
-  workspace.enabledModuleIds = enabled
-    ? [...new Set([...workspace.enabledModuleIds, moduleId])]
-    : workspace.enabledModuleIds.filter((id) => id !== moduleId);
-  return forWorkspace(module, workspace.enabledModuleIds);
+  return invoke<Module>('setModuleEnabled', { workspaceId, moduleId, enabled });
 }
 
 /**
@@ -71,13 +44,5 @@ export async function setModuleVisibility(
   moduleId: string,
   visibility: Module['visibility'],
 ): Promise<Module> {
-  const workspace = findWorkspace(workspaceId);
-  const module = findModule(moduleId);
-
-  module.visibility = visibility;
-  workspace.enabledModuleIds =
-    visibility !== 'off'
-      ? [...new Set([...workspace.enabledModuleIds, moduleId])]
-      : workspace.enabledModuleIds.filter((id) => id !== moduleId);
-  return forWorkspace(module, workspace.enabledModuleIds);
+  return invoke<Module>('setModuleVisibility', { workspaceId, moduleId, visibility });
 }

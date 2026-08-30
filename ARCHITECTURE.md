@@ -6,7 +6,7 @@ behavior. When the two could be read as disagreeing, the handoff wins on *look a
 this document wins on *how code is organized*.
 
 The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema,
-migration runner, and domain-specific IPC commands; frontend service integration remains.
+migration runner, domain-specific IPC commands, and frontend service integration.
 
 ---
 
@@ -25,10 +25,9 @@ app must function without — this is already a product invariant (`AXIOM-HANDOF
 not just a technical preference.
 
 **Current phase**: the Rust backend owns an internal, mutex-protected `rusqlite` connection,
-with versioned migrations under `src-tauri/src/db/`. The frontend can call only registered
-domain commands; it has no raw database access. The remaining Stage 7 service swap changes
-`src/services/*` from mock data to those commands without changing components, hooks, or
-pages. See §5.
+with versioned migrations under `src-tauri/src/db/`. The frontend calls only registered
+domain commands through `src/services/*`; it has no raw database access. Mock fixtures now
+back the test IPC adapter and remain available for the sample-data import. See §5.
 
 ---
 
@@ -144,22 +143,22 @@ service function signatures, component props, mock fixtures — is written again
 ## 5. Data flow
 
 ```
-mockData/*.ts  →  services/*Service.ts  →  hooks/use*.ts  →  pages/*Page.tsx  →  components/*
-   (Stage 4)          (Stage 4)               (Stage 4)          (Stage 5-6)      (Stage 1-3)
+SQLite → #[tauri::command] → services/*Service.ts → hooks/use*.ts → pages/*Page.tsx → components/*
+                                  invoke()             (Stage 4)       (Stage 5-6)     (Stage 1-3)
 
-  [Stage 7 swap: mockData + services/* replaced by Tauri commands.
-   Everything to the right of services/* is unchanged.]
+mockData/*.ts → test/mockBackend.ts → mocked Tauri IPC
+ retained fixtures    test-only adapter     same service boundary
 ```
 
 Rules, in order of how often they'll be checked in review:
 
 1. **Only hooks call services.** A component or page never imports from `services/`
-   directly — it calls a hook. This is what makes the Stage 7 backend swap safe: hooks are
-   the only thing that needs to know a service function is now `invoke()`-backed instead of
-   an in-memory filter.
-2. **Services are `async` now, on purpose**, even though `mockData/` is a synchronous array.
-   `getConceptsByWorkspace(id): Promise<Concept[]>` today, real IPC tomorrow — no caller
-   changes shape.
+   directly — it calls a hook. Services own the Tauri `invoke()` boundary; hooks and every
+   layer to their right remain unaware of IPC.
+2. **Services preserve the locked async signatures.** For example,
+   `getConceptsByWorkspace(id): Promise<Concept[]>` has the same caller-facing shape it had
+   against mock data. Tests exercise those services through Tauri's mocked IPC, not by
+   swapping service implementations.
 3. **State ownership**: domain data (workspaces, goals, concepts, modules, sessions) is
    owned by the hook that fetched it, held in that hook's local `useState`, never lifted into
    a global store. Cross-cutting state — current route, active overlay, active workspace id —
@@ -182,7 +181,8 @@ Rules, in order of how often they'll be checked in review:
 
 Every hook in `hooks/` is designed to be testable without rendering a component: it takes
 plain arguments and returns plain data, so `renderHook` (Vitest + React Testing Library) is
-enough — no need for a mounted page just to verify `useWorkspaceConcepts` filters correctly.
+enough. `src/test/setup.ts` installs Tauri's official IPC mock, and `test/mockBackend.ts`
+serves the retained fixtures behind the same command names and payloads used in production.
 See `AGENTS.md` §Testing for the policy this shape exists to support.
 
 ---
