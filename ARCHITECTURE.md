@@ -69,6 +69,7 @@ axiom/
       commands/               domain IPC handlers + shared serialized DTOs
       db/                      connection setup, schema, migrations, queries
         migrations/            ordered SQL migrations embedded in the Rust binary
+      modules/                 validated module manifests + discovery boundary
       main.rs
     Cargo.toml
     tauri.conf.json

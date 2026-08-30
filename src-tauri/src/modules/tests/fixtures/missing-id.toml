@@ -1,0 +1,6 @@
+manifest_version = 1
+id = ""
+name = "Missing ID"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"

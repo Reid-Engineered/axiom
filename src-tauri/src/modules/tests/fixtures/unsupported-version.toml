@@ -1,0 +1,6 @@
+manifest_version = 2
+id = "org.axiom.unsupported"
+name = "Unsupported Manifest Version"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"

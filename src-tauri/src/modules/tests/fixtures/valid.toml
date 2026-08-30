@@ -1,0 +1,14 @@
+manifest_version = 1
+id = "org.axiom.test_fixture"
+name = "Test Fixture"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
+
+[[provides]]
+id = "fixture.echo"
+version = 1
+
+[[requires]]
+id = "knowledge.query"
+min_version = 1

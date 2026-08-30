@@ -1,0 +1,6 @@
+manifest_version = 1
+id = "org.axiom.malformed_version"
+name = "Malformed Version"
+version = "not-semver"
+minimum_axiom_version = "0.1.0"
+offline = "full"

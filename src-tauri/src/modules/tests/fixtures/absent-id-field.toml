@@ -1,0 +1,5 @@
+manifest_version = 1
+name = "Absent ID Field"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"

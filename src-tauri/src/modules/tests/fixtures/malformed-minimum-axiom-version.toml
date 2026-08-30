@@ -1,0 +1,6 @@
+manifest_version = 1
+id = "org.axiom.malformed_minimum"
+name = "Malformed Minimum Axiom Version"
+version = "0.1.0"
+minimum_axiom_version = "still-not-semver"
+offline = "full"
