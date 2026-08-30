@@ -378,6 +378,21 @@ at the plan level and verified by hand before re-issuing, same discipline as Tas
 
 **Verdict: accepted.** Plan Task 6 (Concept/Objective entity parsers) authorized.
 
+### Plan Task 6 — Concept/Objective entity parsers (commit `2a3b813`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 31 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. This confirms in practice, not just by inspection, that the pre-emptive
+`ProvenanceKind` import fix actually works — no `unused_imports` regression. Diffed
+`concept.rs`, `objective.rs`, `provenance.rs`, `error.rs`, `mod.rs` against the plan — all
+match exactly, including the `O(n²)` exact-duplicate-provenance scan and the empty-locator
+rule. First task in a while with no blocker at all; the pre-trace before issuing paid for
+itself.
+
+**Verdict: accepted.** Plan Task 7 (Example body grammar parser) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
