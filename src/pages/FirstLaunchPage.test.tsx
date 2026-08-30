@@ -14,6 +14,9 @@ function Harness() {
   return (
     <>
       <span data-testid="route">{route.type}</span>
+      <span data-testid="route-subject">
+        {route.type === 'createWorkspace' ? route.subject : undefined}
+      </span>
       <span data-testid="workspace">{activeWorkspaceId}</span>
       <FirstLaunchPage />
     </>
@@ -21,6 +24,24 @@ function Harness() {
 }
 
 describe('FirstLaunchPage', () => {
+  it('carries the typed subject to Create Workspace', () => {
+    render(
+      <WorkspaceProvider>
+        <NavigationProvider>
+          <Harness />
+        </NavigationProvider>
+      </WorkspaceProvider>,
+    );
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Subject' }), {
+      target: { value: 'Organic Chemistry' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(screen.getByTestId('route')).toHaveTextContent('createWorkspace');
+    expect(screen.getByTestId('route-subject')).toHaveTextContent('Organic Chemistry');
+  });
+
   it('imports and opens the sample workspace through the real hook', async () => {
     render(
       <WorkspaceProvider>

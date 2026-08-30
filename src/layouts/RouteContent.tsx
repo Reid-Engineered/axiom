@@ -32,7 +32,7 @@ export function RouteContent({ route, sidebar }: RouteContentProps) {
     case 'createWorkspace':
       return (
         <AppShell>
-          <CreateWorkspacePage />
+          <CreateWorkspacePage subject={route.subject} />
         </AppShell>
       );
     case 'home':

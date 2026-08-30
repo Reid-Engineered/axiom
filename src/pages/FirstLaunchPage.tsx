@@ -21,8 +21,7 @@ export function FirstLaunchPage(_props: FirstLaunchPageProps) {
   const continueToSetup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const submittedSubject = subject.trim() || 'Calculus II';
-    setSubject(submittedSubject);
-    navigate({ type: 'createWorkspace' });
+    navigate({ type: 'createWorkspace', subject: submittedSubject });
   };
 
   const exploreSampleWorkspace = async () => {

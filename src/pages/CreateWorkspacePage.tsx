@@ -8,7 +8,9 @@ import { useWorkspaces } from '../hooks/useWorkspaces';
 import { CenteredColumnLayout } from '../layouts/CenteredColumnLayout';
 import styles from './CreateWorkspacePage.module.css';
 
-export type CreateWorkspacePageProps = Record<string, never>;
+export type CreateWorkspacePageProps = {
+  subject?: string;
+};
 
 /** Natural-language workspace creation and inferred-goal confirmation. */
 const initialFacets = [
@@ -19,11 +21,11 @@ const initialFacets = [
   'Tools · Tutor, Practice, Visualizer, Notes',
 ];
 
-export function CreateWorkspacePage(_props: CreateWorkspacePageProps) {
+export function CreateWorkspacePage({ subject }: CreateWorkspacePageProps) {
   const { navigate } = useNavigation();
   const { setActiveWorkspaceId } = useWorkspace();
   const { createWorkspace } = useWorkspaces();
-  const [subject, setSubject] = useState('Calculus II');
+  const [workspaceSubject, setWorkspaceSubject] = useState(subject ?? 'Calculus II');
   const [goalText, setGoalText] = useState(
     'I want to deeply understand Calc II and be ready for my final in December.',
   );
@@ -34,11 +36,11 @@ export function CreateWorkspacePage(_props: CreateWorkspacePageProps) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!subject.trim() || !goalText.trim()) return;
+    if (!workspaceSubject.trim() || !goalText.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
-      const workspace = await createWorkspace({ subject, goalText });
+      const workspace = await createWorkspace({ subject: workspaceSubject, goalText });
       setActiveWorkspaceId(workspace.id);
       navigate({ type: 'home' });
     } catch (cause) {
@@ -60,7 +62,10 @@ export function CreateWorkspacePage(_props: CreateWorkspacePageProps) {
 
         <label className={styles.field}>
           <span>Subject</span>
-          <input value={subject} onChange={(event) => setSubject(event.target.value)} />
+          <input
+            value={workspaceSubject}
+            onChange={(event) => setWorkspaceSubject(event.target.value)}
+          />
         </label>
 
         <label className={styles.field}>
@@ -99,7 +104,11 @@ export function CreateWorkspacePage(_props: CreateWorkspacePageProps) {
         {error ? <p className={styles.error} role="alert">{error}</p> : null}
         <footer className={styles.footer}>
           <div>
-            <Button size="lg" type="submit" disabled={submitting || !subject.trim() || !goalText.trim()}>
+            <Button
+              size="lg"
+              type="submit"
+              disabled={submitting || !workspaceSubject.trim() || !goalText.trim()}
+            >
               {submitting ? 'Creating…' : 'Create Workspace'}
             </Button>
             <Button size="lg" variant="secondary" onClick={() => navigate({ type: 'firstLaunch' })}>Cancel</Button>

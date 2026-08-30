@@ -4,7 +4,7 @@ import type { HomePageVariant } from '../pages/HomePage';
 
 export type Route =
   | { type: 'firstLaunch' }
-  | { type: 'createWorkspace' }
+  | { type: 'createWorkspace'; subject?: string }
   | { type: 'home'; variant?: HomePageVariant }
   | { type: 'workspaceOverview'; workspaceId: string }
   | { type: 'studySession'; sessionId: string }

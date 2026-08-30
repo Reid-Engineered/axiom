@@ -10,16 +10,33 @@ import { CreateWorkspacePage } from './CreateWorkspacePage';
 function Harness() {
   const { route } = useNavigation();
   const { activeWorkspaceId } = useWorkspace();
+  const subject = route.type === 'createWorkspace' ? route.subject : undefined;
   return (
     <>
       <span data-testid="route">{route.type}</span>
       <span data-testid="workspace">{activeWorkspaceId}</span>
-      <CreateWorkspacePage />
+      <CreateWorkspacePage subject={subject} />
     </>
   );
 }
 
 describe('CreateWorkspacePage', () => {
+  it('uses the subject carried by the Create Workspace route', () => {
+    render(
+      <WorkspaceProvider>
+        <NavigationProvider
+          initialRoute={{ type: 'createWorkspace', subject: 'Organic Chemistry' }}
+        >
+          <Harness />
+        </NavigationProvider>
+      </WorkspaceProvider>,
+    );
+
+    expect(screen.getByRole('textbox', { name: 'Subject' })).toHaveValue(
+      'Organic Chemistry',
+    );
+  });
+
   it('renders inferred facets, allows adjustment, and creates through the real hook', async () => {
     render(
       <WorkspaceProvider>
