@@ -21,6 +21,11 @@ Swap `src/services/*` from `mockData/` reads to `invoke()` calls — signatures 
 
 ## Worklog
 
+- 2026-08-29 (Codex, from 038): `get_active_session_by_workspace` returns Rust
+  `Option<Session>`, whose IPC representation is `Session | null`. Preserve the locked
+  service signature `Promise<Session | undefined>` by normalizing the invoke result with
+  `?? undefined`; callers and hook tests should not change.
+
 ## What was built / tested / left out
 
 Filled in when moving to `review`.

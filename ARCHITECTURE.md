@@ -5,8 +5,8 @@ data flow; `reference/UI/AXIOM-HANDOFF.md` is authoritative for visual design an
 behavior. When the two could be read as disagreeing, the handoff wins on *look and behavior*,
 this document wins on *how code is organized*.
 
-The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema
-and migration runner; IPC commands and service integration remain to be implemented.
+The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema,
+migration runner, and domain-specific IPC commands; frontend service integration remains.
 
 ---
 
@@ -24,10 +24,11 @@ Any future network calls (marketplace fetch, module updates) are additive enhanc
 app must function without — this is already a product invariant (`AXIOM-HANDOFF.md` §6.12),
 not just a technical preference.
 
-**Current phase**: the Rust backend owns an internal `rusqlite` connection, with versioned
-migrations under `src-tauri/src/db/`. No database access is exposed to the frontend; Stage 7
-adds domain-specific IPC commands and swaps `src/services/*` from mock data to those commands,
-without changing components, hooks, or pages. See §5.
+**Current phase**: the Rust backend owns an internal, mutex-protected `rusqlite` connection,
+with versioned migrations under `src-tauri/src/db/`. The frontend can call only registered
+domain commands; it has no raw database access. The remaining Stage 7 service swap changes
+`src/services/*` from mock data to those commands without changing components, hooks, or
+pages. See §5.
 
 ---
 
@@ -66,7 +67,7 @@ axiom/
     main.tsx
   src-tauri/                # Rust backend (Stage 7+)
     src/
-      commands/               one module per domain (workspace, goal, concept, module, session)
+      commands/               domain IPC handlers + shared serialized DTOs
       db/                      connection setup, schema, migrations, queries
         migrations/            ordered SQL migrations embedded in the Rust binary
       main.rs
