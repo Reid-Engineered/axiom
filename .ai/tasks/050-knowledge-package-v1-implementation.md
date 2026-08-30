@@ -49,6 +49,22 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 2): Task 1 is accepted and Task 2 authorized. Read only
+  plan Task 2 in full and confirmed its domain-type contract is consistent. Added the
+  prescribed `Example` JSON round-trip test before the types, with the final `mod types;`
+  declaration so Cargo compiles the red test; no Task 3+ files or `knowledge-package/`
+  changes are in scope.
+- 2026-08-30 (codex, plan Task 2): The red run, `cargo test --locked knowledge::types`,
+  failed as intended because `Example`, `ProvenanceRef`, `SourceLocator`, and
+  `ProvenanceKind` were undefined. Added exactly the eight prescribed serde domain types
+  and Task 2's exact `knowledge/mod.rs` exports, without constructors, validation, or new
+  `KnowledgeError` variants.
+- 2026-08-30 (codex, plan Task 2): Green/gates complete. `cargo test --locked knowledge::`
+  passed 4 tests (the 3 Task 1 identifier tests plus the new `Example` JSON round trip),
+  with 0 failures and 40 filtered out. `cargo clippy --all-targets --locked -- -D warnings`
+  passed with zero warnings, and `cargo fmt --all --check` passed without changes. Task 2
+  required no unspecified implementation choice and exposed no blocker or spec/plan
+  contradiction; Task 3+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 1): Claimed task 050 after re-reading spec §§1–2,
   `modules/identifier.rs`, and only the corrected plan preamble/Global Constraints/Task 1.
   The prior error-taxonomy contradiction is resolved: this step will add exactly
