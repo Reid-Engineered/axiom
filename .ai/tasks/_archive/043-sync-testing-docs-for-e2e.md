@@ -1,7 +1,7 @@
 ---
 id: 043
 title: Sync AGENTS.md and quality-gates.md for the activated E2E suite
-status: review
+status: done
 owner: claude
 stage: 7
 depends_on: [040]
