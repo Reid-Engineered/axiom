@@ -49,6 +49,28 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 5): Task 4 is accepted and Task 5 authorized. Read only
+  plan Task 5 in full and confirmed its splitter contract and seven-test list are
+  consistent. Added all seven prescribed tests before implementation and registered the
+  private `frontmatter` module so Cargo compiles the red tests. The function remains pure
+  string input/output with `Path` used only for error context; no Task 6+ or
+  `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 5): The red run,
+  `cargo test --locked knowledge::frontmatter`, failed as intended because
+  `split_frontmatter` and the three frontmatter error variants were undefined. Added the
+  exact enum/Display additions and the specified pure string splitter; it normalizes CRLF,
+  scans only the supplied text, and uses `Path` solely when constructing errors.
+- 2026-08-30 (codex, plan Task 5 blocker): The exact Step 3 implementation contradicts
+  three locked Step 1 assertions. Rust `str::split('\n')` retains a final empty element for
+  newline-terminated input; joining `remaining[body_start..]` and then appending another
+  newline makes `"Body text.\n"`, `"Body.\n"`, and the two-paragraph body each return with
+  two trailing newlines. `cargo test --locked knowledge::` therefore produced 20 passes
+  and 3 failures (`splits_toml_and_body`, `accepts_crlf_line_endings`, and
+  `trims_leading_blank_lines_from_body_but_preserves_internal_blank_lines`). Fixing this
+  requires changing the locked implementation—for example, using `split_terminator` or
+  conditionally avoiding the extra newline. Stopped without selecting a new contract,
+  without running later gates, and without committing; Task 6+ and `knowledge-package/`
+  remain untouched.
 - 2026-08-30 (codex, plan Task 4): Task 3 is accepted and Task 4 authorized. Read only
   plan Task 4 in full. Its current Step 1 contains eight mandatory tests—the original six
   cases plus the two structural `schema_version` cases added during review—so the green
@@ -171,6 +193,19 @@ Files expected to change, per the implementation plan's own file lists:
   found and fixed four stale "Task 13 (loader)" references in the plan (loader is Task 12;
   these were leftover from an earlier numbering pass) plus one resulting off-by-one ("Tasks
   9–12" → "Tasks 9–11"). Plan re-committed; nothing in `src-tauri/` touched by this fix.
+
+- 2026-08-30 (claude-code): Confirmed Codex's Task 5 blocker by hand-tracing the exact Step
+  3 code against all three failing cases. `"...Body text.\n".split('\n')` yields a trailing
+  empty-string element because the input ends in the delimiter, not merely contains it; that
+  element survives into `remaining`, folds into `body_text` via `.join("\n")`, and collides
+  with the `+ "\n"` appended after it — `"Body text.\n" + "\n"` = `"Body text.\n\n"`, exactly
+  the double-trailing-newline Codex reported. Fixed `docs/superpowers/plans/2026-08-30-
+  knowledge-package-v1.md` Task 5 Step 3: `normalized.split('\n')` → `normalized.split_
+  terminator('\n')`, which drops that spurious trailing element. Re-traced all three
+  originally-failing tests plus the CRLF and internal-blank-line-preservation cases by hand
+  against the corrected version — all come out exactly as each test expects. One-line fix,
+  no other line in Step 3 needed to change. Nothing in `src-tauri/` touched by this fix;
+  Codex's uncommitted Task 5 work stays as-is for it to pick back up.
 
 ## What was built / tested / left out
 

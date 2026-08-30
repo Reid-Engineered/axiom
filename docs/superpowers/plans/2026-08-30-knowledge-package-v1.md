@@ -1065,7 +1065,12 @@ pub(crate) fn split_frontmatter<'a>(
     }
 
     let normalized = raw.replace("\r\n", "\n");
-    let mut lines = normalized.split('\n');
+    // split_terminator, not split: `split('\n')` on a newline-terminated string yields a
+    // trailing empty element (the input ends in the delimiter, not just contains it), which
+    // survives into `remaining`, gets folded into `body_text` below, and then collides with
+    // the `+ "\n"` appended after it — producing two trailing newlines instead of one.
+    // split_terminator drops that spurious trailing element.
+    let mut lines = normalized.split_terminator('\n');
 
     match lines.next() {
         Some(DELIMITER) => {}
