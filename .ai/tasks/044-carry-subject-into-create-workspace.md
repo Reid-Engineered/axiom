@@ -1,7 +1,7 @@
 ---
 id: 044
 title: Carry the first-launch subject into Create Workspace
-status: proposed
+status: review
 owner: codex
 stage: 7
 depends_on: []
@@ -93,11 +93,64 @@ the `??` fallback is what preserves current behavior for the entry points that p
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+**Built**
+
+- Added an optional `subject` to the `createWorkspace` route, forwarded it through
+  `RouteContent`, and used it to seed Create Workspace while preserving the existing
+  `'Calculus II'` fallback for routes that omit it.
+- First Launch now attaches its trimmed/defaulted subject to the route and no longer writes
+  the submitted value into state immediately before navigation.
+- Added coverage proving the typed subject is present on the navigated route and initializes
+  the Create Workspace Subject input. The existing no-subject creation test still passes.
+
+**Tested**
+
+- `npm test -- src/pages/FirstLaunchPage.test.tsx src/pages/CreateWorkspacePage.test.tsx` —
+  passed, 2 files / 5 tests.
+- `npm run typecheck` — passed with zero errors; all `Route` consumers typecheck, including
+  the four unchanged `navigate({ type: 'createWorkspace' })` call sites that omit `subject`.
+- `npm run lint` — passed with zero errors or warnings.
+- `npm run build` — passed.
+- `npm test` — passed, 57 files / 137 tests.
+- `rg -n "#[0-9a-fA-F]{3,6}|rgba\\(" src --glob '!src/styles/tokens.css'` — no matches;
+  no hardcoded design values were introduced.
+- `npm run test:e2e:linux` — not run: `WebKitWebDriver` is not available on `PATH` in this
+  environment. `xvfb-run` is available and `tauri-driver` exists under
+  `/home/marcus/.cargo/bin`, but the native WebKit driver prerequisite is missing.
+
+**Left out**
+
+- The no-subject pre-fill and empty-submit fallback remain unchanged, as required by the
+  Follow-ups below. No production command surface or other screens were changed.
 
 ## Review
+Reviewer: claude-code
+Date: 2026-08-30
+- [x] Correctness — pass. Matches the locked contract exactly: `Route`'s `createWorkspace`
+      variant gains optional `subject`, `RouteContent.tsx` forwards it the same way as other
+      route params, `CreateWorkspacePage` seeds `useState(subject ?? 'Calculus II')` (renamed
+      the local state to `workspaceSubject` to avoid shadowing the prop — a reasonable call,
+      not a contract deviation), and `FirstLaunchPage`'s dead `setSubject` write is removed.
+      Checked all five `navigate({ type: 'createWorkspace' })` call sites myself
+      (`App.tsx:104`, `HomePage.tsx:83,107,391`, `FirstLaunchPage.tsx:77`) — the four that
+      pass nothing are untouched and still compile against the optional field.
+- [x] Architecture conformance — pass. Shared type change (`Route`) called out explicitly in
+      the task file as required; typecheck covers all consumers, re-ran it myself and it's
+      clean. No new global state, no component importing a service directly.
+- [x] UI rules — pass. No markup or CSS touched; re-checked for hardcoded hex/`rgba(` in the
+      diff by inspection (only `tokens.css` itself carries literal values, which is the
+      source of truth, not a violation).
+- [x] Process — pass. Re-ran `npm run typecheck`, `npm run lint`,
+      `npm test -- src/pages/FirstLaunchPage.test.tsx src/pages/CreateWorkspacePage.test.tsx`
+      (5/5) myself — all clean, matching the task file's claims. Did not re-run the full
+      137-test suite or `npm run build` myself but have no reason to doubt them given the
+      focused run and typecheck both passed clean. `npm run test:e2e:linux` not run — same
+      missing-`WebKitWebDriver` environment blocker as 042, disclosed honestly rather than
+      claimed. New tests cover the actual behavior change (subject carried on the route,
+      Create Workspace seeded from it) and the pre-existing no-subject test still passes
+      unchanged, which is the real regression check for the `??` fallback.
 
-Filled in by the reviewing agent. See `.ai/review-checklist.md`.
+Verdict: pass
 
 ## Follow-ups
 
