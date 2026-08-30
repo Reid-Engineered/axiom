@@ -6,6 +6,7 @@
 
 mod concept;
 mod error;
+mod example_body;
 mod frontmatter;
 mod identifier;
 mod objective;

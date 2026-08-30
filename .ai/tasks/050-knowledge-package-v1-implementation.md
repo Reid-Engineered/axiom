@@ -49,6 +49,25 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 7): Task 6 is accepted and Task 7 authorized. Read only
+  plan Task 7 in full and confirmed its closed-heading grammar, helper contract, and
+  fifteen-test list are internally consistent. Added all 15 prescribed tests before the
+  parser and registered the private `example_body` module so Cargo compiles the red step;
+  no Task 8+ or `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 7): The red run,
+  `cargo test --locked knowledge::example_body`, failed as intended because
+  `parse_example_body`, `ParsedExampleBody`, and the seven grammar error variants were
+  undefined. Added the exact error/Display additions and parser with its
+  `section_name`/`section_text`/`parse_hints` helpers; no Example frontmatter or entity-file
+  parsing from Task 8 was added.
+- 2026-08-30 (codex, plan Task 7): Green/gates complete. The final
+  `cargo test --locked knowledge::` run passed all 46 expected tests—the prior 31 plus the
+  15 body-grammar tests—with 0 failures and 40 filtered out.
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings, and
+  `cargo fmt --all --check` passed after mechanical wrapping. Exact `## Problem`/
+  `## Solution`/`## Hints` recognition, opaque deeper headings, optional ordered hints, and
+  all prescribed rejection cases are covered. Task 8+ and `knowledge-package/` remain
+  untouched.
 - 2026-08-30 (codex, plan Task 6): Task 5 is accepted and Task 6 authorized. Read only
   plan Task 6 in full. The corrected import placement is internally consistent, but the
   current Step 1 contains six Concept tests rather than the prompt's five; together with

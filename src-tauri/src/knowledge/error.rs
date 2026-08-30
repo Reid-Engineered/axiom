@@ -48,6 +48,32 @@ pub enum KnowledgeError {
     EmptySourceLocator {
         entity_id: String,
     },
+    MissingExampleSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    DuplicateExampleSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    OutOfOrderExampleSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    UnknownExampleSection {
+        entity_id: String,
+        heading: String,
+    },
+    ContentBeforeProblem {
+        entity_id: String,
+    },
+    InvalidHintLine {
+        entity_id: String,
+        line: String,
+    },
+    EmptyHintsSection {
+        entity_id: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -100,6 +126,13 @@ impl fmt::Display for KnowledgeError {
                 f,
                 "{entity_id} declares a provenance locator with no section, pages, or label"
             ),
+            Self::MissingExampleSection { entity_id, section } => write!(f, "example {entity_id} is missing required section ## {section}"),
+            Self::DuplicateExampleSection { entity_id, section } => write!(f, "example {entity_id} declares ## {section} more than once"),
+            Self::OutOfOrderExampleSection { entity_id, section } => write!(f, "example {entity_id}: ## {section} appears out of the required Problem/Solution/Hints order"),
+            Self::UnknownExampleSection { entity_id, heading } => write!(f, "example {entity_id} contains unrecognized heading: {heading}"),
+            Self::ContentBeforeProblem { entity_id } => write!(f, "example {entity_id} has non-whitespace content before ## Problem"),
+            Self::InvalidHintLine { entity_id, line } => write!(f, "example {entity_id}: invalid line under ## Hints (expected \"- <hint>\"): {line}"),
+            Self::EmptyHintsSection { entity_id } => write!(f, "example {entity_id} declares ## Hints with no hint items"),
         }
     }
 }
