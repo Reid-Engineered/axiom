@@ -412,6 +412,20 @@ itself.
 
 **Verdict: accepted.** Plan Task 7 (Example body grammar parser) authorized.
 
+### Plan Task 7 — Example body grammar parser (commit `b714c50`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 46 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. Diffed `example_body.rs` against the plan — matches verbatim, including the
+`section_name`/`section_text`/`parse_hints` helpers. Confirms the pre-trace (heading
+detection, ordering, `&&str` handling in `parse_hints`, `starts_with("## ")` correctly
+treating `### sub-headings` as opaque) held up in practice — no blocker this round, second
+task in a row with none.
+
+**Verdict: accepted.** Plan Task 8 (Example entity parser) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
