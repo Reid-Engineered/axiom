@@ -49,6 +49,19 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 12 review): Reviewed the Task 12 implementation
+  (commit `58e4fea`) against plan Task 12 Steps 1–4. `loader.rs` matches the plan's
+  prescribed test module and implementation verbatim; `mod.rs` matches Step 4's full
+  replacement exactly — `#![allow(dead_code)]` is gone, and only `load_knowledge_package`,
+  `related_concepts`, the domain/identifier types, and `KnowledgeError` are exported.
+  Re-ran the gates: `cargo test --locked knowledge::` passes 73/73, `cargo clippy
+  --all-targets --locked -- -D warnings` is clean with no dead-code allowance present,
+  `cargo build --locked` succeeds, `cargo fmt --all --check` passes. **Task 12 is
+  accepted.** This closes out the runtime module proper (Tasks 1–12) — the loader is now
+  the crate's sole public entry point. Plan Task 13 (end-to-end conformance corpus) is
+  authorized next. Task 13 adds no new production code and its own commit line
+  (`tests/`, `mod.rs`) already covers every file it touches, so the Task 11 commit-scope
+  gap doesn't apply here.
 - 2026-08-30 (codex, plan Task 12): Task 11 is accepted and Task 12 authorized. Read the
   full task file and only plan Task 12 in full; its loader composition, final public API,
   three-test list, and commit scope are internally consistent. Added the prescribed loader
