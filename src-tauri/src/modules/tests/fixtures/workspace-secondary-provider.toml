@@ -1,0 +1,10 @@
+manifest_version = 1
+id = "org.axiom.workspace_secondary"
+name = "Workspace Secondary Provider"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
+
+[[provides]]
+id = "fixture.secondary"
+version = 1

@@ -2,6 +2,11 @@ use semver::Version;
 
 use super::*;
 
+mod conformance;
+#[path = "fixtures/providers.rs"]
+mod providers;
+mod registry;
+
 fn fixture(name: &str) -> &'static str {
     match name {
         "valid.toml" => include_str!("fixtures/valid.toml"),
@@ -18,6 +23,33 @@ fn fixture(name: &str) -> &'static str {
         "absent-id-field.toml" => include_str!("fixtures/absent-id-field.toml"),
         "incompatible-axiom-version.toml" => {
             include_str!("fixtures/incompatible-axiom-version.toml")
+        }
+        "duplicate-module-id-first.toml" => {
+            include_str!("fixtures/duplicate-module-id-first.toml")
+        }
+        "duplicate-module-id-second.toml" => {
+            include_str!("fixtures/duplicate-module-id-second.toml")
+        }
+        "duplicate-provider-first.toml" => {
+            include_str!("fixtures/duplicate-provider-first.toml")
+        }
+        "duplicate-provider-second.toml" => {
+            include_str!("fixtures/duplicate-provider-second.toml")
+        }
+        "workspace-secondary-provider.toml" => {
+            include_str!("fixtures/workspace-secondary-provider.toml")
+        }
+        "parse-register-valid-echo.toml" => {
+            include_str!("fixtures/parse-register-valid-echo.toml")
+        }
+        "parse-register-valid-secondary.toml" => {
+            include_str!("fixtures/parse-register-valid-secondary.toml")
+        }
+        "parse-register-malformed.toml" => {
+            include_str!("fixtures/parse-register-malformed.toml")
+        }
+        "conformance-multiple-capabilities.toml" => {
+            include_str!("fixtures/conformance-multiple-capabilities.toml")
         }
         _ => panic!("unknown fixture: {name}"),
     }

@@ -1,0 +1,14 @@
+manifest_version = 1
+id = "org.axiom.conformance"
+name = "Conformance Multiple Capabilities"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
+
+[[provides]]
+id = "fixture.echo"
+version = 1
+
+[[provides]]
+id = "fixture.transform"
+version = 2
