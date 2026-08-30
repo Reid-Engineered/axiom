@@ -49,6 +49,40 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 10): Task 9 is accepted and Task 10 authorized. Read only
+  plan Task 10 in full and confirmed its cross-entity reference table, shared-lifetime
+  helper signature, and five-test list are internally consistent. Added all five prescribed
+  tests before implementation and registered the private `validate` module so Cargo
+  compiles the red step; no Task 11+ or `knowledge-package/` work is in scope.
+- 2026-08-30 (codex, plan Task 10): The red run,
+  `cargo test --locked knowledge::validate`, failed as intended because
+  `validate_references`, `DiscoveredEntities`/domain imports through the outer module, and
+  the four reference error variants were undefined. Added the exact fixed-order validator,
+  shared-lifetime provenance helper, and new error/Display additions; prerequisite/
+  related relationship validation remains out of scope until Task 11.
+- 2026-08-30 (codex, plan Task 10 blocker): The exact Step 1 tests plus Step 3
+  implementation do not compile. The test helpers construct and return `Concept`,
+  `Objective`, and `Example`, but the test module explicitly imports only
+  `ProvenanceKind`/`ProvenanceRef`, and Step 3's outer production imports expose only
+  `ProvenanceRef`/`Source` through `use super::*`. `cargo test --locked knowledge::`
+  therefore fails with six E0422/E0425 errors for the three missing domain type names.
+  The smallest correction is to import `Concept`, `Objective`, and `Example` inside the
+  test module alongside its other test-only domain imports. Stopped without changing the
+  locked import contract, without running later gates, and without committing; Task 11+
+  and `knowledge-package/` remain untouched.
+- 2026-08-30 (claude-code, plan Task 10 blocker triage): Confirmed the blocker is a real
+  plan defect, not a Codex error. `validate_references`'s production code in `validate.rs`
+  never names `Concept`/`Objective`/`Example` — it only reaches them through
+  `DiscoveredEntities` field access and inference — so `use super::*` cannot supply those
+  three names to the test module regardless of what the outer scope imports. The plan's
+  Step 1 test-module import line only listed `ProvenanceKind, ProvenanceRef`, missing the
+  three types the helper functions construct by name. Fixed the plan (Task 10 Step 1) to
+  import `Concept, Example, Objective, ProvenanceKind, ProvenanceRef` with a comment
+  explaining why the glob import doesn't cover them. Proactively checked Task 11
+  (`relationships.rs`) and Task 12 (`loader.rs`) test modules for the same class of gap —
+  both are clean: their production code explicitly imports `Concept` and `KnowledgeError`
+  respectively at outer scope, so `use super::*` does supply those names to their test
+  modules. No other plan fix needed before re-issuing Task 10.
 - 2026-08-30 (codex, plan Task 9): Task 8 is accepted and Task 9 authorized. Read only
   corrected plan Task 9 in full and confirmed its filesystem discovery contract, sorting,
   rejection logic, and eight-test list are internally consistent. Added all eight

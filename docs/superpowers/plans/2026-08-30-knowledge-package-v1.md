@@ -2405,7 +2405,12 @@ Create `src-tauri/src/knowledge/validate.rs`:
 mod tests {
     use super::*;
     use crate::knowledge::identifier::{ConceptId, ExampleId, ObjectiveId, SourceId};
-    use crate::knowledge::types::{ProvenanceKind, ProvenanceRef};
+    // Concept, Example, Objective aren't imported anywhere validate.rs's own production
+    // code reaches — that code only ever touches them through DiscoveredEntities field
+    // access and inference, never naming the types directly — so `use super::*` doesn't
+    // bring them into this test module either. The helpers below construct them by name
+    // directly, so they need their own explicit import here.
+    use crate::knowledge::types::{Concept, Example, Objective, ProvenanceKind, ProvenanceRef};
 
     fn source(id: &str) -> Source {
         Source {
