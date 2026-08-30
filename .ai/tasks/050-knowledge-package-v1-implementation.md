@@ -71,6 +71,18 @@ Files expected to change, per the implementation plan's own file lists:
   conditionally avoiding the extra newline. Stopped without selecting a new contract,
   without running later gates, and without committing; Task 6+ and `knowledge-package/`
   remain untouched.
+- 2026-08-30 (codex, plan Task 5 resumed/blocker): Re-read corrected Step 3 after commit
+  `9a3e8f7` and changed only `split('\n')` to `split_terminator('\n')`. The full
+  `cargo test --locked knowledge::` run then passed all 23 expected tests with 0 failures
+  and 40 filtered out, resolving the trailing-newline defect. A second locked-code/gate
+  conflict surfaced: Step 3 explicitly declares `split_frontmatter<'a>` with `raw: &'a str`,
+  but the function returns owned strings and does not otherwise use the lifetime, so
+  `cargo clippy --all-targets --locked -- -D warnings` fails on
+  `clippy::needless_lifetimes`. Fixing it requires eliding the prescribed lifetime or adding
+  an unprescribed Clippy exemption. `cargo fmt --all --check` also reports only mechanical
+  wrapping/module-order changes, but no formatting was applied after the Clippy blocker.
+  Stopped without selecting another contract and without committing; Task 6+ and
+  `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 4): Task 3 is accepted and Task 4 authorized. Read only
   plan Task 4 in full. Its current Step 1 contains eight mandatory tests—the original six
   cases plus the two structural `schema_version` cases added during review—so the green
@@ -206,6 +218,20 @@ Files expected to change, per the implementation plan's own file lists:
   against the corrected version — all come out exactly as each test expects. One-line fix,
   no other line in Step 3 needed to change. Nothing in `src-tauri/` touched by this fix;
   Codex's uncommitted Task 5 work stays as-is for it to pick back up.
+
+- 2026-08-30 (claude-code): Confirmed Codex's second Task 5 blocker. `split_frontmatter`'s
+  Step 3 code block declared `<'a>` and `raw: &'a str`, but `'a` appears nowhere else in the
+  signature — the return type (`Result<(String, String), KnowledgeError>`) is fully owned,
+  and the function body only ever uses `raw` to build a fresh owned `normalized` String, never
+  returning anything borrowed from it. Confirmed this really is needless (not a considered
+  choice this task's Interfaces line already contradicted it): the "Produces" line for this
+  same task, written earlier, already states the correctly-elided signature `raw: &str` with
+  no lifetime — only the literal Step 3 code block had the stray explicit one. Fixed
+  `docs/superpowers/plans/2026-08-30-knowledge-package-v1.md` Task 5 Step 3 to match: removed
+  `<'a>` and changed `&'a str` to `&str`. Purely syntactic — Rust's elision rules produce an
+  identical effective signature, nothing about behavior changes. Nothing in `src-tauri/`
+  touched by this fix; Codex's uncommitted Task 5 work (including its already-correct
+  `split_terminator` fix from the previous round) stays as-is for it to pick back up.
 
 ## What was built / tested / left out
 

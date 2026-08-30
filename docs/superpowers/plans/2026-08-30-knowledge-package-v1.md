@@ -1054,9 +1054,9 @@ use super::error::KnowledgeError;
 
 const DELIMITER: &str = "+++";
 
-pub(crate) fn split_frontmatter<'a>(
+pub(crate) fn split_frontmatter(
     path: &Path,
-    raw: &'a str,
+    raw: &str,
 ) -> Result<(String, String), KnowledgeError> {
     if raw.starts_with('\u{FEFF}') {
         return Err(KnowledgeError::Bom {
