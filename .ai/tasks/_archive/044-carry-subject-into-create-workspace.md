@@ -1,7 +1,7 @@
 ---
 id: 044
 title: Carry the first-launch subject into Create Workspace
-status: review
+status: done
 owner: codex
 stage: 7
 depends_on: []
