@@ -1,7 +1,7 @@
 ---
 id: 040
 title: Playwright/Tauri-driver E2E flows
-status: review
+status: done
 owner: codex
 stage: 7
 depends_on: [039]
