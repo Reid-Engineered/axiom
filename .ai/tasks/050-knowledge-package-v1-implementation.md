@@ -320,6 +320,21 @@ pattern as Task 1's `lib.rs` ordering — noted, not an issue.
 
 **Verdict: accepted.** Plan Task 5 (TOML frontmatter splitter) authorized.
 
+### Plan Task 5 — TOML frontmatter splitter (commit `b4e6dad`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 23 passed, `cargo clippy
+--all-targets --locked -- -D warnings` → clean, `cargo fmt --all --check` → clean, `git
+status` → clean. Diffed `frontmatter.rs`, `error.rs`, `mod.rs` against the twice-corrected
+plan — `split_terminator`, the elided lifetime, all three new error variants and their
+`Display` arms, and the module registration all match exactly. This task took two review
+rounds to land (a real trailing-newline bug, then a real needless-lifetime lint failure),
+both genuine plan defects Codex correctly refused to route around unilaterally — both fixed
+at the plan level and verified by hand before re-issuing, same discipline as Tasks 1 and 3.
+
+**Verdict: accepted.** Plan Task 6 (Concept/Objective entity parsers) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
