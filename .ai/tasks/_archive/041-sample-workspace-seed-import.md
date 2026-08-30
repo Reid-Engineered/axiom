@@ -1,7 +1,7 @@
 ---
 id: 041
 title: Runtime sample-workspace SQLite seed import
-status: review
+status: done
 owner: codex
 stage: 7
 depends_on: [037, 038, 039]
