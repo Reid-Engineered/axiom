@@ -49,6 +49,30 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 11 blocker triage): Confirmed the blocker: Step 6's
+  `git add` line for every plan Task that touches `error.rs` lists only the entity-specific
+  file plus `mod.rs`, omitting `error.rs` itself even though the immediately preceding
+  Step 3 always modifies it (this is a plan-wide pattern, not specific to Task 11 — e.g.
+  Task 10's own Step 6 line had the same gap). It went unnoticed through Tasks 4–10 because
+  each prior commit (see `8eb70e6` for Task 10: `error.rs`, `mod.rs`, `validate.rs`, and the
+  task file) included `error.rs` anyway; my issuing prompt for Task 11 turned that
+  previously-implicit judgment call into an explicit "commit only relationships.rs and
+  mod.rs" instruction, which is what actually blocked Codex here. Fixed plan Task 11 Step 6
+  to `git add` `relationships.rs`, `error.rs`, and `mod.rs` together, with a one-line note
+  explaining why `error.rs` is required. Not touching the already-completed Tasks 4–10's
+  Step 6 text since those tasks are done and their actual commits were already correct.
+  **Task 11 is re-authorized**: implement relationships.rs and error.rs per Task 11 Steps
+  1–5 unchanged, then commit `relationships.rs`, `error.rs`, `mod.rs`, and this task file's
+  updated Worklog together with the prescribed message.
+- 2026-08-30 (codex, plan Task 11 blocker): Read the full task file and only plan Task 11.
+  The implementation scope requires adding four `KnowledgeError` variants in `error.rs`,
+  and this task's handoff requires continuing the Worklog, but both plan Step 6 and the
+  issuing prompt say to commit only `relationships.rs` and `mod.rs`. Such a commit is not
+  self-contained or buildable on checkout: `relationships.rs` necessarily references the
+  uncommitted variants, while the durable Worklog entry would also be omitted. Stopped
+  before creating tests or implementation rather than choosing a different commit scope.
+  Task 12+ and `knowledge-package/` remain untouched. The minimal correction is to authorize
+  committing `relationships.rs`, `error.rs`, `mod.rs`, and this task file together.
 - 2026-08-30 (claude-code, plan Task 10 review): Reviewed the Task 10 implementation
   (commit `8eb70e6`) against plan Task 10 Steps 1–4 and spec §9/§12. `validate.rs` matches
   the plan's prescribed test module and implementation verbatim (only rustfmt wrapping

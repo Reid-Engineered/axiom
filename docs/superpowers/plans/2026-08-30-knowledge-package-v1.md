@@ -2994,9 +2994,12 @@ Expected: PASS; clippy clean.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src-tauri/src/knowledge/relationships.rs src-tauri/src/knowledge/mod.rs
+git add src-tauri/src/knowledge/relationships.rs src-tauri/src/knowledge/error.rs src-tauri/src/knowledge/mod.rs
 git commit -m "feat(knowledge): validate prerequisite DAG and related symmetry"
 ```
+
+(`error.rs` is included because Step 3 adds the four new `KnowledgeError` variants there;
+omitting it would produce a commit that doesn't compile on its own.)
 
 Note on provenance validation (spec §11): there is no separate task for it. `≥1 ProvenanceRef`, `ProvenanceKind` parsing, exact-duplicate-ref rejection, and empty-locator rejection are all per-entity checks already implemented in Task 6's `convert_provenance_refs` (no cross-package data needed); `SourceId` resolution needed the whole package's `Source` list, so it's in Task 10. Nothing from spec §11 is left unimplemented.
 
