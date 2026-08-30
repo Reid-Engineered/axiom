@@ -83,6 +83,13 @@ Files expected to change, per the implementation plan's own file lists:
   wrapping/module-order changes, but no formatting was applied after the Clippy blocker.
   Stopped without selecting another contract and without committing; Task 6+ and
   `knowledge-package/` remain untouched.
+- 2026-08-30 (codex, plan Task 5 resumed): Verified commit `cb057ba` corrected Step 3's
+  signature to `split_frontmatter(path: &Path, raw: &str)` and applied that exact lifetime
+  elision. After rustfmt's mechanical Display-arm wrapping and alphabetical private-module
+  ordering, `cargo test --locked knowledge::` passed all 23 expected tests with 0 failures
+  and 40 filtered out, `cargo clippy --all-targets --locked -- -D warnings` passed with zero
+  warnings, and `cargo fmt --all --check` passed. Both prior Task 5 plan blockers are now
+  resolved; Task 6+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (codex, plan Task 4): Task 3 is accepted and Task 4 authorized. Read only
   plan Task 4 in full. Its current Step 1 contains eight mandatory tests—the original six
   cases plus the two structural `schema_version` cases added during review—so the green

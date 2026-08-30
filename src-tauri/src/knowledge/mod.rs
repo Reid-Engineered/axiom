@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 
 mod error;
+mod frontmatter;
 mod identifier;
 mod package;
 mod raw;

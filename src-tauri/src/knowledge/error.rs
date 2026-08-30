@@ -7,6 +7,15 @@ pub enum KnowledgeError {
     InvalidIdentifier {
         value: String,
     },
+    Bom {
+        path: PathBuf,
+    },
+    MissingFrontmatterDelimiter {
+        path: PathBuf,
+    },
+    UnterminatedFrontmatter {
+        path: PathBuf,
+    },
     TomlSyntax {
         path: PathBuf,
         source: toml::de::Error,
@@ -31,6 +40,21 @@ impl fmt::Display for KnowledgeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidIdentifier { value } => write!(f, "invalid Knowledge identifier: {value}"),
+            Self::Bom { path } => write!(
+                f,
+                "{} starts with a byte-order mark, which is rejected",
+                path.display()
+            ),
+            Self::MissingFrontmatterDelimiter { path } => write!(
+                f,
+                "{} does not start with the '+++' frontmatter delimiter",
+                path.display()
+            ),
+            Self::UnterminatedFrontmatter { path } => write!(
+                f,
+                "{} opens frontmatter with '+++' but never closes it",
+                path.display()
+            ),
             Self::TomlSyntax { path, source } => {
                 write!(f, "invalid TOML in {}: {source}", path.display())
             }
