@@ -225,6 +225,12 @@ pub enum ManifestError {
     DuplicateCapability { module_id: String, capability_id: String }, // two [[provides]]
                                                                         // with the same
                                                                         // id + version
+    IncompatibleAxiomVersion { required: semver::Version, running: semver::Version },
+                              // well-formed minimum_axiom_version, but newer than this
+                              // build -- added during task 046's review, same shape as
+                              // UnsupportedManifestVersion (valid content, this runtime
+                              // can't accept it); validate() rejects it outright, so no
+                              // ModuleManifest value can carry an incompatible version
     TomlSyntax(toml::de::Error),
 }
 

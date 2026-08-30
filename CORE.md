@@ -148,6 +148,12 @@ pub enum ManifestError {
                                                                         // with the same
                                                                         // id + version,
                                                                         // within ONE manifest
+    IncompatibleAxiomVersion { required: semver::Version, running: semver::Version },
+                              // well-formed minimum_axiom_version, but newer than this
+                              // build -- same shape as UnsupportedManifestVersion (content
+                              // is valid, this specific runtime can't accept it), added
+                              // during task 046's review after the locked contract turned
+                              // out to have no variant for it
     TomlSyntax(toml::de::Error),
 }
 ```
@@ -155,6 +161,13 @@ pub enum ManifestError {
 Syntactic failures (bad TOML, wrong field types) surface as `TomlSyntax`; semantic failures
 only checkable after a structurally-valid parse get their own specific variant, so error
 messages stay legible rather than bottoming out in a generic deserialization error.
+
+`validate()` rejects `IncompatibleAxiomVersion` outright, the same way it rejects
+`UnsupportedManifestVersion` outright — there is no path to a `ModuleManifest` value whose
+`minimum_axiom_version` exceeds `axiom_version()`. This keeps the compatibility check a pure
+function of the manifest plus one external constant (the running build's own version), not a
+registration-time concern — it doesn't need to know what else is registered, so it belongs
+here, not in `RegistryError` (§4).
 
 **Discovery** is behind an abstraction, not a concrete mechanism:
 
