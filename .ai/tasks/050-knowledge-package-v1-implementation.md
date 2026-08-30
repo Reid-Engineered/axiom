@@ -49,6 +49,33 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 13 blocker triage): Confirmed the blocker is a real
+  plan defect. Step 6 was the only place the plan declared `#[cfg(test)] mod tests;` in
+  `mod.rs`, but Step 2 (and Step 3/4/5's incremental runs, had Codex tried them) invoke
+  `cargo test --locked knowledge::tests::conformance` before Step 6 ever runs — Rust
+  silently discovers zero tests under an undeclared module rather than erroring, so the
+  run "succeeds" while proving nothing. Fixed the plan: Task 13 Step 1 now ends with adding
+  `#[cfg(test)] mod tests;` to `mod.rs` (position in the file doesn't matter, only that it
+  precedes the first `cargo test` of this task); Step 6 is retitled "Run the full corpus"
+  and no longer re-adds the line. Also corrected Step 6's stale "~24 conformance tests"
+  expectation to the exact count Codex computed (5 + 7 + 6 + 11 = 29). **Task 13 is
+  re-authorized**: keep the five already-written tests and support module, add the
+  `mod.rs` registration now, confirm the five pass, then proceed through Steps 3–7
+  unchanged (corrected counts/step text only, no other content changed).
+- 2026-08-30 (codex, plan Task 13 blocker): Task 12 is accepted and Task 13 authorized.
+  Read the full task file and only plan Task 13, then created Step 1's exact support module
+  and first five conformance tests without changing `knowledge/mod.rs`, as the prescribed
+  ordering requires. The Step 2 command, `cargo test --locked
+  knowledge::tests::conformance`, exited successfully but ran **0 tests** (113 filtered
+  out), not the required five: Rust does not discover `src/knowledge/tests/mod.rs` until
+  the parent `knowledge/mod.rs` declares `#[cfg(test)] mod tests;`, but the plan defers that
+  declaration to Step 6, after every test-append step. Stopped rather than silently moving
+  Step 6 earlier. The minimal correction is to move that registration into Step 1 before
+  the first corpus run (it can still remain the last line of `mod.rs`). No remaining
+  conformance cases were appended, no commit was made, and Task 14+ and
+  `knowledge-package/` remain untouched. Separately, the prescribed corpus totals 29 tests
+  (5 in Step 1, 7 in Step 3, 6 in Step 4, and 11 in Step 5), so the plan/prompt's “~24”
+  expectation should be treated as a stale approximate count; this does not affect behavior.
 - 2026-08-30 (claude-code, plan Task 12 review): Reviewed the Task 12 implementation
   (commit `58e4fea`) against plan Task 12 Steps 1–4. `loader.rs` matches the plan's
   prescribed test module and implementation verbatim; `mod.rs` matches Step 4's full

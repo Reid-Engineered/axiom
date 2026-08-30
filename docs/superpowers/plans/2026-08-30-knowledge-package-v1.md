@@ -3348,6 +3348,12 @@ fn unresolved_objective_reference() {
 }
 ```
 
+In `src-tauri/src/knowledge/mod.rs`, add `#[cfg(test)] mod tests;` as the last line now,
+not in Step 6 — Rust does not discover `knowledge/tests/mod.rs` at all until the parent
+module declares it, so the Step 2 run below would otherwise execute zero tests rather than
+failing loudly. The line's position in the file doesn't matter; only that it's present
+before the first `cargo test` of this task.
+
 - [ ] **Step 2: Run these five tests to verify they pass as written**
 
 Run: `cd src-tauri && cargo test --locked knowledge::tests::conformance`
@@ -3762,12 +3768,14 @@ fn root_documentation_files_are_ignored() {
 }
 ```
 
-- [ ] **Step 6: Register the tests module and run the full corpus**
+- [ ] **Step 6: Run the full corpus**
 
-In `src-tauri/src/knowledge/mod.rs`, add `#[cfg(test)] mod tests;` as the last line.
+`#[cfg(test)] mod tests;` was already added to `src-tauri/src/knowledge/mod.rs` in Step 1;
+no further mod.rs change is needed here.
 
 Run: `cd src-tauri && cargo test --locked knowledge::tests::conformance && cargo clippy --all-targets --locked -- -D warnings`
-Expected: all ~24 conformance tests PASS; clippy clean.
+Expected: all 29 conformance tests PASS (5 from Step 1, 7 from Step 3, 6 from Step 4, 11
+from Step 5); clippy clean.
 
 - [ ] **Step 7: Commit**
 
