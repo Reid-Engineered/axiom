@@ -2,8 +2,8 @@
 
 Why the system is shaped the way it is. This document is authoritative for structure and
 data flow; `reference/UI/AXIOM-HANDOFF.md` is authoritative for visual design and product
-behavior. When the two could be read as disagreeing, the handoff wins on *look and behavior*,
-this document wins on *how code is organized*.
+behavior. When the two could be read as disagreeing, the handoff wins on _look and behavior_,
+this document wins on _how code is organized_.
 
 The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema,
 migration runner, domain-specific IPC commands, and frontend service integration.
@@ -72,6 +72,7 @@ axiom/
       main.rs
     Cargo.toml
     tauri.conf.json
+  e2e/                     # native Tauri WebDriver flow + Linux setup notes
   reference/UI/              design source of truth (mockups, handoff doc) — do not edit
   .ai/                      multi-agent handoff system, see .ai/README.md
   AGENTS.md
@@ -81,7 +82,7 @@ axiom/
 ```
 
 Component-level styles are colocated (`Mastery.module.css` next to `Mastery.tsx`), not
-gathered into `styles/`. "Centralized" describes the *tokens* — one file every component
+gathered into `styles/`. "Centralized" describes the _tokens_ — one file every component
 reads from — not a single stylesheet. See `AGENTS.md` §UI Rules.
 
 ---
@@ -91,22 +92,22 @@ reads from — not a single stylesheet. See `AGENTS.md` §UI Rules.
 One page per screen in `AXIOM-HANDOFF.md` §4–5. Pages are the only layer allowed to call
 hooks that fetch data; everything below them is props-driven.
 
-| Page | Layout used | Key composed components |
-|---|---|---|
-| `FirstLaunchPage` | `CenteredColumnLayout` | `Placeholder` (logo), text rows |
-| `CreateWorkspacePage` | `CenteredColumnLayout` | `Chip`, inferred-structure panel |
-| `HomePage` (variant: default / session-intent / library) | `AppShell` | Continue card, `WorkspaceCard` |
-| `WorkspaceOverviewPage` | `TwoPaneLayout` | `ConceptRow`, `ReasonedRecommendation`, `SuggestionPanel` |
-| `StudySessionPage` | `SessionShell` | working area, tutor panel, visualization pane |
-| `FullVisualizationPage` | `FullVisualizationShell` | `Inspector`, floating toolbar |
-| `ConceptViewPage` | `TwoPaneLayout` | `Mastery`, `MathDisplay`, `ConceptRow` (Builds on / Leads to) |
-| `ConceptsListPage` | `AppShell` | `ChapterStateProfile`, `ConceptRow`, filter chips |
-| `MaterialPage` | `AppShell` | search-typed result rows, progress bar |
-| `WorkspaceToolsPage` | `AppShell` | module rows, `Toggle`, `SuggestionPanel` |
-| `MarketplacePage` | `AppShell` | `SegmentedControl`, `TrustBadge`, `OfflineChip` |
-| `ModuleDetailPage` | `TwoPaneLayout` | `TrustBadge`, capability-sentence rail |
-| `GoalEditingSheet` | `Sheet` overlay | `Chip`, consequence-preview panel |
-| `CommandPalette` | `overlays/CommandPalette` | `ConceptRow`, grouped results, key legend |
+| Page                                                     | Layout used               | Key composed components                                       |
+| -------------------------------------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `FirstLaunchPage`                                        | `CenteredColumnLayout`    | `Placeholder` (logo), text rows                               |
+| `CreateWorkspacePage`                                    | `CenteredColumnLayout`    | `Chip`, inferred-structure panel                              |
+| `HomePage` (variant: default / session-intent / library) | `AppShell`                | Continue card, `WorkspaceCard`                                |
+| `WorkspaceOverviewPage`                                  | `TwoPaneLayout`           | `ConceptRow`, `ReasonedRecommendation`, `SuggestionPanel`     |
+| `StudySessionPage`                                       | `SessionShell`            | working area, tutor panel, visualization pane                 |
+| `FullVisualizationPage`                                  | `FullVisualizationShell`  | `Inspector`, floating toolbar                                 |
+| `ConceptViewPage`                                        | `TwoPaneLayout`           | `Mastery`, `MathDisplay`, `ConceptRow` (Builds on / Leads to) |
+| `ConceptsListPage`                                       | `AppShell`                | `ChapterStateProfile`, `ConceptRow`, filter chips             |
+| `MaterialPage`                                           | `AppShell`                | search-typed result rows, progress bar                        |
+| `WorkspaceToolsPage`                                     | `AppShell`                | module rows, `Toggle`, `SuggestionPanel`                      |
+| `MarketplacePage`                                        | `AppShell`                | `SegmentedControl`, `TrustBadge`, `OfflineChip`               |
+| `ModuleDetailPage`                                       | `TwoPaneLayout`           | `TrustBadge`, capability-sentence rail                        |
+| `GoalEditingSheet`                                       | `Sheet` overlay           | `Chip`, consequence-preview panel                             |
+| `CommandPalette`                                         | `overlays/CommandPalette` | `ConceptRow`, grouped results, key legend                     |
 
 Every row-shaped repeat (concept rows, workspace cards, module rows) is one component reused
 across pages — see `AGENTS.md` §UI Rules, "no duplicated markup" is enforced here, not just
@@ -184,6 +185,11 @@ plain arguments and returns plain data, so `renderHook` (Vitest + React Testing 
 enough. `src/test/setup.ts` installs Tauri's official IPC mock, and `test/mockBackend.ts`
 serves the retained fixtures behind the same command names and payloads used in production.
 See `AGENTS.md` §Testing for the policy this shape exists to support.
+
+Stage 7's native smoke flow lives in `e2e/`. It launches the release Tauri binary through
+`tauri-driver`, exercises real IPC and SQLite from first launch through workspace creation,
+and isolates its application data with a temporary `XDG_DATA_HOME`. It is deliberately one
+high-value flow rather than full-screen browser coverage.
 
 ---
 
