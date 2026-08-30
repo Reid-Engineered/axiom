@@ -1,7 +1,7 @@
 ---
 id: 045
 title: Stage 8 architecture lock — rewrite CORE.md into the active Rust contract
-status: review
+status: done
 owner: claude
 stage: 8
 depends_on: []
