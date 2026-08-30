@@ -45,6 +45,7 @@ pub fn run() {
             commands::material::get_material,
             commands::material::search_material,
             commands::note::get_recent_notes,
+            commands::seed::import_sample_workspace,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -49,7 +49,10 @@ export const mockSessions: Session[] = [
     elapsedMinutes: 24,
     problemIndex: 8,
     problemCount: 8,
-    exchanges: longTutorHistory.slice(0, 4),
+    exchanges: longTutorHistory.slice(0, 4).map((exchange, index) => ({
+      ...exchange,
+      id: `exchange-parts-${index + 1}`,
+    })),
     settledConclusions: ['Choose u so its derivative simplifies the product.'],
     startedAt: '2026-08-24T14:00:00.000Z',
   },

@@ -1,7 +1,10 @@
 use rusqlite::params;
 
-use super::{concept, goal, material, module, note, session, workspace};
-use super::{CreateWorkspaceInput, Database, SessionIntent, StartSessionInput, Workspace};
+use super::{concept, goal, material, module, note, seed, session, workspace};
+use super::{
+    CreateWorkspaceInput, Database, SampleWorkspaceSeed, SessionIntent, StartSessionInput,
+    Workspace,
+};
 
 fn database() -> Database {
     Database::open_in_memory().unwrap()
@@ -29,6 +32,145 @@ fn insert_concept(database: &Database, workspace_id: &str, id: &str, name: &str)
             params![id, workspace_id, name],
         )
         .unwrap();
+}
+
+fn sample_seed() -> SampleWorkspaceSeed {
+    serde_json::from_value(serde_json::json!({
+        "sampleWorkspaceId": "sample-workspace",
+        "workspaces": [{
+            "id": "sample-workspace",
+            "name": "Calculus II",
+            "guidingGoalId": "sample-goal",
+            "progress": 0.58,
+            "lastConceptName": "Shell method",
+            "lastActivityAt": "2026-08-27T19:20:00.000Z",
+            "paused": false,
+            "offlineAvailability": [{
+                "kind": "textbookAndLectureNotes",
+                "enabled": true,
+                "sizeBytes": 880803840
+            }],
+            "enabledModuleIds": ["sample-module"]
+        }],
+        "workspaceActivity": [{
+            "id": "sample-activity",
+            "workspaceId": "sample-workspace",
+            "occurredAt": "2026-08-28T12:00:00.000Z",
+            "summary": "A worked example was linked to Shell method."
+        }],
+        "goals": [{
+            "id": "sample-goal",
+            "workspaceId": "sample-workspace",
+            "text": "Explain and solve every integration technique.",
+            "state": "Guiding",
+            "inferred": {
+                "conceptScope": 87,
+                "tools": ["Practice", "Visualizer"]
+            },
+            "createdAt": "2026-08-18T13:00:00.000Z",
+            "updatedAt": "2026-08-26T17:30:00.000Z"
+        }],
+        "concepts": [{
+            "id": "sample-concept",
+            "workspaceId": "sample-workspace",
+            "name": "Shell method",
+            "chapter": "6 · Applications of Integration",
+            "masteryState": "Developing",
+            "meaning": "Works with support but not yet independently.",
+            "onExam": true,
+            "blocksConceptIds": [],
+            "prerequisiteConceptIds": [],
+            "relatedConceptIds": [],
+            "leadsToConceptIds": [],
+            "whereItShowsUp": ["Volume by rotation"],
+            "recentDiagnostics": [{
+                "id": "sample-diagnostic",
+                "expression": "2πx(4-x²)",
+                "type": "positive",
+                "note": "Radius and height were identified correctly.",
+                "occurredAt": "2026-08-27T19:10:00.000Z"
+            }],
+            "notesCount": 4
+        }],
+        "modules": [{
+            "id": "sample-module",
+            "name": "Function Visualizer",
+            "icon": "V",
+            "trust": "verified",
+            "developer": "Axiom Labs",
+            "price": "Free",
+            "description": "Makes shell construction visible.",
+            "contextSeen": "The current concept.",
+            "offlineStatus": "Works offline",
+            "supportedConceptNames": ["Shell method"],
+            "suits": ["Learners who think visually"],
+            "privacyNotes": ["Nothing leaves your device"],
+            "enabled": true,
+            "visibility": "workspace"
+        }],
+        "workspaceTemplates": [{
+            "id": "sample-template",
+            "name": "Visual Learner",
+            "description": "A visual starting point.",
+            "toolCount": 7
+        }],
+        "sessions": [{
+            "id": "sample-session",
+            "workspaceId": "sample-workspace",
+            "conceptId": "sample-concept",
+            "status": "paused",
+            "intent": {
+                "activity": "Practising",
+                "targetMinutes": 35
+            },
+            "resumeSummary": "You were checking where the shell height changes.",
+            "elapsedMinutes": 47,
+            "exchanges": [{
+                "id": "sample-exchange",
+                "question": "How should I identify the radius?",
+                "answer": "Measure from the axis of rotation.",
+                "occurredAt": "2026-08-27T19:00:00.000Z",
+                "pinnedToVisualization": true
+            }],
+            "settledConclusions": ["The radius is measured from the axis."],
+            "startedAt": "2026-08-27T17:00:00.000Z",
+            "pausedAt": "2026-08-27T20:27:00.000Z"
+        }],
+        "materials": [{
+            "id": "sample-material",
+            "workspaceId": "sample-workspace",
+            "title": "Calculus",
+            "edition": "9th edition",
+            "totalPages": 712,
+            "totalChapters": 18,
+            "segments": [
+                { "label": "Ch 6–7", "status": "read" },
+                { "label": "Ch 8", "status": "inProgress" },
+                { "label": "Ch 10–11", "status": "next", "detail": "33 sections" },
+                { "label": "Ch 12–18", "status": "outOfSyllabus" }
+            ],
+            "highlightsCount": 41,
+            "notesCount": 18,
+            "mostMarkedSections": ["§7.3"]
+        }],
+        "materialResults": [{
+            "id": "sample-result",
+            "kind": "section",
+            "page": 442,
+            "title": "§7.3 · Volumes by Cylindrical Shells",
+            "reason": "Matches the current radius practice.",
+            "conceptId": "sample-concept",
+            "inSyllabus": true
+        }],
+        "notes": [{
+            "id": "sample-note",
+            "workspaceId": "sample-workspace",
+            "conceptId": "sample-concept",
+            "text": "Measure the shell radius from the axis.",
+            "updatedAt": "2026-08-27T18:40:00.000Z"
+        }]
+    }))
+    .unwrap()
 }
 
 #[test]
@@ -398,6 +540,108 @@ fn note_handler_returns_workspace_notes_newest_first() {
     assert_eq!(notes.len(), 2);
     assert_eq!(notes[0].id, "note-new");
     assert_eq!(notes[1].id, "note-old");
+}
+
+#[test]
+fn sample_import_normalizes_the_seed_and_preserves_owned_counts() {
+    let database = database();
+    let imported = seed::import_sample_workspace_handler(&database, &sample_seed()).unwrap();
+
+    assert_eq!(imported.id, "sample-workspace");
+    assert_eq!(imported.enabled_module_ids, vec!["sample-module"]);
+    assert_eq!(
+        goal::get_goals_by_workspace_handler(&database, &imported.id)
+            .unwrap()
+            .len(),
+        1
+    );
+    let concept = concept::get_concept_handler(&database, "sample-concept").unwrap();
+    assert_eq!(concept.notes_count, 1);
+    assert_eq!(
+        concept.where_it_shows_up.unwrap(),
+        vec!["Volume by rotation"]
+    );
+    assert_eq!(concept.recent_diagnostics.unwrap().len(), 1);
+    assert_eq!(
+        module::get_workspace_templates_handler(&database)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(
+        module::get_module_handler(&database, "sample-module")
+            .unwrap()
+            .enabled
+    );
+    assert_eq!(
+        session::get_session_handler(&database, "sample-session")
+            .unwrap()
+            .exchanges
+            .len(),
+        1
+    );
+    let material = material::get_material_handler(&database, &imported.id).unwrap();
+    assert_eq!(material.highlights_count, 41);
+    assert_eq!(material.notes_count, 18);
+    assert_eq!(
+        material::search_material_handler(&database, &imported.id, "radius")
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(
+        note::get_recent_notes_handler(&database, &imported.id)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(
+        workspace::get_recent_activity_handler(&database, &imported.id)
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
+#[test]
+fn sample_import_is_idempotent_and_does_not_reset_existing_sample_work() {
+    let database = database();
+    let seed = sample_seed();
+    seed::import_sample_workspace_handler(&database, &seed).unwrap();
+    {
+        let connection = database.connection().unwrap();
+        connection
+            .execute(
+                "UPDATE workspaces SET name = 'My Calculus II' WHERE id = 'sample-workspace'",
+                [],
+            )
+            .unwrap();
+    }
+
+    let imported_again = seed::import_sample_workspace_handler(&database, &seed).unwrap();
+    assert_eq!(imported_again.name, "My Calculus II");
+    assert_eq!(
+        workspace::get_workspaces_handler(&database).unwrap().len(),
+        1
+    );
+}
+
+#[test]
+fn sample_import_rolls_back_every_table_when_one_fixture_is_invalid() {
+    let database = database();
+    let mut seed = sample_seed();
+    seed.notes[0].concept_id = "missing-concept".to_owned();
+
+    assert!(seed::import_sample_workspace_handler(&database, &seed).is_err());
+    let connection = database.connection().unwrap();
+    let workspace_count: i64 = connection
+        .query_row("SELECT COUNT(*) FROM workspaces", [], |row| row.get(0))
+        .unwrap();
+    let module_count: i64 = connection
+        .query_row("SELECT COUNT(*) FROM modules", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(workspace_count, 0);
+    assert_eq!(module_count, 0);
 }
 
 #[test]

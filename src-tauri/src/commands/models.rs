@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OfflinePartialAvailability {
     pub available_count: i64,
@@ -8,7 +8,7 @@ pub struct OfflinePartialAvailability {
     pub limit_reason: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OfflineKindAvailability {
     pub kind: String,
@@ -18,7 +18,7 @@ pub struct OfflineKindAvailability {
     pub partial: Option<OfflinePartialAvailability>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
     pub id: String,
@@ -34,7 +34,7 @@ pub struct Workspace {
     pub enabled_module_ids: Vec<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceActivityEvent {
     pub id: String,
@@ -50,7 +50,7 @@ pub struct CreateWorkspaceInput {
     pub goal_text: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GoalInferredStructure {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -65,7 +65,7 @@ pub struct GoalInferredStructure {
     pub tools: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Goal {
     pub id: String,
@@ -81,7 +81,7 @@ pub struct Goal {
     pub updated_at: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConceptDiagnostic {
     pub id: String,
@@ -92,7 +92,7 @@ pub struct ConceptDiagnostic {
     pub occurred_at: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Concept {
     pub id: String,
@@ -129,7 +129,7 @@ pub struct Concept {
     pub notes_count: i64,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
     pub id: String,
@@ -163,7 +163,7 @@ pub struct Module {
     pub visibility: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceTemplate {
     pub id: String,
@@ -182,7 +182,7 @@ pub struct SessionIntent {
     pub target_minutes: Option<i64>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TutorExchange {
     pub id: String,
@@ -192,7 +192,7 @@ pub struct TutorExchange {
     pub pinned_to_visualization: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
     pub id: String,
@@ -225,7 +225,7 @@ pub struct StartSessionInput {
     pub intent: SessionIntent,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChapterSegment {
     pub label: String,
@@ -234,7 +234,7 @@ pub struct ChapterSegment {
     pub detail: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Material {
     pub id: String,
@@ -249,7 +249,7 @@ pub struct Material {
     pub most_marked_sections: Vec<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaterialResult {
     pub id: String,
@@ -267,7 +267,7 @@ pub struct MaterialResult {
     pub exercise_attempted: Option<i64>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Note {
     pub id: String,
@@ -275,4 +275,20 @@ pub struct Note {
     pub concept_id: String,
     pub text: String,
     pub updated_at: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SampleWorkspaceSeed {
+    pub sample_workspace_id: String,
+    pub workspaces: Vec<Workspace>,
+    pub workspace_activity: Vec<WorkspaceActivityEvent>,
+    pub goals: Vec<Goal>,
+    pub concepts: Vec<Concept>,
+    pub modules: Vec<Module>,
+    pub workspace_templates: Vec<WorkspaceTemplate>,
+    pub sessions: Vec<Session>,
+    pub materials: Vec<Material>,
+    pub material_results: Vec<MaterialResult>,
+    pub notes: Vec<Note>,
 }

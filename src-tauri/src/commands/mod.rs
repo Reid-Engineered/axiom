@@ -8,6 +8,7 @@ pub mod goal;
 pub mod material;
 pub mod module;
 pub mod note;
+pub mod seed;
 pub mod session;
 pub mod workspace;
 

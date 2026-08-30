@@ -8,6 +8,7 @@ import {
   setWorkspaceOfflineAvailability,
   type CreateWorkspaceInput,
 } from '../services/workspaceService';
+import { importSampleWorkspace } from '../services/sampleWorkspaceService';
 import type { OfflineContentKind, Workspace } from '../types';
 import { useAsyncResource } from './useAsyncResource';
 
@@ -26,7 +27,21 @@ export function useWorkspaces() {
     [setData],
   );
 
-  return { workspaces: resource.data ?? [], ...resource, createWorkspace: create };
+  const importSample = useCallback(async () => {
+    const workspace = await importSampleWorkspace();
+    setData((current) => {
+      if (current?.some((candidate) => candidate.id === workspace.id)) return current;
+      return [...(current ?? []), workspace];
+    });
+    return workspace;
+  }, [setData]);
+
+  return {
+    workspaces: resource.data ?? [],
+    ...resource,
+    createWorkspace: create,
+    importSampleWorkspace: importSample,
+  };
 }
 
 /** Loads one workspace and exposes its per-kind offline toggle. */

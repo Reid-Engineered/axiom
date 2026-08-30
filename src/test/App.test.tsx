@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
 
-function enterSampleWorkspace() {
+async function enterSampleWorkspace() {
   fireEvent.click(screen.getByRole('button', { name: 'Explore a sample workspace' }));
+  await waitFor(() => expect(document.querySelector('[data-route="home"]')).not.toBeNull());
 }
 
 describe('development gallery route', () => {
@@ -31,10 +32,10 @@ describe('Stage 3 navigation', () => {
     window.location.hash = '';
   });
 
-  it('navigates through the permanent workspace areas', () => {
+  it('navigates through the permanent workspace areas', async () => {
     const { container } = render(<App />);
 
-    enterSampleWorkspace();
+    await enterSampleWorkspace();
     expect(container.querySelector('[data-route="home"]')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Calculus II' }));
     fireEvent.click(screen.getByRole('button', { name: 'Concepts' }));
@@ -75,19 +76,19 @@ describe('Stage 3 navigation', () => {
     ['Study session', 'studySession'],
     ['Concept view', 'conceptView'],
     ['Module detail', 'moduleDetail'],
-  ])('reaches the %s stub without adding permanent navigation', (label, route) => {
+  ])('reaches the %s stub without adding permanent navigation', async (label, route) => {
     const { container } = render(<App />);
 
-    enterSampleWorkspace();
+    await enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(container.querySelector(`[data-route="${route}"]`)).not.toBeNull();
   });
 
-  it('renders full visualization with a drag strip and without a sidebar', () => {
+  it('renders full visualization with a drag strip and without a sidebar', async () => {
     const { container } = render(<App />);
 
-    enterSampleWorkspace();
+    await enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: 'Full visualization' }));
 
@@ -96,10 +97,10 @@ describe('Stage 3 navigation', () => {
     expect(container.querySelector('aside')).toBeNull();
   });
 
-  it('reaches the goal-editing overlay from the development stub menu', () => {
+  it('reaches the goal-editing overlay from the development stub menu', async () => {
     const { container } = render(<App />);
 
-    enterSampleWorkspace();
+    await enterSampleWorkspace();
     fireEvent.click(screen.getByText('Page stubs'));
     fireEvent.click(screen.getByRole('button', { name: 'Goal editing' }));
     expect(container.querySelector('[data-overlay="goalEditing"]')).not.toBeNull();

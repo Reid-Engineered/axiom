@@ -108,6 +108,8 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
   const parameters = args(payload);
 
   switch (command) {
+    case 'importSampleWorkspace':
+      return structuredClone(findWorkspace('workspace-calculus-ii'));
     case 'getWorkspaces':
       return structuredClone(workspaces);
     case 'getWorkspace':

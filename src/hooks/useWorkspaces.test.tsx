@@ -5,7 +5,7 @@ import { mockWorkspaces } from '../services/mockData/workspaces';
 import { useRecentWorkspaceActivity, useWorkspaceDetails, useWorkspaces } from './useWorkspaces';
 
 describe('workspace domain hooks', () => {
-  it('loads the real workspace fixtures and creates a workspace', async () => {
+  it('loads the real workspace fixtures, creates a workspace, and imports the sample', async () => {
     const { result } = renderHook(() => useWorkspaces());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.workspaces).toHaveLength(mockWorkspaces.length);
@@ -17,6 +17,13 @@ describe('workspace domain hooks', () => {
       });
     });
     expect(result.current.workspaces[result.current.workspaces.length - 1]?.name).toBe('Topology');
+
+    await act(async () => {
+      await result.current.importSampleWorkspace();
+    });
+    expect(
+      result.current.workspaces.filter((workspace) => workspace.id === 'workspace-calculus-ii'),
+    ).toHaveLength(1);
   });
 
   it('loads fixture detail and updates one offline kind', async () => {
