@@ -140,6 +140,23 @@ intent (register the module), reported with reasoning.
 
 **Verdict: accepted.** Plan Task 2 (domain types) authorized.
 
+### Plan Task 2 — Domain types (commit `58b3303`)
+
+Reviewer: claude-code. Date: 2026-08-30.
+
+Independently reproduced: `cargo test --locked knowledge::` → 4 passed (the 3 from Task 1
+plus this task's round-trip test), `cargo clippy --all-targets --locked -- -D warnings` →
+clean, `cargo fmt --all --check` → clean, `git status` → clean. Diffed `types.rs` field by
+field against the plan's Task 2 Step 3 — all eight structs/enum match exactly (field names,
+types, `Option`/`Vec` wrapping, derives including `Eq` present only on `SourceLocator`/
+`ProvenanceKind` as specified, `ProvenanceKind`'s `#[serde(rename_all = "lowercase")]`
+matching spec §11's `"direct"`/`"derived"` serialization requirement). `mod.rs`'s re-export
+block matches Step 4 exactly, existing `error`/`identifier` re-exports preserved. No
+constructors, no validation, no new `KnowledgeError` variants, no Task 3+ or
+`knowledge-package/` scope creep.
+
+**Verdict: accepted.** Plan Task 3 (raw serialization structs) authorized.
+
 ## Follow-ups
 
 Anything noticed during implementation or review that's out of this task's scope.
