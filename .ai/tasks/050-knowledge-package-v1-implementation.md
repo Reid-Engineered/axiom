@@ -49,6 +49,17 @@ Files expected to change, per the implementation plan's own file lists:
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 13 resumed): Verified corrective commit `85e1690`, kept
+  the existing Step 1 support module and five tests unchanged, and added only the now-
+  authorized `#[cfg(test)] mod tests;` registration. The corrected first checkpoint ran
+  5/5 tests through the public loader. Appended the prescribed 7 reference/relationship
+  cases, 6 provenance/schema cases, and 11 Example grammar/file-layout/frontmatter cases
+  in order. The complete conformance corpus passed 29/29 with 113 tests filtered out, and
+  `cargo clippy --all-targets --locked -- -D warnings` passed with zero warnings. The full
+  `cargo test --locked knowledge::` gate passed 102/102 with 40 filtered out; `cargo fmt
+  --all --check` passed after applying four mechanical rustfmt line wraps. Every expected
+  `KnowledgeError` variant surfaced through `load_knowledge_package` as prescribed; no
+  production code changed. Task 14+ and `knowledge-package/` remain untouched.
 - 2026-08-30 (claude-code, plan Task 13 blocker triage): Confirmed the blocker is a real
   plan defect. Step 6 was the only place the plan declared `#[cfg(test)] mod tests;` in
   `mod.rs`, but Step 2 (and Step 3/4/5's incremental runs, had Codex tried them) invoke

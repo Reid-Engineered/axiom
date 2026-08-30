@@ -22,3 +22,6 @@ pub use types::{
     Concept, Example, KnowledgePackage, Objective, ProvenanceKind, ProvenanceRef, Source,
     SourceLocator,
 };
+
+#[cfg(test)]
+mod tests;
