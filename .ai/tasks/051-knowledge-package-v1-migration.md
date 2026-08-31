@@ -1,7 +1,7 @@
 ---
 id: 051
 title: Knowledge Package v1 — migrate knowledge-package/ (Calc II) content
-status: in-progress
+status: review
 owner: codex
 stage: 8
 depends_on: [050]
@@ -48,6 +48,28 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 17): Implemented this one myself rather than issuing
+  it to Codex — per `CLAUDE.md`, "anything touching `ARCHITECTURE.md`" is Claude's specific
+  responsibility in the agent rotation, and Task 17 modifies `ARCHITECTURE.md` directly.
+  **Step 1**: replaced the `knowledge-package/` entry's stale "ad hoc until Knowledge
+  Package v1" comment with a two-line comment pointing at the v1 spec, preserving the
+  block's column-29 comment-alignment convention (verified with `index($0,"#")` across the
+  edited and neighboring lines, not eyeballed).
+  **Step 2**: rewrote `synthesis-report.md` per all five prescribed bullets — Concepts/
+  Objectives/Problem-families ID references updated to Task 15's actual grammar-compliant
+  IDs; added a "Provenance Collapse to a Single Source" entry under "Structural inferences"
+  documenting the 11→1 Source collapse and what `direct` vs `derived` now means, spot-
+  verified against every migrated Example's actual `provenance_refs[].kind` (not asserted
+  from memory); reworded the three other "Structural inferences" entries that described
+  now-dropped generation/templating machinery as explicitly historical rather than current;
+  moved `pf-method-select-integral-count` out of "Problem families" into "Rejected
+  candidates" with its exclusion reason and a pointer to `.ai/tasks/_archive/
+  049-knowledge-package-shell-fixes.md`; left "Human review priorities" untouched (no item
+  resolved by this migration). Per the plan's own review note for this step, independently
+  verified every backtick-quoted Concept/Objective/Example ID in the rewritten report
+  against `id = "..."` in the actual migrated files — exact match, no missing/stray IDs.
+  This is prose; no code gate applies, and no `src-tauri/` file was touched.
+  **This closes the entire 17-task Knowledge Package v1 plan.**
 - 2026-08-30 (claude-code, plan Task 16 review): Reviewed the Task 16 implementation
   (commit `faedc45`) against plan Task 16 Steps 1–4. Diffed `migration.rs` against the
   plan's prescribed test module — matches exactly (only rustfmt line-wrapping differs).
@@ -107,12 +129,63 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`.
+**Built:** the real `knowledge-package/` (Calc II cylindrical shells) migrated in full to
+Knowledge Package v1 — `package.toml`, `sources.toml`, 3 Concepts, 6 Objectives, 6
+Examples, all pre-v1 JSON/`problem-families/` removed; a permanent committed regression
+test (`migration.rs`) proving the real package loads and is structurally complete; and
+`ARCHITECTURE.md`/`synthesis-report.md` updated to match.
+
+**Tested:** the migrated package loads through `load_knowledge_package` with 0 validation
+failures (verified twice independently — once via a throwaway integration test during
+Task 15 review, once as the committed `migration.rs` in Task 16); full workspace suite
+145/145 passing; clippy and fmt clean throughout. Every ID in the rewritten
+`synthesis-report.md` was checked against the actual on-disk `id = "..."` values.
+
+**Left out, deliberately:** `pf-method-select-integral-count` did not migrate (spec §19,
+unresolved source contradiction — see "Rejected candidates" in `synthesis-report.md`).
+Right-shifted vertical axes remain unrepresented (noted in "Unresolved gaps"). The
+disk/washer cross-package prerequisite gap is now structurally unrepresentable in v1's
+schema, not merely undeclared — also noted there, with no fix attempted (would need a
+disk/washer package or a future cross-package reference mechanism, neither in scope).
 
 ## Review
 
 Filled in by the reviewing agent — must be a different agent than whoever implements this
 task's plan Tasks, per `CLAUDE.md`'s coordination rules and this task's own Scope section.
+One exception, noted rather than silently taken: plan Task 17 modifies `ARCHITECTURE.md`
+directly, which `CLAUDE.md` assigns specifically to Claude in the agent rotation regardless
+of who implements the surrounding task — so Task 17 was implemented and self-verified by
+claude-code (the same agent reviewing Tasks 15–16 here). Mitigations: Task 17 is prose-only
+(no `src-tauri/` file touched, no code gate applies per the plan itself), and the plan's own
+review instruction for this step — confirm every ID in the rewritten report exists on disk
+— was independently run as a `comm`-based set-diff, not eyeballed, with an empty result.
+A different reviewer (or the human) should still sanity-read `synthesis-report.md`'s prose
+before merge, since prose accuracy beyond ID existence isn't something a diff can verify.
+
+### Plan Tasks 1–14 (050)
+
+Reviewed and accepted in full under
+[050](050-knowledge-package-v1-implementation.md) — see that task's own `## Review`
+section. Not repeated here.
+
+### Plan Task 15 — Migrate `knowledge-package/` to v1 (commit `17d8aa3`)
+
+See the Task 15 review worklog entry above (2026-08-30, claude-code). **Verdict: accepted.**
+
+### Plan Task 16 — Migration validation (commit `faedc45`)
+
+See the Task 16 review worklog entry above (2026-08-30, claude-code). **Verdict:
+accepted.**
+
+### Plan Task 17 — Documentation cleanup (uncommitted at review time)
+
+Implemented and self-verified by claude-code, per the self-review note above. **Verdict:
+accepted, pending a second reader's prose sanity-check before merge** (see caveat above).
+
+---
+
+**Task-level verdict: 051 — and with it, the entire 17-task Knowledge Package v1 plan — is
+complete.** Status set to `review`, pending human merge decision.
 
 ## Follow-ups
 

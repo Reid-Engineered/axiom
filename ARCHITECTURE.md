@@ -74,7 +74,8 @@ axiom/
       main.rs
     Cargo.toml
     tauri.conf.json
-  knowledge-package/        # Stage 8 reference content; ad hoc until Knowledge Package v1
+  knowledge-package/        # Stage 8 reference content, Knowledge Package v1 format —
+                            # see docs/superpowers/specs/2026-08-30-knowledge-package-v1-spec.md
   e2e/                     # native Tauri WebDriver flow + Linux setup notes
   reference/UI/              design source of truth (mockups, handoff doc) — do not edit
   .ai/                      multi-agent handoff system, see .ai/README.md
