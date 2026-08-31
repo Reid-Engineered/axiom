@@ -1,5 +1,12 @@
 # Quality gates
 
+**As of task 052, CI (`.github/workflows/ci.yml`) enforces the mechanical gates below
+automatically on every PR and push to `master`** — `npm run typecheck`/`lint`/`build`/`test`,
+the design-token grep, `cargo check`/`test`/`clippy`/`fmt`, and `npm run test:e2e:linux`, all
+as required status checks. A task's handoff doc links its PR instead of restating pass/fail
+by hand (see `.ai/tasks/TEMPLATE.md`). Two gates stay manual — see "Structural changes" and
+"Explicitly not a gate" below; CI can't judge either mechanically.
+
 A task cannot move from `in-progress` to `review` until every gate that applies to it
 passes. "Applies to it" matters — a docs-only task doesn't need `cargo check` run against
 Rust code it didn't touch. State in the task file which gates were run.
@@ -38,17 +45,10 @@ Rust code it didn't touch. State in the task file which gates were run.
 
 ## End-to-end (Stage 7+)
 
-- Any task touching `src-tauri/` or `src/services/`: `npm run test:e2e:linux` passes. This
-  is where an IPC or persistence regression would actually surface, so it's a hard gate for
-  this surface specifically, not the whole repo.
-- Any other task: advisory. Run it if `e2e/README.md`'s prerequisites
-  (`WebKitWebDriver` + `xvfb`) are available in the environment; if not, state that plainly
-  in the task file as an environment blocker rather than claiming a pass — see 040's, 042's,
-  and 044's `## Review` sections for the pattern.
-- No CI provider runs this automatically yet. Once one exists, widen the first bullet to
-  every task touching `src/` — the scoping here is a concession to agents not reliably
-  having the native WebKit driver installed, not a statement that other surfaces are exempt
-  from regressions an E2E flow could catch.
+CI runs `npm run test:e2e:linux` on every pull request and push to `master`, unconditionally
+— not scoped to tasks touching `src-tauri/` or `src/services/` (the `e2e` job in
+`.github/workflows/ci.yml` isn't path-filtered). This is a required status check; a task
+can't merge without it passing, regardless of which files it touched.
 
 ## Explicitly not a gate
 

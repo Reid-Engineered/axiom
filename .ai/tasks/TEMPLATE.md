@@ -26,8 +26,11 @@ Dated, append-only. Update as state actually changes, not in a batch at the end.
 
 ## What was built / tested / left out
 
-Filled in when moving to `review`. Specific: which files, which tests, which gates were run
-(`.ai/quality-gates.md`), and anything deliberately deferred with a reason.
+Filled in when moving to `review`. Specific: which files, what was deliberately deferred and
+why, and a link to the task's PR — CI's check run on that PR (`.ai/quality-gates.md`) is the
+source of truth for which mechanical gates passed, not hand-typed pass/fail here. Call out
+explicitly only the two gates CI can't check: whether `ARCHITECTURE.md` was updated for a
+structural change, and visual fidelity against the mockups.
 
 ## Review
 
