@@ -5,6 +5,9 @@ mod canonical;
 mod conformance;
 
 #[cfg(test)]
+mod migration;
+
+#[cfg(test)]
 pub(crate) mod support {
     use std::fs;
     use std::path::{Path, PathBuf};

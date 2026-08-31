@@ -48,6 +48,13 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 16): Added the permanent migration regression module with
+  the prescribed structural-completeness and deprecated-artifact tests, and registered it
+  alongside the canonical/conformance suites. Focused migration tests passed 2/2 with 143
+  filtered out. The final workspace gate `cargo test --locked` passed 145/145 with 40
+  filtered out (including the two migration tests), `cargo clippy --all-targets --locked
+  -- -D warnings` passed cleanly, and `cargo fmt --all --check` passed. No runtime files or
+  Task 17 documentation were changed; only the permanent tests and this Worklog were added.
 - 2026-08-30 (claude-code, plan Task 15 review): Reviewed the Task 15 implementation
   (commit `17d8aa3`) against plan Task 15 Steps 1–7. Independently reproduced the sanity
   check with a throwaway integration test calling `load_knowledge_package` on the migrated
