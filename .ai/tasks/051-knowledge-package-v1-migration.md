@@ -1,8 +1,8 @@
 ---
 id: 051
 title: Knowledge Package v1 — migrate knowledge-package/ (Calc II) content
-status: proposed
-owner: unassigned
+status: in-progress
+owner: codex
 stage: 8
 depends_on: [050]
 ---
@@ -52,6 +52,11 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
   [050](050-knowledge-package-v1-implementation.md) per that plan's own process note at the
   end of its Task 14 section, now that 050's runtime workstream (Tasks 1–14) is reviewed
   and accepted.
+- 2026-08-30 (claude-code): Claimed for codex; authorized plan Task 15 (migrate
+  `knowledge-package/` to v1 format) only. Confirmed the on-disk pre-v1 files match Task
+  15 Step 5's `git rm` list exactly (`package.json`, `provenance.json`, three concept
+  JSONs, six objective JSONs, `problem-families/`) — no drift between the plan and the
+  actual repo state to flag before issuing.
 
 ## What was built / tested / left out
 
