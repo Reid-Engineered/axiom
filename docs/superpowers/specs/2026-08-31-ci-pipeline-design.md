@@ -23,9 +23,16 @@ protection).
 Explicitly out of scope:
 - Agent orchestration (auto-dispatching Claude/Codex/Antigravity) — separate spec.
 - CD / release artifact builds — separate spec, revisit once Stage 7 ships something.
-- Extending e2e coverage to macOS/Windows — no driver setup for either exists anywhere in
-  this repo today (`e2e/README.md` only documents Linux); this is real infrastructure work
-  in its own right, tracked as a follow-up task once this spec's Linux e2e job is proven.
+- macOS entirely — `Reid-Engineered/axiom` is a **private** GitHub repo, and GitHub Actions
+  bills private-repo minutes OS-weighted (Linux 1x, Windows 2x, **macOS 10x**) against a
+  2,000–3,000 min/mo free quota. A 3-OS matrix would burn that quota in under a day of normal
+  task activity. Dropping macOS keeps this initiative free; macOS build/e2e verification
+  moves to whenever the CD spec actually needs to produce a `.dmg`, using either real Apple
+  hardware or a paid macOS runner at that point (self-hosting macOS CI requires genuine Apple
+  hardware per Apple's terms — a Windows/WSL box can't stand in for it).
+- Extending e2e coverage to Windows — no driver setup exists in this repo today
+  (`e2e/README.md` only documents Linux); this is real infrastructure work in its own right,
+  tracked as a follow-up task once this spec's Linux e2e job is proven.
 - Mechanizing the `ARCHITECTURE.md`-updated-on-structural-change gate and the
   visual/pixel-diff gate — both stay human judgment calls, per `.ai/quality-gates.md`'s own
   explicit exclusion of the latter.
@@ -37,11 +44,11 @@ Explicitly out of scope:
   changes agent behavior (this task installs and starts using `gh` CLI), not just adds a
   workflow file — call this out explicitly to whichever agent implements it.
 - **e2e is in scope for this pass, Linux-only.** `frontend-checks` and `backend-checks` run
-  on a Linux/macOS/Windows matrix; `e2e` runs on `ubuntu-latest` only, per the driver-support
-  gap above.
+  on a Linux/Windows matrix (macOS dropped for cost — see §1); `e2e` runs on `ubuntu-latest`
+  only, per the driver-support gap above.
 - **GitHub Actions, hosted runners** (not self-hosted). Simplest, standard, no infrastructure
-  to maintain. Revisit self-hosted specifically for the macOS leg later if hosted-runner
-  minute cost becomes a real problem (macOS hosted runners bill at roughly 10x Linux).
+  to maintain, and Linux+Windows minutes on a private repo's free tier comfortably cover
+  normal task volume without macOS's 10x multiplier in the mix.
 
 ## 3. Trigger model & branch protection
 
@@ -64,7 +71,7 @@ unchanged by this spec.
 One workflow, parallel jobs:
 
 ### `frontend-checks`
-Matrix: `[ubuntu-latest, macos-latest, windows-latest]`.
+Matrix: `[ubuntu-latest, windows-latest]`.
 1. `actions/checkout`, `actions/setup-node` (cached).
 2. `npm ci`
 3. `npm run typecheck`
@@ -76,7 +83,7 @@ Matrix: `[ubuntu-latest, macos-latest, windows-latest]`.
    `.ai/quality-gates.md` ("Grep for stray hex codes... as part of self-check").
 
 ### `backend-checks`
-Matrix: `[ubuntu-latest, macos-latest, windows-latest]`. Working directory `src-tauri/`.
+Matrix: `[ubuntu-latest, windows-latest]`. Working directory `src-tauri/`.
 1. `actions/checkout`, `dtolnay/rust-toolchain` (stable), cache `~/.cargo` and
    `src-tauri/target` keyed on `Cargo.lock` + OS.
 2. `cargo check`
@@ -94,7 +101,7 @@ Matrix: `[ubuntu-latest, macos-latest, windows-latest]`. Working directory `src-
 4. `npm ci`
 5. `npm run test:e2e:linux` — exactly the script `e2e/README.md` already specifies for CI use.
 
-All three jobs (7 total runs: 3+3+1) are required status checks on `master`.
+All three jobs (5 total runs: 2+2+1) are required status checks on `master`.
 
 ## 5. Gate mapping & task-file changes
 
@@ -124,15 +131,17 @@ GitHub's native PR check UI is sufficient. No new tooling for this.
 ## 7. Validating the pipeline
 
 After the workflow file and branch protection are live: open one real, small PR (a trivial
-doc fix or converting an already-archived task into a test case) and confirm all 7 job runs
+doc fix or converting an already-archived task into a test case) and confirm all 5 job runs
 report correctly. Then deliberately introduce one failure (e.g. a lint violation) on that
 same PR to confirm a red check actually blocks merge, before trusting the pipeline for real
 task PRs.
 
 ## 8. Follow-ups (out of scope here, tracked for later)
 
-- Extend e2e to macOS and Windows — needs their native WebDriver setup researched and
-  documented first; `e2e/README.md` has no Mac/Windows section today.
+- Extend e2e to Windows — needs its native WebDriver setup (WebView2's driver) researched and
+  documented first; `e2e/README.md` has no Windows section today.
+- macOS build/e2e verification — deferred entirely (see §1); pick back up when the CD spec
+  needs to produce a `.dmg`, using real Apple hardware or a paid macOS runner.
 - Agent orchestration spec (separate brainstorm) — depends on this pipeline existing as the
   source of truth for gate status.
 - CD spec (separate brainstorm) — depends on this pipeline; revisit once Stage 7 ships.
