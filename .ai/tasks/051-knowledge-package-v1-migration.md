@@ -48,6 +48,26 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 15 review): Reviewed the Task 15 implementation
+  (commit `17d8aa3`) against plan Task 15 Steps 1–7. Independently reproduced the sanity
+  check with a throwaway integration test calling `load_knowledge_package` on the migrated
+  `../knowledge-package` — got the identical counts Codex reported
+  (`concepts=3 objectives=6 examples=6 sources=1`), then deleted the test. Diffed
+  `package.toml`/`sources.toml` and spot-checked `shell.method_vertical_axis.md` and
+  `shell.example_y_poly.md` against the plan's Step 1/2/4 content byte-for-byte — matches
+  exactly (except that plan's own Markdown source line-wraps some hint bullets across two
+  physical lines for readability; the frozen Task 7 grammar requires one physical line per
+  hint, so Codex correctly un-wrapped rather than transcribing the wrap literally — every
+  hint line in every migrated Example now starts `- ` with no continuation). Confirmed the
+  pre-v1 removal list (Step 5) was applied in full — no `package.json`, `provenance.json`,
+  old-naming JSON files, or `problem-families/` remain on disk. Re-ran the gates: `cargo
+  test --locked knowledge::` 103/103 (no new tests committed yet — Task 16 adds the
+  permanent version), `cargo clippy --all-targets --locked -- -D warnings` clean, `cargo
+  fmt --all --check` clean, worktree clean. **Task 15 is accepted.** Plan Task 16
+  (migration validation) is authorized next; pre-checked it — its prescribed assertions
+  (id, schema_version, 1 source, 3/6/6 entity counts, no `pf-` prefixed example ids) match
+  what's actually on disk, and its Step 2 registers `mod migration;` before Step 2's own
+  test run (no repeat of the Task 13/14-class ordering defect).
 - 2026-08-30 (codex, plan Task 15): Migrated the Calc II package to the v1 TOML+Markdown
   layout: `package.toml`, `sources.toml`, 3 Concepts, 6 Objectives, and 6 concrete Examples
   (17 new files), then removed the exact pre-v1 manifests/JSONs and `problem-families/`
