@@ -48,6 +48,15 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## Worklog
 
+- 2026-08-30 (claude-code, plan Task 16 review): Reviewed the Task 16 implementation
+  (commit `faedc45`) against plan Task 16 Steps 1–4. Diffed `migration.rs` against the
+  plan's prescribed test module — matches exactly (only rustfmt line-wrapping differs).
+  `mod migration;` is registered in `tests/mod.rs`. Re-ran the gates: `cargo test --locked
+  knowledge::tests::migration -- --nocapture` passes 2/2, `cargo test --locked` (full
+  workspace) passes 145/145, `cargo clippy --all-targets --locked -- -D warnings` clean,
+  `cargo fmt --all --check` clean. **Task 16 is accepted.** Only plan Task 17 (docs
+  cleanup: `ARCHITECTURE.md`, `knowledge-package/synthesis-report.md`) remains — this
+  closes the entire 17-task Knowledge Package v1 plan once accepted.
 - 2026-08-30 (codex, plan Task 16): Added the permanent migration regression module with
   the prescribed structural-completeness and deprecated-artifact tests, and registered it
   alongside the canonical/conformance suites. Focused migration tests passed 2/2 with 143
