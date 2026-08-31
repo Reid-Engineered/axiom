@@ -205,7 +205,7 @@ The learning canvas is the one place Axiom **inverts its own palette**: dark sta
 
 1. Simple by default, powerful by choice — every screen shows one obvious next action; advanced controls sit behind Adjust / Advanced… / More… / All tools.
 2. Never expose configuration merely because it exists; never use developer vocabulary (package, manifest, dependency, runtime, API) in the learner interface.
-3. No dashboards, no percentages, no streaks, XP, badges, or leaderboards. Progress is expressed as named mastery states and capability sentences.
+3. No dashboards, no percentages, no streaks, XP, badges, or leaderboards *in the core app*. Progress is expressed as named mastery states and capability sentences. A module may offer its own gamified progress view as an opt-in capability (per invariant 5 — never promoted to a navigation destination); this invariant governs what Axiom itself shows by default, not what a learner can choose to enable.
 4. Feedback diagnoses; it never merely marks. Amber for a named mistake; no red; no celebration.
 5. Modules are capabilities inside a workspace, never navigation destinations, and they share workspace context.
 6. Visualization is composed from verified primitives and shared across tutor, practice, explanation, notes, assessment.

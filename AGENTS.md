@@ -19,8 +19,10 @@ background reading, it is the spec. Read it before implementing any page.
 The twelve invariants in that document's §6 are non-negotiable design constraints, not
 suggestions. The two most likely to be violated by an agent moving fast:
 
-- **No dashboards, no percentages, no streaks/XP/badges.** Progress is a named mastery
-  state and a sentence, never a number presented as a score.
+- **No dashboards, no percentages, no streaks/XP/badges in the core app.** Progress is a
+  named mastery state and a sentence, never a number presented as a score. A module can
+  offer its own opt-in gamified view — this rule is about what Axiom itself shows by
+  default, not a ban on modules ever doing it (see `AXIOM-HANDOFF.md` §6, invariant 3).
 - **Modules are never navigation destinations.** If you're adding a sidebar row for a
   module, stop — that's the one thing the sidebar is specified to never do.
 
