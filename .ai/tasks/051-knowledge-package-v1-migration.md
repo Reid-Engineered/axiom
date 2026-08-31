@@ -48,6 +48,17 @@ Files expected to change, per the implementation plan's own Task 15–17 file li
 
 ## Worklog
 
+- 2026-08-30 (codex, plan Task 15): Migrated the Calc II package to the v1 TOML+Markdown
+  layout: `package.toml`, `sources.toml`, 3 Concepts, 6 Objectives, and 6 concrete Examples
+  (17 new files), then removed the exact pre-v1 manifests/JSONs and `problem-families/`
+  tree listed by the plan. The first throwaway loader check caught a content-format issue:
+  five prescribed Markdown hint bullets were physically wrapped across continuation lines,
+  but the frozen parser's grammar requires every hint line to begin `- `. Flattened those
+  five line wraps without changing wording; no runtime code was touched. The deleted local
+  throwaway test then loaded `Path::new("../knowledge-package")` successfully and printed
+  `concepts=3 objectives=6 examples=6 sources=1`. Task 16+ and `src-tauri/src/knowledge/`
+  remain untouched. The plan's prose says "16 new files" while its explicit list contains
+  17; followed the explicit list.
 - 2026-08-30 (claude-code): Created this task, splitting plan Tasks 15–17 out of
   [050](050-knowledge-package-v1-implementation.md) per that plan's own process note at the
   end of its Task 14 section, now that 050's runtime workstream (Tasks 1–14) is reviewed

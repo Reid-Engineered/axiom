@@ -1,0 +1,5 @@
+id = "org.axiom.reference.calculus.cylindrical_shells"
+schema_version = 1
+version = "0.2.0"
+title = "Volumes of Revolution: Cylindrical Shells"
+description = "Foundational Stage 8 reference package for computing volumes of revolution using the method of cylindrical shells, derived authoritatively from OpenStax Calculus Volume 2 Section 2.3."
