@@ -4,8 +4,15 @@
 automatically on every PR and push to `master`** — `npm run typecheck`/`lint`/`build`/`test`,
 the design-token grep, `cargo check`/`test`/`clippy`/`fmt`, and `npm run test:e2e:linux`, all
 as required status checks. A task's handoff doc links its PR instead of restating pass/fail
-by hand (see `.ai/tasks/TEMPLATE.md`). Two gates stay manual — see "Structural changes" and
-"Explicitly not a gate" below; CI can't judge either mechanically.
+by hand (see `.ai/tasks/TEMPLATE.md`). Everything not listed above stays manual — component/
+hook test presence, the no-cross-import rule, `#[tauri::command]` frontend wiring, the
+"Structural changes" section below, and "Explicitly not a gate" below; CI can't judge any of
+these mechanically.
+
+**Flaky checks:** if a required check fails once and then passes clean on an immediate
+re-run with no code change, treat it as a pass and file a follow-up task for the flake —
+don't block or re-litigate the PR over it. (Precedent: task 052's own validation hit exactly
+this with `GoalEditingSheet.test.tsx`, confirmed as a flake by an immediate green re-run.)
 
 A task cannot move from `in-progress` to `review` until every gate that applies to it
 passes. "Applies to it" matters — a docs-only task doesn't need `cargo check` run against

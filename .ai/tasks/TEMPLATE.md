@@ -29,8 +29,8 @@ Dated, append-only. Update as state actually changes, not in a batch at the end.
 Filled in when moving to `review`. Specific: which files, what was deliberately deferred and
 why, and a link to the task's PR — CI's check run on that PR (`.ai/quality-gates.md`) is the
 source of truth for which mechanical gates passed, not hand-typed pass/fail here. Call out
-explicitly only the two gates CI can't check: whether `ARCHITECTURE.md` was updated for a
-structural change, and visual fidelity against the mockups.
+explicitly the gates CI can't check — for example, whether `ARCHITECTURE.md` was updated for
+a structural change, or visual fidelity against the mockups.
 
 ## Review
 

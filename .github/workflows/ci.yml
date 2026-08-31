@@ -1,10 +1,27 @@
 name: CI
 
+# The job names below (plus, for the two matrixed jobs, each `matrix.os` value) are the
+# exact GitHub status-check context strings required on `master`'s branch protection rule
+# (frontend-checks (ubuntu-latest), frontend-checks (macos-latest), frontend-checks
+# (windows-latest), backend-checks (ubuntu-latest), backend-checks (macos-latest),
+# backend-checks (windows-latest), e2e). Renaming a job or an OS label, or removing a
+# matrix leg, orphans the old required context -- PRs will sit "Expected" forever until an
+# admin re-applies branch protection with the new names. Re-apply with:
+#   gh api --method PUT repos/Reid-Engineered/axiom/branches/master/protection \
+#     --input .github/branch-protection.json
+
 on:
   pull_request:
     branches: [master]
   push:
     branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   frontend-checks:
@@ -13,20 +30,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test
-
+      # Runs once (ubuntu leg only) since it's a static grep over checked-out source,
+      # identical on every OS. If the ubuntu-latest leg is ever removed from the matrix
+      # above, this gate silently stops running -- keep both in sync.
       - name: Check for hardcoded design values
         if: matrix.os == 'ubuntu-latest'
         shell: bash
@@ -42,12 +52,24 @@ jobs:
           fi
           echo "No hardcoded design values found."
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run test
+
   backend-checks:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: src-tauri
@@ -58,7 +80,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -68,20 +90,22 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - run: cargo check
-      - run: cargo test
+      - run: cargo check --locked
+      - run: cargo test --locked
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo fmt --all --check
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Tauri Linux build dependencies
+      - name: Install Tauri Linux build + WebKit driver dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf xvfb webkit2gtk-driver \
+            || sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf xvfb webkitgtk-webdriver
 
       - uses: actions/setup-node@v4
         with:
@@ -96,12 +120,6 @@ jobs:
 
       - name: Install tauri-driver
         run: cargo install tauri-driver --version 2.0.6 --locked
-
-      - name: Install WebKit driver + xvfb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y webkit2gtk-driver xvfb \
-            || sudo apt-get install -y webkitgtk-webdriver xvfb
 
       - run: npm ci
       - run: npm run test:e2e:linux

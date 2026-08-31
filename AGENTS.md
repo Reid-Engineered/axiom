@@ -157,15 +157,22 @@ status change, both are `in-progress`) → `review` (step 4) → `done`.
 
 ## Git workflow
 
-- **Trunk-based.** `main` is always buildable (see per-stage acceptance criteria in
+- **Trunk-based.** `master` is always buildable (see per-stage acceptance criteria in
   `ROADMAP.md`). Work happens on short-lived branches, one per task:
   `agent/<tool>/<task-id>-<slug>` (e.g. `agent/claude-code/012-concept-row`).
+- **PRs are required; `master` has branch protection.** Push your task branch, open a PR
+  with `gh pr create` (base `master`), and let `.github/workflows/ci.yml`'s checks run — all
+  of them are required status checks, configured per `.github/branch-protection.json`. `gh`
+  needs to be installed and authenticated (`gh auth login`) in your environment before you
+  can do this. As of 2026-08-31, `enforce_admins` is `false` on the protection rule, so a
+  repo admin can still push directly to `master` if genuinely necessary — that bypasses every
+  check, so treat it as a rare exception, not routine practice.
 - **Conventional commits**: `type(scope): summary` — `feat(components): add ConceptRow`,
   `fix(hooks): correct useWorkspaceConcepts filter`, `docs(architecture): note stage 7 swap`.
-- **Squash-merge to `main`.** Multiple agents produce many small commits per task; the
+- **Squash-merge to `master`.** Multiple agents produce many small commits per task; the
   branch history doesn't need to survive, the task's handoff doc in `.ai/tasks/` is the
   durable record of what happened and why.
-- **No force-push to `main`, no `--no-verify`.** If a hook or check fails, fix the cause.
+- **No force-push to `master`, no `--no-verify`.** If a hook or check fails, fix the cause.
 - Full merge mechanics (who reviews, what gates block a merge) live in
   `.ai/merge-strategy.md` and `.ai/quality-gates.md` — this section covers naming and
   commit hygiene only.
