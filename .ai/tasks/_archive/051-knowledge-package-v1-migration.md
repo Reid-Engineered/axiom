@@ -1,7 +1,7 @@
 ---
 id: 051
 title: Knowledge Package v1 — migrate knowledge-package/ (Calc II) content
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [050]
