@@ -3,7 +3,7 @@
 A desktop learning environment built around one idea: a learner has a **goal**, works
 inside a **workspace**, and everything the app shows — recommendations, tutoring, practice —
 is in service of that goal, expressed in the learner's own terms. No dashboards, no
-percentages, no streaks or badges. Progress is a named mastery state and a sentence, never a
+percentages, no streaks or badges (Unless the user sets it up). Progress is a named mastery state and a sentence, never a
 score.
 
 Built with [Tauri](https://tauri.app/) (Rust backend, React/TypeScript frontend), local-first
