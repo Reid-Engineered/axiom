@@ -38,15 +38,16 @@ Vitest (already the repo's test runner) for tests.
 
 ---
 
-### Task 1: Task types, parser, and the `files:` frontmatter field
+### Task 1: Claim the task file, then task types, parser, and the `files:` frontmatter field
 
 **Files:**
+- Create: `.ai/tasks/053-agent-orchestration.md`
 - Create: `scripts/dispatch/types.ts`
 - Create: `scripts/dispatch/parseTasks.ts`
 - Test: `scripts/dispatch/parseTasks.test.ts`
 - Modify: `.ai/tasks/TEMPLATE.md`
 - Modify: `package.json`
-- Modify: `tsconfig.json` (conditionally — see Step 1)
+- Modify: `tsconfig.json` (conditionally — see Step 3)
 - Modify: `.gitignore`
 
 **Interfaces:**
@@ -55,7 +56,70 @@ Vitest (already the repo's test runner) for tests.
   `worklogDates: string[]`), `parseTaskFile(filePath: string): Task`,
   `parseAllTasks(tasksDir: string): Task[]` — every later task in this plan consumes these.
 
-- [ ] **Step 1: Add dependencies and confirm typecheck coverage**
+This work is tracked in `.ai/tasks/` like everything else in this repo (per `.ai/README.md`),
+the same way sub-project 1 (CI) was tracked as task 052. 053 is the next free id — confirmed
+against both `.ai/tasks/` and `.ai/tasks/_archive/` at plan-writing time; re-confirm it's
+still free before creating the file, in case another task landed since.
+
+- [ ] **Step 1: Write the task file**
+
+Create `.ai/tasks/053-agent-orchestration.md`:
+
+```markdown
+---
+id: 053
+title: Agent orchestration (dispatch script)
+status: in-progress
+owner: claude-code
+stage: N/A — tooling/infrastructure, not a ROADMAP.md stage
+depends_on: []
+files: [scripts/dispatch/types.ts, scripts/dispatch/parseTasks.ts, scripts/dispatch/readiness.ts, scripts/dispatch/ciStatus.ts, scripts/dispatch/worktree.ts, scripts/dispatch/invoke.ts, scripts/dispatch/report.ts, scripts/dispatch/index.ts, .ai/tasks/TEMPLATE.md, package.json, tsconfig.json, .gitignore]
+---
+
+## Scope
+
+Build `npm run dispatch` -- a script that scans `.ai/tasks/` for ready work and invokes the
+owning agent (Codex, Antigravity, or Claude) non-interactively, replacing manual prompt
+copy-paste. Full design: `docs/superpowers/specs/2026-08-31-agent-orchestration-design.md`.
+Full task breakdown: `docs/superpowers/plans/2026-08-31-agent-orchestration.md`.
+
+Does not build: CD/release builds, a fully autonomous daemon, parallel dispatch, or
+owner-inference for unassigned tasks -- all tracked as follow-ups in the spec's §7.
+
+## Plan
+
+Files to be created or touched:
+- Create: `scripts/dispatch/types.ts`, `parseTasks.ts`, `readiness.ts`, `ciStatus.ts`,
+  `worktree.ts`, `invoke.ts`, `report.ts`, `index.ts` (plus their `.test.ts` files)
+- Modify: `.ai/tasks/TEMPLATE.md`, `package.json`, `tsconfig.json`, `.gitignore`
+
+## Worklog
+
+- 2026-08-31 — started, claimed by claude-code
+
+## What was built / tested / left out
+
+(filled in when moving to review)
+
+## Review
+
+(filled in by reviewer)
+
+## Follow-ups
+
+(filled in when moving to review — see spec §7 for known ones)
+```
+
+(replace `2026-08-31` above with the actual date you're running this step on)
+
+- [ ] **Step 2: Commit the claim**
+
+```bash
+git add .ai/tasks/053-agent-orchestration.md
+git commit -m "chore(053): claim for claude-code, agent orchestration"
+```
+
+- [ ] **Step 3: Add dependencies and confirm typecheck coverage**
 
 ```bash
 npm install --save-dev js-yaml @types/js-yaml tsx
@@ -67,7 +131,7 @@ the `include` array so `npm run typecheck` covers this new code. If `include` is
 entirely (meaning everything under the project is already included), no change is needed —
 note which case applied in your commit.
 
-- [ ] **Step 2: Gitignore the worktree directory**
+- [ ] **Step 4: Gitignore the worktree directory**
 
 Add a line to `.gitignore`:
 
@@ -75,7 +139,7 @@ Add a line to `.gitignore`:
 .worktrees
 ```
 
-- [ ] **Step 3: Write `scripts/dispatch/types.ts`**
+- [ ] **Step 5: Write `scripts/dispatch/types.ts`**
 
 ```typescript
 export type TaskStatus = 'proposed' | 'in-progress' | 'review' | 'changes-requested' | 'done';
@@ -96,7 +160,7 @@ export interface Task {
 }
 ```
 
-- [ ] **Step 4: Write the failing test for the parser**
+- [ ] **Step 6: Write the failing test for the parser**
 
 Create `scripts/dispatch/parseTasks.test.ts`:
 
@@ -200,12 +264,12 @@ describe('parseAllTasks', () => {
 });
 ```
 
-- [ ] **Step 5: Run the test to verify it fails**
+- [ ] **Step 7: Run the test to verify it fails**
 
 Run: `npx vitest run scripts/dispatch/parseTasks.test.ts`
 Expected: FAIL — `parseTasks` module not found.
 
-- [ ] **Step 6: Write `scripts/dispatch/parseTasks.ts`**
+- [ ] **Step 8: Write `scripts/dispatch/parseTasks.ts`**
 
 ```typescript
 import { readFileSync, readdirSync } from 'node:fs';
@@ -259,12 +323,12 @@ export function parseAllTasks(tasksDir: string): Task[] {
 }
 ```
 
-- [ ] **Step 7: Run the test to verify it passes**
+- [ ] **Step 9: Run the test to verify it passes**
 
 Run: `npx vitest run scripts/dispatch/parseTasks.test.ts`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 8: Add the `files:` field to `TEMPLATE.md`**
+- [ ] **Step 10: Add the `files:` field to `TEMPLATE.md`**
 
 Find this text in `.ai/tasks/TEMPLATE.md`:
 
@@ -313,12 +377,12 @@ sync. If this list grows materially once work starts, that's a signal the task i
 scoped — see `.ai/lifecycle.md` on splitting.
 ```
 
-- [ ] **Step 9: Run the full test suite and typecheck**
+- [ ] **Step 11: Run the full test suite and typecheck**
 
 Run: `npx vitest run && npm run typecheck`
 Expected: all pass, zero typecheck errors.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
 git add scripts/dispatch/types.ts scripts/dispatch/parseTasks.ts scripts/dispatch/parseTasks.test.ts .ai/tasks/TEMPLATE.md package.json package-lock.json tsconfig.json .gitignore
@@ -1347,11 +1411,14 @@ behaved correctly.
 on-demand trigger (no daemon anywhere in this plan) ✓, Node/TS + `tsx` (Task 1) ✓, readiness
 checked not assumed (Task 2) ✓, sequential dispatch (Task 6's `for` loop, no `Promise.all`)
 ✓, no auto-retry (Task 6's try/catch just records the error) ✓. §3 `files:` frontmatter field
-(Task 1, Step 8) ✓. §4 dispatch round steps (Tasks 2, 4, 5, 6 in sequence match exactly) ✓.
+(Task 1, Step 10) ✓. §4 dispatch round steps (Tasks 2, 4, 5, 6 in sequence match exactly) ✓.
 §5 error handling (Task 6's try/catch; blast-radius containment is existing sub-project-1
 infrastructure, nothing new to build) ✓. §6 validation (Task 7, including the file-conflict
 check) ✓. §7 follow-ups (recorded, not built — Antigravity validation in Task 7 explicitly
 allowed to defer to a follow-up if install friction repeats sub-project 1's `gh` experience).
+This work is itself tracked as `.ai/tasks/053-agent-orchestration.md` (Task 1, Steps 1-2) —
+053 was the next free id at plan-writing time, matching how sub-project 1 tracked itself as
+task 052; this was a gap in the first draft of this plan, caught and fixed before dispatch.
 
 **Placeholder scan:** no TBD/TODO; every step has literal code, commands, or fully-specified
 conditional instructions (e.g. Task 1 Step 1's tsconfig check names both branches explicitly).
