@@ -32,7 +32,8 @@ section. A single unresolved fail keeps the task in `changes-requested` — ther
 
 ## Process
 
-- [ ] Quality gates in `.ai/quality-gates.md` actually run, not just claimed.
+- [ ] Quality gates: the task's linked PR shows every CI check green (`.ai/quality-gates.md`
+      lists which gates are mechanical vs. manual); the manual ones are checked by eye.
 - [ ] Task file's worklog reflects what happened, in enough detail that someone reading only
       the task file (not the diff) understands the shape of the change.
 - [ ] Scope matches what the task was created for; anything extra split into a follow-up
