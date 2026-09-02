@@ -27,7 +27,8 @@ pub use relationships::related_concepts;
 pub use types::{
     Bound, CanonicalSolution, Concept, DifficultyRange, Example, GeneratorRef, Hint,
     KnowledgePackage, Objective, ParameterSpec, ParameterType, ProblemFamily, ProblemFamilyStatus,
-    ProvenanceKind, ProvenanceRef, ResponseType, Source, SourceLocator,
+    ProblemInstance, ProvenanceKind, ProvenanceRef, ResolvedSolution, ResponseType, Source,
+    SourceLocator,
 };
 
 #[cfg(test)]

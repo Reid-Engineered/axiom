@@ -128,6 +128,23 @@ pub enum ProblemFamilyStatus {
     Verified,
     NeedsReview,
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProblemInstance {
+    pub family_id: ProblemFamilyId,
+    pub seed: u64,
+    pub resolved_parameters: std::collections::BTreeMap<String, f64>,
+    pub prompt: String,
+    pub canonical_solution: ResolvedSolution,
+    pub hints: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "value", rename_all = "lowercase")]
+pub enum ResolvedSolution {
+    Symbolic(String),
+    Numeric(f64),
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Source {
     pub id: SourceId,
@@ -220,4 +237,21 @@ mod tests {
         );
     }
 
+    #[test]
+    fn problem_instance_round_trips_through_json() {
+        let instance = ProblemInstance {
+            family_id: ProblemFamilyId::new("problem.shell_y_poly").unwrap(),
+            seed: 42,
+            resolved_parameters: std::collections::BTreeMap::from([("coeff".to_owned(), 4.0)]),
+            prompt: "Define R...".to_owned(),
+            canonical_solution: ResolvedSolution::Symbolic("2*pi".to_owned()),
+            hints: vec!["Identify the radius.".to_owned()],
+        };
+        let json = serde_json::to_string(&instance).unwrap();
+        assert!(json.contains("\"kind\":\"symbolic\""));
+        assert_eq!(
+            serde_json::from_str::<ProblemInstance>(&json).unwrap(),
+            instance
+        );
+    }
 }
