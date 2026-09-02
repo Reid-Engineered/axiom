@@ -72,6 +72,14 @@ command-layer change — see the plan's 7 tasks for exact per-file, per-step det
   WSL lacks `WebKitWebDriver` and `tauri-driver`; PR #3's required CI E2E job remains the
   merge gate for that flow.
 
+- 2026-09-02 — Merged `origin/master` (`3f05bd7`) into the PR branch and resolved the
+  task-document conflict. Kept master's original Claude review as the base and appended
+  the branch's second-review Codex outcomes unchanged. Retained `status: review`, the
+  complete worklog/follow-ups, and the current 178-test summary; 164 and 171 were earlier
+  revision counts. No Rust files changed. Re-ran `cargo test --locked` (178 passed),
+  `cargo clippy --all-targets --locked -- -D warnings`, `cargo fmt --all --check`, and
+  `git diff --check`; all passed.
+
 ## What was built / tested / left out
 
 PR: [#3 — feat: Canonical Problem schema (#054)](https://github.com/Reid-Engineered/axiom/pull/3)
