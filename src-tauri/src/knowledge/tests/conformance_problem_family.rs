@@ -26,7 +26,7 @@ fn assert_mutation(
     case: &str,
     original: &str,
     replacement: &str,
-    expected: fn(&KnowledgeError) -> bool,
+    expected: impl Fn(&KnowledgeError) -> bool,
 ) {
     let root = temp_root(case);
     copy_tree(&canonical_root(), &root);
@@ -140,5 +140,64 @@ fn cross_concept_objective_is_rejected_end_to_end() {
                 KnowledgeError::ProblemFamilyCrossConceptObjective { .. }
             )
         },
+    );
+}
+
+#[test]
+fn empty_or_omitted_objectives_are_rejected_end_to_end() {
+    for (case, replacement) in [
+        ("problem_empty_objectives", "objective_ids = []"),
+        ("problem_omitted_objectives", ""),
+    ] {
+        assert_mutation(
+            case,
+            "objective_ids = [\"shell.setup_radius_height\"]",
+            replacement,
+            |error| matches!(error, KnowledgeError::MissingProblemFamilyObjectives { entity_id } if entity_id == "problem.shell_y_poly"),
+        );
+    }
+}
+
+#[test]
+fn zero_hint_level_is_rejected_end_to_end() {
+    assert_mutation(
+        "problem_zero_hint_level",
+        "level = 1",
+        "level = 0",
+        |error| matches!(error, KnowledgeError::InvalidHintLevel { entity_id, level: 0 } if entity_id == "problem.shell_y_poly"),
+    );
+}
+
+#[test]
+fn non_finite_bounds_are_rejected_end_to_end() {
+    for value in ["nan", "+nan", "-nan", "inf", "+inf", "-inf"] {
+        for (field, parameter, original) in [
+            ("value", "a", "value = 0"),
+            ("min", "coeff", "min = 2"),
+            ("max", "b", "max = { parameter = \"coeff\" }"),
+        ] {
+            for bound in [
+                value.to_owned(),
+                format!("{{ parameter = \"coeff\", offset = {value} }}"),
+            ] {
+                assert_mutation(
+                    "problem_non_finite_bound",
+                    original,
+                    &format!("{field} = {bound}"),
+                    |error| matches!(error, KnowledgeError::NonFiniteParameterBound { entity_id, parameter: actual_parameter, field: actual_field } if entity_id == "problem.shell_y_poly" && actual_parameter == parameter && *actual_field == field),
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn deeply_nested_constraint_is_rejected_end_to_end() {
+    let constraint = format!("b >= {}5{}", "(".repeat(10_000), ")".repeat(10_000));
+    assert_mutation(
+        "problem_deep_constraint",
+        "status = \"verified\"",
+        &format!("status = \"verified\"\nconstraints = [\"{constraint}\"]"),
+        |error| matches!(error, KnowledgeError::ConstraintParseError { message, .. } if message.contains("maximum depth")),
     );
 }

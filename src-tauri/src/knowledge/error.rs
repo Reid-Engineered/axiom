@@ -134,6 +134,18 @@ pub enum KnowledgeError {
         constraint: String,
         message: String,
     },
+    MissingProblemFamilyObjectives {
+        entity_id: String,
+    },
+    NonFiniteParameterBound {
+        entity_id: String,
+        parameter: String,
+        field: &'static str,
+    },
+    InvalidHintLevel {
+        entity_id: String,
+        level: u32,
+    },
     MissingProblemFamilySection {
         entity_id: String,
         section: &'static str,
@@ -292,6 +304,9 @@ impl fmt::Display for KnowledgeError {
                 "related_ids declared on both {first} and {second}; author it on exactly one side"
             ),
             Self::ConstraintParseError { entity_id, constraint, message } => write!(f, "{entity_id}: constraint \"{constraint}\" failed to parse: {message}"),
+            Self::MissingProblemFamilyObjectives { entity_id } => write!(f, "problem family {entity_id} has no objective_ids; at least one is required"),
+            Self::NonFiniteParameterBound { entity_id, parameter, field } => write!(f, "{entity_id}.parameters.{parameter}.{field} must contain a finite bound or reference offset"),
+            Self::InvalidHintLevel { entity_id, level } => write!(f, "{entity_id} declares invalid hint level {level}; levels must be positive"),
             Self::MissingProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id} is missing required section ## {section}"),
             Self::DuplicateProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id} declares ## {section} more than once"),
             Self::OutOfOrderProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id}: ## {section} appears out of order"),

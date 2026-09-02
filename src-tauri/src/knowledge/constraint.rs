@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use super::error::KnowledgeError;
 
+const MAX_NESTING_DEPTH: usize = 64;
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ArithOp {
     Add,
@@ -153,7 +155,7 @@ impl ExprParser {
     }
 
     fn parse_comparison(&mut self) -> Result<ConstraintExpr, String> {
-        let left = self.parse_term()?;
+        let left = self.parse_term(0)?;
         let op = match self.advance() {
             Some(Token::Eq) => CompareOp::Eq,
             Some(Token::Ne) => CompareOp::Ne,
@@ -163,12 +165,12 @@ impl ExprParser {
             Some(Token::Lt) => CompareOp::Lt,
             other => return Err(format!("expected a comparison operator, found {other:?}")),
         };
-        let right = self.parse_term()?;
+        let right = self.parse_term(0)?;
         Ok(ConstraintExpr::Comparison { left, op, right })
     }
 
-    fn parse_term(&mut self) -> Result<Term, String> {
-        let mut left = self.parse_factor()?;
+    fn parse_term(&mut self, depth: usize) -> Result<Term, String> {
+        let mut left = self.parse_factor(depth)?;
         loop {
             let op = match self.tokens.get(self.pos) {
                 Some(Token::Plus) => ArithOp::Add,
@@ -179,14 +181,14 @@ impl ExprParser {
             left = Term::BinaryOp {
                 op,
                 left: Box::new(left),
-                right: Box::new(self.parse_factor()?),
+                right: Box::new(self.parse_factor(depth)?),
             };
         }
         Ok(left)
     }
 
-    fn parse_factor(&mut self) -> Result<Term, String> {
-        let mut left = self.parse_atom()?;
+    fn parse_factor(&mut self, depth: usize) -> Result<Term, String> {
+        let mut left = self.parse_atom(depth)?;
         loop {
             let op = match self.tokens.get(self.pos) {
                 Some(Token::Star) => ArithOp::Mul,
@@ -197,25 +199,38 @@ impl ExprParser {
             left = Term::BinaryOp {
                 op,
                 left: Box::new(left),
-                right: Box::new(self.parse_atom()?),
+                right: Box::new(self.parse_atom(depth)?),
             };
         }
         Ok(left)
     }
 
-    fn parse_atom(&mut self) -> Result<Term, String> {
+    fn parse_atom(&mut self, depth: usize) -> Result<Term, String> {
+        if depth > MAX_NESTING_DEPTH {
+            return Err(format!(
+                "constraint nesting exceeds maximum depth {MAX_NESTING_DEPTH}"
+            ));
+        }
         match self.advance() {
             Some(Token::Number(value)) => Ok(Term::Literal(value)),
             Some(Token::Ident(name)) => Ok(Term::Param(name)),
+            Some(Token::Minus) => match self.parse_atom(depth + 1)? {
+                Term::Literal(value) => Ok(Term::Literal(-value)),
+                term => Ok(Term::BinaryOp {
+                    op: ArithOp::Sub,
+                    left: Box::new(Term::Literal(0.0)),
+                    right: Box::new(term),
+                }),
+            },
             Some(Token::LParen) => {
-                let term = self.parse_term()?;
+                let term = self.parse_term(depth + 1)?;
                 match self.advance() {
                     Some(Token::RParen) => Ok(term),
                     other => Err(format!("expected ')', found {other:?}")),
                 }
             }
             other => Err(format!(
-                "expected a number, identifier, or '(', found {other:?}"
+                "expected a number, identifier, '-', or '(', found {other:?}"
             )),
         }
     }
@@ -258,5 +273,79 @@ mod tests {
         assert!(
             matches!(parse_constraint("problem.family", "a < b c"), Err(KnowledgeError::ConstraintParseError { entity_id, .. }) if entity_id == "problem.family")
         );
+    }
+
+    #[test]
+    fn limits_parenthesis_and_unary_minus_nesting() {
+        for prefix in ["(", "-", "-("] {
+            let suffix = if prefix.contains('(') { ")" } else { "" };
+            let limit = MAX_NESTING_DEPTH / prefix.len();
+            let input = format!("b >= {}5{}", prefix.repeat(limit), suffix.repeat(limit));
+            assert!(parse_constraint("problem.family", &input).is_ok());
+            for depth in [limit + 1, 10_000] {
+                let input = format!("b >= {}5{}", prefix.repeat(depth), suffix.repeat(depth));
+                assert!(matches!(
+                    parse_constraint("problem.family", &input),
+                    Err(KnowledgeError::ConstraintParseError { entity_id, constraint, message })
+                        if entity_id == "problem.family"
+                            && constraint == input
+                            && message.contains("maximum depth")
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn parses_unary_minus_with_atom_precedence() {
+        fn binary(op: ArithOp, left: Term, right: Term) -> Term {
+            Term::BinaryOp {
+                op,
+                left: Box::new(left),
+                right: Box::new(right),
+            }
+        }
+        let a = Term::Param("a".to_owned());
+        let negative_a = binary(ArithOp::Sub, Term::Literal(0.0), a.clone());
+        for (input, right) in [
+            ("-5", Term::Literal(-5.0)),
+            ("--5", Term::Literal(5.0)),
+            ("-a", negative_a.clone()),
+            (
+                "-a * 2",
+                binary(ArithOp::Mul, negative_a, Term::Literal(2.0)),
+            ),
+            (
+                "a * -2",
+                binary(ArithOp::Mul, a.clone(), Term::Literal(-2.0)),
+            ),
+            (
+                "a - -2",
+                binary(ArithOp::Sub, a.clone(), Term::Literal(-2.0)),
+            ),
+            (
+                "-(a + 2)",
+                binary(
+                    ArithOp::Sub,
+                    Term::Literal(0.0),
+                    binary(ArithOp::Add, a, Term::Literal(2.0)),
+                ),
+            ),
+        ] {
+            assert_eq!(
+                parse_constraint("problem.family", &format!("b >= {input}")).unwrap(),
+                ConstraintExpr::Comparison {
+                    left: Term::Param("b".to_owned()),
+                    op: CompareOp::Ge,
+                    right,
+                },
+                "incorrect unary-minus parse for {input}"
+            );
+        }
+        for input in ["b >= -", "b >= -()", "b >= -*5"] {
+            assert!(matches!(
+                parse_constraint("problem.family", input),
+                Err(KnowledgeError::ConstraintParseError { .. })
+            ));
+        }
     }
 }

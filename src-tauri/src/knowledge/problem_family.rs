@@ -26,6 +26,9 @@ pub(crate) fn parse_problem_family_file(
     let id = ProblemFamilyId::new(frontmatter.id)?;
     let entity_id = id.as_str().to_owned();
     let concept_id = ConceptId::new(frontmatter.concept_id)?;
+    if frontmatter.objective_ids.is_empty() {
+        return Err(KnowledgeError::MissingProblemFamilyObjectives { entity_id });
+    }
     let objective_ids = frontmatter
         .objective_ids
         .into_iter()
@@ -98,6 +101,12 @@ pub(crate) fn parse_problem_family_file(
         .into_iter()
         .zip(parsed_body.hint_texts)
         .map(|(raw_hint, text)| {
+            if raw_hint.level == 0 {
+                return Err(KnowledgeError::InvalidHintLevel {
+                    entity_id: entity_id.clone(),
+                    level: raw_hint.level,
+                });
+            }
             if !seen_levels.insert(raw_hint.level) {
                 return Err(KnowledgeError::DuplicateHintLevel {
                     entity_id: entity_id.clone(),
@@ -144,9 +153,18 @@ fn convert_parameters(
                     })
                 }
             };
-            let value = raw_spec.value.map(convert_bound);
-            let min = raw_spec.min.map(convert_bound);
-            let max = raw_spec.max.map(convert_bound);
+            let value = raw_spec
+                .value
+                .map(|raw| convert_bound(entity_id, &name, "value", raw))
+                .transpose()?;
+            let min = raw_spec
+                .min
+                .map(|raw| convert_bound(entity_id, &name, "min", raw))
+                .transpose()?;
+            let max = raw_spec
+                .max
+                .map(|raw| convert_bound(entity_id, &name, "max", raw))
+                .transpose()?;
             if value.is_some() && (min.is_some() || max.is_some()) {
                 return Err(KnowledgeError::ParameterValueAndBoundsConflict {
                     entity_id: entity_id.to_owned(),
@@ -167,11 +185,27 @@ fn convert_parameters(
         .collect()
 }
 
-fn convert_bound(raw: RawBound) -> Bound {
-    match raw {
+fn convert_bound(
+    entity_id: &str,
+    parameter: &str,
+    field: &'static str,
+    raw: RawBound,
+) -> Result<Bound, KnowledgeError> {
+    let value = match &raw {
+        RawBound::Literal(value) => *value,
+        RawBound::Reference { offset, .. } => *offset,
+    };
+    if !value.is_finite() {
+        return Err(KnowledgeError::NonFiniteParameterBound {
+            entity_id: entity_id.to_owned(),
+            parameter: parameter.to_owned(),
+            field,
+        });
+    }
+    Ok(match raw {
         RawBound::Literal(value) => Bound::Literal(value),
         RawBound::Reference { parameter, offset } => Bound::Reference { parameter, offset },
-    }
+    })
 }
 
 fn validate_parameter_references(
@@ -308,6 +342,7 @@ mod tests {
     const VALID: &str = r#"+++
 id = "problem.a"
 concept_id = "shell.a"
+objective_ids = ["shell.objective_a"]
 difficulty = { min = 1, max = 2 }
 generator = { id = "gen.a", version = 1 }
 constraints = ["b <= coeff"]
@@ -345,6 +380,37 @@ S.
     fn valid_family_parses_constraints() {
         let family = parse_problem_family_file(Path::new("problems/problem.a.md"), VALID).unwrap();
         assert_eq!(family.constraints.len(), 1);
+    }
+
+    #[test]
+    fn accepts_negative_constraints_and_finite_bounds() {
+        for value in ["-5", "0", "5", "-5.5", "0.0", "5.5"] {
+            for bound in [
+                value.to_owned(),
+                format!("{{ parameter = \"coeff\", offset = {value} }}"),
+            ] {
+                let raw = VALID
+                    .replace("b <= coeff", "b >= -5")
+                    .replace("min = 1\n", &format!("min = {bound}\n"));
+                let family = parse_problem_family_file(Path::new("x.md"), &raw).unwrap();
+                assert!(matches!(
+                    family.constraints[0],
+                    ConstraintExpr::Comparison {
+                        right: Term::Literal(-5.0),
+                        ..
+                    }
+                ));
+                let expected = if bound.starts_with('{') {
+                    Bound::Reference {
+                        parameter: "coeff".to_owned(),
+                        offset: value.parse().unwrap(),
+                    }
+                } else {
+                    Bound::Literal(value.parse().unwrap())
+                };
+                assert_eq!(family.parameters["b"].min, Some(expected));
+            }
+        }
     }
 
     #[test]
