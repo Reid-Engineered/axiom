@@ -47,12 +47,43 @@ pub(crate) fn validate_references(
             }
         }
     }
+    for family in &entities.problem_families {
+        if !concept_ids.contains(&family.concept_id) {
+            return Err(KnowledgeError::UnresolvedConcept {
+                entity_id: family.id.as_str().to_owned(),
+                field: "concept_id",
+                target: family.concept_id.as_str().to_owned(),
+            });
+        }
+        for objective_id in &family.objective_ids {
+            let Some(objective) = objectives_by_id.get(objective_id) else {
+                return Err(KnowledgeError::UnresolvedObjective {
+                    entity_id: family.id.as_str().to_owned(),
+                    field: "objective_ids",
+                    target: objective_id.as_str().to_owned(),
+                });
+            };
+            if objective.concept_id != family.concept_id {
+                return Err(KnowledgeError::ProblemFamilyCrossConceptObjective {
+                    problem_family_id: family.id.as_str().to_owned(),
+                    objective_id: objective_id.as_str().to_owned(),
+                });
+            }
+        }
+    }
 
     validate_provenance_sources(
         entities
             .concepts
             .iter()
             .map(|c| (c.id.as_str(), &c.provenance_refs)),
+        &source_ids,
+    )?;
+    validate_provenance_sources(
+        entities
+            .problem_families
+            .iter()
+            .map(|p| (p.id.as_str(), &p.provenance_refs)),
         &source_ids,
     )?;
     validate_provenance_sources(
@@ -156,6 +187,7 @@ mod tests {
             concepts: vec![concept("shell.a")],
             objectives: vec![objective("shell.obj", "shell.a")],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.obj"])],
+            problem_families: vec![],
         };
         assert!(validate_references(&entities, &[source("src.a")]).is_ok());
     }
@@ -166,6 +198,7 @@ mod tests {
             concepts: vec![concept("shell.a")],
             objectives: vec![objective("shell.obj", "shell.missing")],
             examples: vec![],
+            problem_families: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -179,6 +212,7 @@ mod tests {
             concepts: vec![concept("shell.a")],
             objectives: vec![],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.missing"])],
+            problem_families: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -192,6 +226,7 @@ mod tests {
             concepts: vec![concept("shell.a"), concept("shell.b")],
             objectives: vec![objective("shell.obj", "shell.b")],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.obj"])],
+            problem_families: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -205,6 +240,7 @@ mod tests {
             concepts: vec![concept("shell.a")],
             objectives: vec![],
             examples: vec![],
+            problem_families: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[]),
