@@ -1,7 +1,7 @@
 ---
 id: 054
 title: Canonical Problem schema (ProblemFamily/ProblemInstance)
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: []
@@ -38,10 +38,37 @@ command-layer change — see the plan's 7 tasks for exact per-file, per-step det
 
 - 2026-09-01 — spec and plan written by Claude (architect role per AGENTS.md), handed to
   Codex for implementation
+- 2026-09-01 — Codex began implementation on `agent/codex/054-canonical-problem-schema`.
+  Windows has no native Cargo installation; WSL access requires an escalated sandbox call.
+  The Rust toolchain is healthy in Ubuntu and tests run against this Windows checkout via
+  `/mnt/c`, with disposable build output in WSL `/tmp`. The unrelated untracked `archify/`
+  directory was preserved.
+- 2026-09-01 — Deviated from the plan's sample generator IDs (`gen-shell-y-poly`/`gen-a`):
+  they violate the identifier grammar the same plan requires. Fixtures/tests use the valid
+  `gen.shell_y_poly`/`gen.a` forms instead.
+- 2026-09-01 — `ResolvedSolution` uses adjacent Serde tagging (`kind` + `value`) because
+  Serde's internally tagged representation does not support the spec's tuple variants;
+  this preserves the intended explicit variant discriminator and compiles cleanly.
+- 2026-09-01 — Codex self-review found and fixed incomplete constraint parsing/wiring,
+  missing parameter-cycle and constraint-reference checks, permissive body-section parsing,
+  and missing conformance coverage. Final self-check found no remaining blocking findings.
 
 ## What was built / tested / left out
 
-(filled in when moving to review)
+Built the canonical `ProblemFamily` authored schema, `ProblemInstance` runtime schema,
+constraint expression parser, TOML/frontmatter and Markdown-body parsing, structural and
+cross-entity validation, package discovery/loading, public exports, and the migrated
+canonical shell-method fixture.
+
+Tested with the WSL Rust toolchain against the Windows checkout:
+- `cargo check --locked` — pass
+- `cargo test --locked` — pass, 164 tests
+- `cargo clippy --all-targets --locked -- -D warnings` — pass
+- `cargo fmt --all --check` — pass
+
+The conformance coverage includes every planned full-loader rejection class. Generator
+execution, `math.verify`, Practice Core, UI integration, and offline acceptance remain out
+of scope as specified.
 
 ## Review
 
@@ -49,4 +76,6 @@ command-layer change — see the plan's 7 tasks for exact per-file, per-step det
 
 ## Follow-ups
 
-(filled in when moving to review — see spec §8 for known ones)
+- Implement generator functions and domain-validity property tests.
+- Add `math.verify`, Practice Core integration, Study Session UI integration, and the
+  offline acceptance test in the follow-up sub-projects listed by the design spec.

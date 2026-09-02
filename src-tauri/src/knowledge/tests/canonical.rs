@@ -16,6 +16,7 @@ fn canonical_fixture_loads_and_matches_spec_17() {
     assert_eq!(package.concepts.len(), 3);
     assert_eq!(package.objectives.len(), 1);
     assert_eq!(package.examples.len(), 1);
+    assert_eq!(package.problem_families.len(), 1);
 
     let vertical = package
         .concepts
@@ -42,4 +43,9 @@ fn canonical_fixture_loads_and_matches_spec_17() {
     let example = &package.examples[0];
     assert!(example.solution.contains("63"));
     assert_eq!(example.hints.len(), 1);
+
+    let family = &package.problem_families[0];
+    assert_eq!(family.id.as_str(), "problem.shell_y_poly");
+    assert_eq!(family.parameters.len(), 3);
+    assert_eq!(family.hints.len(), 4);
 }
