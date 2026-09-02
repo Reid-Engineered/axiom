@@ -58,6 +58,8 @@ command-layer change — see the plan's 7 tasks for exact per-file, per-step det
 
 ## What was built / tested / left out
 
+PR: [#3 — feat: Canonical Problem schema (#054)](https://github.com/Reid-Engineered/axiom/pull/3)
+
 Built the canonical `ProblemFamily` authored schema, `ProblemInstance` runtime schema,
 constraint expression parser, TOML/frontmatter and Markdown-body parsing, structural and
 cross-entity validation, package discovery/loading, public exports, and the migrated
