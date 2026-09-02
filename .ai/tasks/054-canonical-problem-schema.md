@@ -52,6 +52,9 @@ command-layer change — see the plan's 7 tasks for exact per-file, per-step det
 - 2026-09-01 — Codex self-review found and fixed incomplete constraint parsing/wiring,
   missing parameter-cycle and constraint-reference checks, permissive body-section parsing,
   and missing conformance coverage. Final self-check found no remaining blocking findings.
+- 2026-09-01 — Initial CI found the documented `GoalEditingSheet.test.tsx` frontend flake
+  on Ubuntu and a Windows-only CRLF assumption in the new hint-count conformance mutation.
+  Made the mutation line-ending agnostic; no production code changed.
 
 ## What was built / tested / left out
 

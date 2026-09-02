@@ -95,8 +95,8 @@ fn invalid_difficulty_is_rejected_end_to_end() {
 fn hint_count_mismatch_is_rejected_end_to_end() {
     assert_mutation(
         "problem_hint_count",
-        "[[hints]]\nlevel = 4",
-        "[[hints]]\nlevel = 4\n\n[[hints]]\nlevel = 5",
+        "level = 4",
+        "level = 4\n\n[[hints]]\nlevel = 5",
         |error| matches!(error, KnowledgeError::ProblemFamilyHintCountMismatch { .. }),
     );
 }
