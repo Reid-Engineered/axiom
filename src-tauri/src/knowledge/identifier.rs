@@ -36,6 +36,7 @@ knowledge_id!(ConceptId);
 knowledge_id!(ObjectiveId);
 knowledge_id!(ExampleId);
 knowledge_id!(SourceId);
+knowledge_id!(ProblemFamilyId);
 
 #[cfg(test)]
 mod tests {
