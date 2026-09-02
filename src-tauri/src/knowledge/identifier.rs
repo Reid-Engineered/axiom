@@ -37,6 +37,7 @@ knowledge_id!(ObjectiveId);
 knowledge_id!(ExampleId);
 knowledge_id!(SourceId);
 knowledge_id!(ProblemFamilyId);
+knowledge_id!(GeneratorId);
 
 #[cfg(test)]
 mod tests {
@@ -52,6 +53,7 @@ mod tests {
         ] {
             assert!(ConceptId::new(valid).is_ok(), "{valid} should be valid");
             assert!(SourceId::new(valid).is_ok(), "{valid} should be valid");
+            assert!(GeneratorId::new(valid).is_ok(), "{valid} should be valid");
         }
     }
 
@@ -68,6 +70,10 @@ mod tests {
         ] {
             assert!(matches!(
                 ConceptId::new(invalid),
+                Err(KnowledgeError::InvalidIdentifier { .. })
+            ));
+            assert!(matches!(
+                GeneratorId::new(invalid),
                 Err(KnowledgeError::InvalidIdentifier { .. })
             ));
         }

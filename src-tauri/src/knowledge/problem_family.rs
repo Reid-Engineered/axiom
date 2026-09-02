@@ -1,10 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use super::constraint::{parse_constraint, ConstraintExpr, Term};
+use super::constraint::{is_parameter_name, parse_constraint, ConstraintExpr, Term};
 use super::error::KnowledgeError;
 use super::frontmatter::split_frontmatter;
-use super::identifier::{ConceptId, ObjectiveId, ProblemFamilyId};
+use super::identifier::{ConceptId, GeneratorId, ObjectiveId, ProblemFamilyId};
 use super::problem_family_body::parse_problem_family_body;
 use super::provenance::convert_provenance_refs;
 use super::raw::{RawBound, RawCanonicalSolution, RawParameterSpec, RawProblemFamilyFrontmatter};
@@ -41,17 +41,12 @@ pub(crate) fn parse_problem_family_file(
             max: frontmatter.difficulty.max,
         });
     }
-    crate::modules::identifier::validate_identifier(&frontmatter.generator.id).map_err(|_| {
-        KnowledgeError::InvalidIdentifier {
-            value: frontmatter.generator.id.clone(),
-        }
-    })?;
     let difficulty = DifficultyRange {
         min: frontmatter.difficulty.min,
         max: frontmatter.difficulty.max,
     };
     let generator = GeneratorRef {
-        id: frontmatter.generator.id,
+        id: GeneratorId::new(frontmatter.generator.id)?,
         version: frontmatter.generator.version,
     };
     let parameters = convert_parameters(&entity_id, frontmatter.parameters)?;
@@ -96,6 +91,7 @@ pub(crate) fn parse_problem_family_file(
         });
     }
     let mut seen_levels = HashSet::new();
+    let mut previous_level = 0;
     let hints = frontmatter
         .hints
         .into_iter()
@@ -113,6 +109,14 @@ pub(crate) fn parse_problem_family_file(
                     level: raw_hint.level,
                 });
             }
+            if raw_hint.level < previous_level {
+                return Err(KnowledgeError::OutOfOrderHintLevel {
+                    entity_id: entity_id.clone(),
+                    previous_level,
+                    level: raw_hint.level,
+                });
+            }
+            previous_level = raw_hint.level;
             Ok(Hint {
                 level: raw_hint.level,
                 text,
@@ -143,6 +147,12 @@ fn convert_parameters(
 ) -> Result<std::collections::BTreeMap<String, ParameterSpec>, KnowledgeError> {
     raw.into_iter()
         .map(|(name, raw_spec)| {
+            if !is_parameter_name(&name) {
+                return Err(KnowledgeError::InvalidParameterName {
+                    entity_id: entity_id.to_owned(),
+                    parameter: name,
+                });
+            }
             let kind = match raw_spec.kind.as_str() {
                 "integer" => ParameterType::Integer,
                 "float" => ParameterType::Float,
@@ -324,7 +334,14 @@ fn convert_canonical_solution(
         (ResponseType::SymbolicExpression, Some(expression), None) => {
             Ok(CanonicalSolution::Symbolic { expression })
         }
-        (ResponseType::Numeric, None, Some(value)) => Ok(CanonicalSolution::Numeric { value }),
+        (ResponseType::Numeric, None, Some(value)) => {
+            if !value.is_finite() {
+                return Err(KnowledgeError::NonFiniteCanonicalSolution {
+                    entity_id: entity_id.to_owned(),
+                });
+            }
+            Ok(CanonicalSolution::Numeric { value })
+        }
         _ => Err(KnowledgeError::ResponseTypeSolutionMismatch {
             entity_id: entity_id.to_owned(),
             response_type: match response_type {

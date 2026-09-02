@@ -134,6 +134,34 @@ struct ExprParser {
     pos: usize,
 }
 
+struct ParsedTerm {
+    term: Term,
+    depth: usize,
+}
+
+impl ParsedTerm {
+    fn leaf(term: Term) -> Self {
+        Self { term, depth: 0 }
+    }
+
+    fn binary(op: ArithOp, left: Self, right: Self) -> Result<Self, String> {
+        let depth = 1 + left.depth.max(right.depth);
+        if depth > MAX_NESTING_DEPTH {
+            return Err(format!(
+                "constraint tree exceeds maximum depth {MAX_NESTING_DEPTH}"
+            ));
+        }
+        Ok(Self {
+            term: Term::BinaryOp {
+                op,
+                left: Box::new(left.term),
+                right: Box::new(right.term),
+            },
+            depth,
+        })
+    }
+}
+
 impl ExprParser {
     fn advance(&mut self) -> Option<Token> {
         let token = self.tokens.get(self.pos).cloned();
@@ -155,7 +183,7 @@ impl ExprParser {
     }
 
     fn parse_comparison(&mut self) -> Result<ConstraintExpr, String> {
-        let left = self.parse_term(0)?;
+        let left = self.parse_term(0)?.term;
         let op = match self.advance() {
             Some(Token::Eq) => CompareOp::Eq,
             Some(Token::Ne) => CompareOp::Ne,
@@ -165,11 +193,11 @@ impl ExprParser {
             Some(Token::Lt) => CompareOp::Lt,
             other => return Err(format!("expected a comparison operator, found {other:?}")),
         };
-        let right = self.parse_term(0)?;
+        let right = self.parse_term(0)?.term;
         Ok(ConstraintExpr::Comparison { left, op, right })
     }
 
-    fn parse_term(&mut self, depth: usize) -> Result<Term, String> {
+    fn parse_term(&mut self, depth: usize) -> Result<ParsedTerm, String> {
         let mut left = self.parse_factor(depth)?;
         loop {
             let op = match self.tokens.get(self.pos) {
@@ -178,16 +206,12 @@ impl ExprParser {
                 _ => break,
             };
             self.pos += 1;
-            left = Term::BinaryOp {
-                op,
-                left: Box::new(left),
-                right: Box::new(self.parse_factor(depth)?),
-            };
+            left = ParsedTerm::binary(op, left, self.parse_factor(depth)?)?;
         }
         Ok(left)
     }
 
-    fn parse_factor(&mut self, depth: usize) -> Result<Term, String> {
+    fn parse_factor(&mut self, depth: usize) -> Result<ParsedTerm, String> {
         let mut left = self.parse_atom(depth)?;
         loop {
             let op = match self.tokens.get(self.pos) {
@@ -196,32 +220,28 @@ impl ExprParser {
                 _ => break,
             };
             self.pos += 1;
-            left = Term::BinaryOp {
-                op,
-                left: Box::new(left),
-                right: Box::new(self.parse_atom(depth)?),
-            };
+            left = ParsedTerm::binary(op, left, self.parse_atom(depth)?)?;
         }
         Ok(left)
     }
 
-    fn parse_atom(&mut self, depth: usize) -> Result<Term, String> {
+    fn parse_atom(&mut self, depth: usize) -> Result<ParsedTerm, String> {
         if depth > MAX_NESTING_DEPTH {
             return Err(format!(
                 "constraint nesting exceeds maximum depth {MAX_NESTING_DEPTH}"
             ));
         }
         match self.advance() {
-            Some(Token::Number(value)) => Ok(Term::Literal(value)),
-            Some(Token::Ident(name)) => Ok(Term::Param(name)),
-            Some(Token::Minus) => match self.parse_atom(depth + 1)? {
-                Term::Literal(value) => Ok(Term::Literal(-value)),
-                term => Ok(Term::BinaryOp {
-                    op: ArithOp::Sub,
-                    left: Box::new(Term::Literal(0.0)),
-                    right: Box::new(term),
-                }),
-            },
+            Some(Token::Number(value)) => Ok(ParsedTerm::leaf(Term::Literal(value))),
+            Some(Token::Ident(name)) => Ok(ParsedTerm::leaf(Term::Param(name))),
+            Some(Token::Minus) => {
+                let atom = self.parse_atom(depth + 1)?;
+                if let Term::Literal(value) = atom.term {
+                    Ok(ParsedTerm::leaf(Term::Literal(-value)))
+                } else {
+                    ParsedTerm::binary(ArithOp::Sub, ParsedTerm::leaf(Term::Literal(0.0)), atom)
+                }
+            }
             Some(Token::LParen) => {
                 let term = self.parse_term(depth + 1)?;
                 match self.advance() {
@@ -234,6 +254,10 @@ impl ExprParser {
             )),
         }
     }
+}
+
+pub(crate) fn is_parameter_name(name: &str) -> bool {
+    matches!(tokenize(name).as_deref(), Ok([Token::Ident(parsed)]) if parsed == name)
 }
 
 pub(crate) fn parse_constraint(
@@ -346,6 +370,26 @@ mod tests {
                 parse_constraint("problem.family", input),
                 Err(KnowledgeError::ConstraintParseError { .. })
             ));
+        }
+    }
+
+    #[test]
+    fn bounds_actual_tree_depth_across_operators_and_grouping() {
+        for operator in ["+", "-", "*", "/"] {
+            let at_limit = format!("{}1", format!("1{operator}").repeat(MAX_NESTING_DEPTH));
+            assert!(parse_constraint("family", &format!("b >= {at_limit}")).is_ok());
+            for too_deep in [
+                format!("{at_limit}{operator}1"),
+                format!("({at_limit}) + 1"),
+                format!("1 + ({at_limit})"),
+                format!("-({at_limit})"),
+            ] {
+                assert!(
+                    matches!(parse_constraint("family", &format!("b >= {too_deep}")),
+                    Err(KnowledgeError::ConstraintParseError { message, .. }) if message.contains("tree exceeds maximum depth")),
+                    "accepted {too_deep}"
+                );
+            }
         }
     }
 }

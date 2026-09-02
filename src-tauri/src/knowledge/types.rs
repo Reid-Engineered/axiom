@@ -2,7 +2,7 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use super::identifier::{
-    ConceptId, ExampleId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
+    ConceptId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -73,7 +73,7 @@ pub struct DifficultyRange {
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GeneratorRef {
-    pub id: String,
+    pub id: GeneratorId,
     pub version: u32,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -213,7 +213,7 @@ mod tests {
             objective_ids: vec![],
             difficulty: DifficultyRange { min: 1, max: 2 },
             generator: GeneratorRef {
-                id: "gen.shell_y_poly".to_owned(),
+                id: GeneratorId::new("gen.shell_y_poly").unwrap(),
                 version: 1,
             },
             parameters: std::collections::BTreeMap::new(),
@@ -231,6 +231,10 @@ mod tests {
             status: ProblemFamilyStatus::Verified,
         };
         let json = serde_json::to_string(&family).unwrap();
+        assert_eq!(
+            serde_json::to_value(&family).unwrap()["generator"]["id"],
+            "gen.shell_y_poly"
+        );
         assert_eq!(
             serde_json::from_str::<ProblemFamily>(&json).unwrap(),
             family

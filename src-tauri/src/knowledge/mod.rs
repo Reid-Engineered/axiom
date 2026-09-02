@@ -20,7 +20,7 @@ mod validate;
 pub use constraint::{ArithOp, CompareOp, ConstraintExpr, Term};
 pub use error::KnowledgeError;
 pub use identifier::{
-    ConceptId, ExampleId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
+    ConceptId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
 };
 pub use loader::load_knowledge_package;
 pub use relationships::related_concepts;

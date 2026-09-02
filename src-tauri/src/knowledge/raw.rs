@@ -99,7 +99,7 @@ pub(crate) struct RawGeneratorRef {
     pub version: u32,
 }
 #[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 pub(crate) enum RawBound {
     Literal(f64),
     Reference {

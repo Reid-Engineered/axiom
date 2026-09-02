@@ -146,6 +146,18 @@ pub enum KnowledgeError {
         entity_id: String,
         level: u32,
     },
+    OutOfOrderHintLevel {
+        entity_id: String,
+        previous_level: u32,
+        level: u32,
+    },
+    InvalidParameterName {
+        entity_id: String,
+        parameter: String,
+    },
+    NonFiniteCanonicalSolution {
+        entity_id: String,
+    },
     MissingProblemFamilySection {
         entity_id: String,
         section: &'static str,
@@ -307,6 +319,9 @@ impl fmt::Display for KnowledgeError {
             Self::MissingProblemFamilyObjectives { entity_id } => write!(f, "problem family {entity_id} has no objective_ids; at least one is required"),
             Self::NonFiniteParameterBound { entity_id, parameter, field } => write!(f, "{entity_id}.parameters.{parameter}.{field} must contain a finite bound or reference offset"),
             Self::InvalidHintLevel { entity_id, level } => write!(f, "{entity_id} declares invalid hint level {level}; levels must be positive"),
+            Self::OutOfOrderHintLevel { entity_id, previous_level, level } => write!(f, "{entity_id} declares hint level {level} after {previous_level}; levels must ascend in body bullet order"),
+            Self::InvalidParameterName { entity_id, parameter } => write!(f, "{entity_id} declares parameter name {parameter:?} that cannot be referenced in constraints"),
+            Self::NonFiniteCanonicalSolution { entity_id } => write!(f, "{entity_id}.canonical_solution.value must be finite"),
             Self::MissingProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id} is missing required section ## {section}"),
             Self::DuplicateProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id} declares ## {section} more than once"),
             Self::OutOfOrderProblemFamilySection { entity_id, section } => write!(f, "problem family {entity_id}: ## {section} appears out of order"),

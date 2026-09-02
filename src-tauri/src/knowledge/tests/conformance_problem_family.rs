@@ -1,7 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::knowledge::{load_knowledge_package, KnowledgeError};
+use crate::knowledge::{
+    load_knowledge_package, CanonicalSolution, KnowledgeError, KnowledgePackage,
+};
 
 use super::support::temp_root;
 
@@ -28,17 +30,27 @@ fn assert_mutation(
     replacement: &str,
     expected: impl Fn(&KnowledgeError) -> bool,
 ) {
+    let error = load_mutated_family(case, |contents| {
+        assert!(
+            contents.contains(original),
+            "mutation source missing for {case}"
+        );
+        contents.replacen(original, replacement, 1)
+    })
+    .unwrap_err();
+    assert!(expected(&error), "unexpected error for {case}: {error}");
+}
+
+fn load_mutated_family(
+    case: &str,
+    mutate: impl FnOnce(String) -> String,
+) -> Result<KnowledgePackage, KnowledgeError> {
     let root = temp_root(case);
     copy_tree(&canonical_root(), &root);
     let path = root.join("problems/problem.shell_y_poly.md");
     let contents = fs::read_to_string(&path).unwrap();
-    assert!(
-        contents.contains(original),
-        "mutation source missing for {case}"
-    );
-    fs::write(path, contents.replacen(original, replacement, 1)).unwrap();
-    let error = load_knowledge_package(&root).unwrap_err();
-    assert!(expected(&error), "unexpected error for {case}: {error}");
+    fs::write(path, mutate(contents)).unwrap();
+    load_knowledge_package(&root)
 }
 
 #[test]
@@ -199,5 +211,148 @@ fn deeply_nested_constraint_is_rejected_end_to_end() {
         "status = \"verified\"",
         &format!("status = \"verified\"\nconstraints = [\"{constraint}\"]"),
         |error| matches!(error, KnowledgeError::ConstraintParseError { message, .. } if message.contains("maximum depth")),
+    );
+}
+
+#[test]
+fn long_flat_operator_chains_are_rejected_end_to_end() {
+    for operator in ["+", "-", "*", "/"] {
+        let constraint = format!("b >= {}1", format!("1{operator}").repeat(199_999));
+        assert_mutation(
+            "problem_flat_constraint",
+            "status = \"verified\"",
+            &format!("status = \"verified\"\nconstraints = [\"{constraint}\"]"),
+            |error| {
+                matches!(error, KnowledgeError::ConstraintParseError { entity_id, message, .. }
+                if entity_id == "problem.shell_y_poly" && message.contains("tree exceeds maximum depth"))
+            },
+        );
+    }
+}
+
+#[test]
+fn numeric_canonical_solution_must_be_finite_end_to_end() {
+    for value in [
+        "nan", "+nan", "-nan", "inf", "+inf", "-inf", "-5.5", "0.0", "5.5",
+    ] {
+        let result = load_mutated_family("problem_numeric_solution", |contents| {
+            contents
+                .replace(
+                    "response_type = \"symbolic-expression\"",
+                    "response_type = \"numeric\"",
+                )
+                .replace(
+                    "expression = \"2*pi*(coeff*b^3/3 - b^4/4)\"",
+                    &format!("value = {value}"),
+                )
+        });
+        match value.parse::<f64>() {
+            Ok(number) if number.is_finite() => {
+                assert_eq!(
+                    result.unwrap().problem_families[0].canonical_solution,
+                    CanonicalSolution::Numeric { value: number }
+                );
+            }
+            _ => assert!(
+                matches!(result, Err(KnowledgeError::NonFiniteCanonicalSolution { entity_id }) if entity_id == "problem.shell_y_poly"),
+                "accepted {value}"
+            ),
+        }
+    }
+}
+
+#[test]
+fn unknown_bound_reference_fields_are_rejected_end_to_end() {
+    for table in [
+        "{ parameter = \"coeff\", offst = 1 }",
+        "{ parameter = \"coeff\", offset = 1, extra = 2 }",
+    ] {
+        assert_mutation(
+            "problem_unknown_bound_field",
+            "{ parameter = \"coeff\" }",
+            table,
+            |error| matches!(error, KnowledgeError::TomlSyntax { .. }),
+        );
+    }
+}
+
+#[test]
+fn parameter_names_must_be_referenceable_end_to_end() {
+    for name in ["and", "", "1a", "a.b", "a-b", "a b", " a", "α"] {
+        assert_mutation(
+            "problem_invalid_parameter_name",
+            "[parameters.a]",
+            &format!("[parameters.\"{name}\"]"),
+            |error| {
+                matches!(error, KnowledgeError::InvalidParameterName { entity_id, parameter }
+                if entity_id == "problem.shell_y_poly" && parameter == name)
+            },
+        );
+    }
+    for name in ["a", "A1", "_", "_a", "a_1", "and1"] {
+        let package = load_mutated_family("problem_valid_parameter_name", |contents| {
+            contents
+                .replace("[parameters.a]", &format!("[parameters.{name}]"))
+                .replace(
+                    "status = \"verified\"",
+                    &format!(
+                        "status = \"verified\"\nconstraints = [\"{name} >= 0 and b >= {name}\"]"
+                    ),
+                )
+        })
+        .unwrap();
+        assert!(package.problem_families[0].parameters.contains_key(name));
+    }
+}
+
+#[test]
+fn hint_levels_must_ascend_in_body_order_end_to_end() {
+    let result = load_mutated_family("problem_out_of_order_hints", |contents| {
+        contents.replace("level = 1", "level = 5")
+    });
+    assert!(
+        matches!(result, Err(KnowledgeError::OutOfOrderHintLevel { entity_id, previous_level: 5, level: 2 }) if entity_id == "problem.shell_y_poly")
+    );
+    let original = load_mutated_family("problem_original_hints", |contents| contents).unwrap();
+    let gapped = load_mutated_family("problem_gapped_hints", |contents| {
+        contents.replace("level = 4", "level = 8")
+    })
+    .unwrap();
+    assert_eq!(
+        gapped.problem_families[0]
+            .hints
+            .iter()
+            .map(|hint| hint.level)
+            .collect::<Vec<_>>(),
+        vec![1, 2, 3, 8]
+    );
+    assert_eq!(
+        gapped.problem_families[0]
+            .hints
+            .iter()
+            .map(|hint| &hint.text)
+            .collect::<Vec<_>>(),
+        original.problem_families[0]
+            .hints
+            .iter()
+            .map(|hint| &hint.text)
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn generator_ids_are_validated_end_to_end() {
+    for id in ["generator", "gen.bad-id", "Gen.a"] {
+        assert_mutation(
+            "problem_invalid_generator",
+            "gen.shell_y_poly",
+            id,
+            |error| matches!(error, KnowledgeError::InvalidIdentifier { value } if value == id),
+        );
+    }
+    let package = load_mutated_family("problem_valid_generator", |contents| contents).unwrap();
+    assert_eq!(
+        package.problem_families[0].generator.id.as_str(),
+        "gen.shell_y_poly"
     );
 }
