@@ -4,6 +4,7 @@ import { access, mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -123,14 +124,21 @@ test(
         By.xpath("//label[span[normalize-space(.)='Subject']]/input"),
       );
       await workspaceSubject.click();
-      // WebKitGTK 2.52 rejects tauri-driver's legacy Element Send Keys payload; Actions is W3C-safe.
+      // Keep selection, clearing, and typing in separate Actions requests so React processes
+      // the controlled input's cleared state before WebKit dispatches the replacement text.
       await driver
         .actions({ async: true })
         .keyDown(Key.CONTROL)
         .sendKeys('a')
         .keyUp(Key.CONTROL)
-        .sendKeys('Axiom E2E Subject')
         .perform();
+      await driver.actions({ async: true }).sendKeys(Key.BACK_SPACE).perform();
+      await driver.wait(
+        async () => (await workspaceSubject.getAttribute('value')) === '',
+        2_000,
+        'subject field did not clear',
+      );
+      await driver.actions({ async: true }).sendKeys('Axiom E2E Subject').perform();
       assert.equal(await workspaceSubject.getAttribute('value'), 'Axiom E2E Subject');
       await driver.findElement(By.xpath("//button[normalize-space(.)='Create Workspace']")).click();
 
@@ -164,6 +172,7 @@ test(
     } finally {
       if (driver) await driver.quit().catch(() => undefined);
       await stopProcess(driverProcess);
+      await delay(250);
       await rm(isolatedDataHome, {
         recursive: true,
         force: true,
