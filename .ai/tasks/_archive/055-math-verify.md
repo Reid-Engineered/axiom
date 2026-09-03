@@ -1,7 +1,7 @@
 ---
 id: 055
 title: math.verify capability (deterministic numeric + mathcore symbolic-expression)
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [054]
@@ -93,10 +93,49 @@ specified.
 
 ## Review
 
-(filled in when a reviewer picks this up)
+Reviewed by Claude (`/code-review`, high effort, 4 finder angles + manual verification +
+actual `cargo test`/`cargo clippy` run) against commit `215c0fe` on `master`. No blocking
+findings.
+
+- [x] Correctness — pass. Tolerance/comparison logic (`provider.rs:81-88`) matches spec §5
+      exactly, including the `is_finite` guard on both operands (fixes the failure mode a
+      naive port would hit if `canonical` were ever non-finite). `mathcore` usage is
+      strictly limited to `MathCore::new()`/`.calculate()` — verified no
+      `differentiate`/`integrate`/`solve`/`simplify`/matrix calls anywhere in the diff.
+      `CapabilityProvider`/`InvocationError` mapping follows `registry.rs`'s established
+      convention exactly. `VerifyRequest`/`VerifyResult` match the spec's contract
+      field-for-field. 204/204 tests pass (26 new), `cargo clippy -D warnings` clean.
+- [x] Architecture conformance — pass, with one process note (not a code defect): this
+      commit (owned by `codex`) edits `ARCHITECTURE.md:72` directly, which `CLAUDE.md`
+      reserves to Claude ("anything touching `ARCHITECTURE.md`, `AGENTS.md`, or `.ai/`
+      itself"). The edit itself is correct and mechanical — one line adding `capabilities/`
+      to the folder tree, reflecting a placement already locked in the design spec §3 — so
+      no fix needed here, but future structural-doc updates should be surfaced for Claude's
+      sign-off rather than merged directly, per the coordination rule.
+- [ ] UI rules — N/A, no frontend/UI touched by this task.
+- [x] Process — pass. Worklog reflects what happened in enough detail to follow without the
+      diff (including the `mathcore` `std`-feature plan correction). Scope matches the task
+      as created — no unrequested expansion. `ARCHITECTURE.md` updated for the new
+      top-level directory.
+
+Two non-blocking findings, both confirmed by direct reading (`provider.rs`), moved to
+Follow-ups below rather than fixed here per this repo's review convention (reviewer records,
+original author or a follow-up task applies the fix).
+
+Verdict: no blocking findings — moving to `done`.
 
 ## Follow-ups
 
+- `provider.rs:67` — `student_response` is passed into `mathcore`'s recursive-descent
+  parser/evaluator with no length or nesting bound. Not a logic bug today (this capability
+  isn't wired to any live input path yet), but once Practice actually feeds real learner
+  input through it, a pathological string (e.g. deeply nested parentheses) could drive
+  excessive stack depth/CPU before `verify()` ever returns `is_correct: false`. Revisit when
+  wiring this capability to a real caller (see the app-startup-registration follow-up below).
+- `provider.rs:60-65` — `canonical_solution.clone()` inside the `map_err` closure is
+  unnecessary: `canonical_solution` is never read again after this point (the `?` returns
+  immediately on error, and the success path only uses `student_response`), so a `move`
+  closure could take ownership directly instead of cloning. Cosmetic/efficiency only.
 - Formula-shaped symbolic answers with genuine free variables (domain-sampling equivalence
   checking) — not needed until a problem family actually requires one (spec §8).
 - Symbolic-exactness enforcement (rejecting a numerically-correct decimal approximation for
