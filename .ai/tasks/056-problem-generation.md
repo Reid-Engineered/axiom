@@ -1,7 +1,7 @@
 ---
 id: 056
 title: Problem generation engine (deterministic seeded sampling + domain-validity property test)
-status: review
+status: changes-requested
 owner: codex
 stage: 8
 depends_on: [054, 055]
@@ -103,9 +103,49 @@ command wiring, frontend integration, and UI remain out of scope as specified.
 
 ## Review
 
-(filled in when a reviewer picks this up)
+Reviewed by Claude (`/code-review`, high effort, cross-file + manual verification) against
+commit `dc05aa1` on `master`. One blocking finding.
+
+- [ ] Correctness — FAIL: `src-tauri/src/generation/rng.rs:18` — `sample_integer(min, max)`
+      has no guard against `min > max`. `range = (max - min + 1) as u64` becomes `0` (a
+      `next_u64() % 0` panic) when `min == max + 1`, or wraps into an enormous `u64` via the
+      negative-to-unsigned cast when `min` is further above `max`, in which case the
+      returned value can land far outside the declared `[min, max]` — silent corruption
+      instead of a `GenerationError`. Reachable whenever a resolved `Bound::Reference` (with
+      an offset) ends up pushing `min` above `max` — a plausible authoring mistake neither
+      task 054's schema validation nor this task's own resolution code currently catches.
+      Same class of issue as task 054's blocking constraint-parser finding: malformed
+      content must produce a graceful error, never a crash. Confirmed by direct reading, not
+      agent speculation.
+- [x] Architecture conformance — pass on the code itself. Process note (non-blocking, but
+      now a **repeat**): this commit (owned by `codex`) again edited `ARCHITECTURE.md`
+      directly (adding the `generation/` line), which `CLAUDE.md` reserves to Claude — same
+      finding as task 055's review. The edit is again mechanically correct, so not reverted,
+      but a second occurrence means this should stop happening going forward, not just be
+      noted again.
+- [ ] UI rules — N/A, no frontend/UI touched by this task.
+- [x] Process — pass. Worklog is detailed and honest about several plan corrections made
+      during implementation (module-naming collision, unused-import gating, a flaky-test
+      fix). 235/235 tests pass, clippy/fmt/E2E all green.
+
+Two additional non-blocking findings, confirmed by direct reading, moved to Follow-ups:
+
+Verdict: **changes-requested** — fix the `sample_integer` bounds guard, then resubmit for
+re-review.
 
 ## Follow-ups
+
+- `src-tauri/src/generation/template.rs:19-22` — the scientific-notation fix (preventing
+  `"2e5"`'s `e` from being misread as a standalone identifier) also suppresses identifier
+  detection for any parameter name immediately preceded by a digit with no separating
+  operator (e.g. `"3b"` would leave `b` unsubstituted instead of replacing it). Low risk
+  today — the real fixture always uses explicit `*`, and an author who wrote `"3b"` would
+  already hit a `mathcore` parse failure regardless (a confusing error, not a silent wrong
+  answer) — but worth tightening if a future family's expression relies on bare adjacency.
+- `src-tauri/src/generation/template.rs:31` — `value.is_sign_negative()` is `true` for
+  `-0.0`, so a resolved parameter that lands on negative zero renders as `"(-0)"` instead of
+  `"0"` in a substituted expression. Cosmetic only (mathematically harmless), not correctness
+  — noted for whoever next touches `format_number`.
 
 - Knowledge-authoring-time validation (task 054's module) should require every
   `ParameterSpec` have either a fixed `value` or both `min` and `max` — today's schema
