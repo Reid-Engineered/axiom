@@ -145,6 +145,11 @@ test('workspace data survives an application restart', { timeout: 120_000 }, asy
   } finally {
     if (activeDriver) await activeDriver.quit().catch(() => undefined);
     await Promise.allSettled(driverProcesses.map((driverProcess) => stopProcess(driverProcess)));
-    await rm(isolatedDataHome, { recursive: true, force: true });
+    await rm(isolatedDataHome, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
   }
 });

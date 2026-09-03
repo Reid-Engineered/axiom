@@ -145,20 +145,31 @@ test(
       // The sidebar persists across the whole flow — confirm it specifically picked up
       // the newly created workspace (not just that it appears somewhere on the page) and
       // no longer shows the first-launch empty state.
-      await driver.wait(async () => {
-        const entries = await sidebarNav.findElements(
-          By.xpath(".//button[contains(normalize-space(.), 'Axiom E2E Subject')]"),
-        );
-        return entries.length > 0;
-      }, 10_000, 'sidebar did not pick up the newly created workspace');
-      const emptyStateAfterCreate = await sidebarNav.findElements(
+      await driver.wait(
+        until.elementLocated(
+          By.xpath(
+            "//aside//nav[@aria-label='Primary']//button[contains(normalize-space(.), 'Axiom E2E Subject')]",
+          ),
+        ),
+        10_000,
+        'sidebar did not pick up the newly created workspace',
+      );
+      const homeSidebarNav = await driver.findElement(
+        By.css('aside nav[aria-label="Primary"]'),
+      );
+      const emptyStateAfterCreate = await homeSidebarNav.findElements(
         By.xpath(".//p[normalize-space(.)='No workspaces yet.']"),
       );
       assert.equal(emptyStateAfterCreate.length, 0);
     } finally {
       if (driver) await driver.quit().catch(() => undefined);
       await stopProcess(driverProcess);
-      await rm(isolatedDataHome, { recursive: true, force: true });
+      await rm(isolatedDataHome, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 100,
+      });
     }
   },
 );
