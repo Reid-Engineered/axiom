@@ -1,7 +1,7 @@
 ---
 id: 054
 title: Canonical Problem schema (ProblemFamily/ProblemInstance)
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: []
@@ -198,6 +198,14 @@ Validation after these changes: `cargo test --locked` passed all 178 tests;
 PR #3's required CI job because the local WSL environment lacks `WebKitWebDriver` and
 `tauri-driver`. No directory layout or data-flow rule changed. The section-parser
 extraction and the earlier reuse follow-ups remain deliberately deferred.
+
+- 2026-09-02 — Merged `agent/codex/054-canonical-problem-schema` directly into `master`
+  (no PR — repo has switched to direct-merge workflow until there's a working app end to
+  end). Clean merge, no conflicts. Re-verified independently on `master` post-merge:
+  `cargo test --locked` (178 passed), `cargo clippy --all-targets --locked -- -D warnings`,
+  `cargo fmt --all --check`, and `git diff --check` all pass. All 5 blocking findings from
+  the original review confirmed fixed by direct code reading (not just worklog claims).
+  Marking done and archiving.
 
 ## Follow-ups
 
