@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::iter::Peekable;
 use std::str::Chars;
 
@@ -44,6 +45,45 @@ pub enum ConstraintExpr {
         right: Term,
     },
     All(Vec<ConstraintExpr>),
+}
+
+impl Term {
+    pub(crate) fn evaluate(&self, params: &BTreeMap<String, f64>) -> f64 {
+        match self {
+            Self::Param(name) => params[name],
+            Self::Literal(value) => *value,
+            Self::BinaryOp { op, left, right } => {
+                let left = left.evaluate(params);
+                let right = right.evaluate(params);
+                match op {
+                    ArithOp::Add => left + right,
+                    ArithOp::Sub => left - right,
+                    ArithOp::Mul => left * right,
+                    ArithOp::Div => left / right,
+                }
+            }
+        }
+    }
+}
+
+impl ConstraintExpr {
+    pub(crate) fn holds(&self, params: &BTreeMap<String, f64>) -> bool {
+        match self {
+            Self::Comparison { left, op, right } => {
+                let left = left.evaluate(params);
+                let right = right.evaluate(params);
+                match op {
+                    CompareOp::Eq => left == right,
+                    CompareOp::Ne => left != right,
+                    CompareOp::Ge => left >= right,
+                    CompareOp::Le => left <= right,
+                    CompareOp::Gt => left > right,
+                    CompareOp::Lt => left < right,
+                }
+            }
+            Self::All(parts) => parts.iter().all(|part| part.holds(params)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -285,6 +325,65 @@ pub(crate) fn parse_constraint(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn params(pairs: &[(&str, f64)]) -> BTreeMap<String, f64> {
+        pairs
+            .iter()
+            .map(|(name, value)| (name.to_string(), *value))
+            .collect()
+    }
+
+    #[test]
+    fn evaluates_literals_and_parameters() {
+        let values = params(&[("b", 3.0)]);
+        assert_eq!(Term::Literal(2.0).evaluate(&values), 2.0);
+        assert_eq!(Term::Param("b".to_owned()).evaluate(&values), 3.0);
+    }
+
+    #[test]
+    fn evaluates_every_arithmetic_operator() {
+        let values = params(&[]);
+        fn binary(op: ArithOp, left: f64, right: f64) -> Term {
+            Term::BinaryOp {
+                op,
+                left: Box::new(Term::Literal(left)),
+                right: Box::new(Term::Literal(right)),
+            }
+        }
+        assert_eq!(binary(ArithOp::Add, 2.0, 3.0).evaluate(&values), 5.0);
+        assert_eq!(binary(ArithOp::Sub, 5.0, 3.0).evaluate(&values), 2.0);
+        assert_eq!(binary(ArithOp::Mul, 4.0, 3.0).evaluate(&values), 12.0);
+        assert_eq!(binary(ArithOp::Div, 9.0, 3.0).evaluate(&values), 3.0);
+    }
+
+    #[test]
+    fn holds_evaluates_every_comparison_operator() {
+        let values = params(&[]);
+        fn comparison(op: CompareOp, left: f64, right: f64) -> ConstraintExpr {
+            ConstraintExpr::Comparison {
+                left: Term::Literal(left),
+                op,
+                right: Term::Literal(right),
+            }
+        }
+        assert!(comparison(CompareOp::Eq, 1.0, 1.0).holds(&values));
+        assert!(comparison(CompareOp::Ne, 1.0, 2.0).holds(&values));
+        assert!(comparison(CompareOp::Ge, 2.0, 2.0).holds(&values));
+        assert!(comparison(CompareOp::Le, 2.0, 2.0).holds(&values));
+        assert!(comparison(CompareOp::Gt, 3.0, 2.0).holds(&values));
+        assert!(comparison(CompareOp::Lt, 2.0, 3.0).holds(&values));
+        assert!(!comparison(CompareOp::Gt, 2.0, 3.0).holds(&values));
+    }
+
+    #[test]
+    fn holds_requires_every_conjunct_to_hold() {
+        let values = params(&[("b", 4.0)]);
+        let expression = parse_constraint("family", "b >= 1 and b <= 10").unwrap();
+        assert!(expression.holds(&values));
+
+        let expression = parse_constraint("family", "b >= 1 and b <= 3").unwrap();
+        assert!(!expression.holds(&values));
+    }
 
     #[test]
     fn parses_conjunctions_and_arithmetic_with_precedence() {

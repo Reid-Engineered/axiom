@@ -1,7 +1,7 @@
 ---
 id: 056
 title: Problem generation engine (deterministic seeded sampling + domain-validity property test)
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: [054, 055]
@@ -55,10 +55,51 @@ the plan's 8 tasks for exact per-file, per-step detail):
   bespoke per-family Rust code — what's genuinely bespoke per family is the property test
   itself, not the sampling mechanism. Spec and plan written by Claude (architect role per
   `AGENTS.md`), handed to Codex for implementation.
+- 2026-09-02 — Codex started implementation directly on `master` per the current workflow.
+  Confirmed local `master` matches `origin/master`, dependencies 054/055 are done, and the
+  unrelated untracked `.claude/` directory remains out of scope.
+- 2026-09-02 — Corrected one additional flaky assertion from the plan: the canonical hint
+  fixture intentionally contains TeX braces, so the full-pipeline test checks specifically
+  for unresolved declared-parameter placeholders instead of rejecting every `{` character.
+  Number formatting also uses `f64::to_string()` directly so large whole values are not
+  truncated through an `i64` cast.
+- 2026-09-02 — Focused tests exposed an unused-import warning for the test-only
+  `parse_constraint` re-export; gated that re-export with `cfg(test)`. Self-review also
+  hardened identifier substitution so negative values remain grouped under exponentiation
+  and parameter names cannot be substituted inside scientific-notation literals.
+- 2026-09-02 — Strengthened the narrow-constraint test with a seed whose first draw is known
+  to fail and second draw succeeds, so it exercises actual reject-and-resample behavior
+  rather than merely accepting a lucky first draw.
+- 2026-09-02 — Fixed a second Rust module-wiring issue in the plan before handoff: its inline
+  entry-point tests and external property-test directory were both named `tests`, which
+  cannot coexist in one module. The implementation and corrected plan use `unit_tests` for
+  the inline suite and `tests` for the property suite.
+- 2026-09-02 — Final validation passed: `cargo check --locked`, all 235 Rust tests,
+  Clippy with warnings denied, rustfmt, and `git diff --check`. Installed `tauri-driver` and
+  the Ubuntu WebKit driver into a disposable `/tmp` tree for the native gate;
+  `npm run test:e2e:linux` passed both flows, and the temporary tree was removed.
 
 ## What was built / tested / left out
 
-(filled in when moving to review)
+Built deterministic SplitMix64 sampling, recursive dependency-aware parameter resolution,
+constraint evaluation and capped reject-and-resample behavior, prompt/hint and symbolic
+expression substitution, generator dispatch, and the public `generate_problem_instance`
+entry point. Added the 10,000-seed `problem.shell_y_poly` domain-validity test and updated
+the backend architecture tree for the new top-level `generation/` module. No production or
+development dependency was added.
+
+Validation on 2026-09-02:
+
+- `cargo check --locked --quiet` — pass
+- `cargo test --locked --quiet` — pass, 235 tests total (31 new tests)
+- `cargo clippy --all-targets --locked --quiet -- -D warnings` — pass
+- `cargo fmt --all --check` — pass
+- `git diff --check` — pass
+- `npm run test:e2e:linux` — pass, 2 native flows (using disposable local driver installs)
+
+Real reference-package authoring, Knowledge-authoring-time completeness validation,
+parameter-dependent numeric canonical solutions, bespoke generators, Practice Core/Tauri
+command wiring, frontend integration, and UI remain out of scope as specified.
 
 ## Review
 

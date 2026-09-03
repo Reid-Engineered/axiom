@@ -80,7 +80,9 @@ property test):
 - `rng.rs` — `DeterministicRng` (§6).
 - `sampling.rs` — parameter resolution and constraint-checked resampling (§4).
 - `template.rs` — the two substitution mechanisms (§5).
-- `tests/mod.rs` — the domain-validity property test for `gen.shell_y_poly` (§8).
+- `tests/mod.rs` — the domain-validity property test for `gen.shell_y_poly` (§8); the
+  inline entry-point suite uses the distinct `unit_tests` module name so both can be wired
+  from `mod.rs`.
 
 ## 4. Parameter resolution and constraint checking
 
@@ -127,23 +129,23 @@ neither can substitute for the other:
   `"2*pi*(coeff*b^3/3 - b^4/4)"`): must remain a valid `mathcore`-parseable expression after
   substitution, so a curly-brace scheme can't be used here — the string needs to stay
   `"2*pi*(4*3^3/3 - 3^4/4)"`-shaped, not `"2*pi*({4}*{3}^3/3 - {3}^4/4)"`. This needs a small
-  word-boundary-aware identifier scanner: find maximal runs of `[A-Za-z_][A-Za-z0-9_]*`, and
-  replace a run with its formatted value only if it exactly equals a declared parameter name
-  — anything else (a `mathcore` constant like `pi`, a function name like `sin`) is left
-  untouched. Deliberately not reusing `constraint.rs`'s parser (no `^`/power operator in that
-  grammar) or `mathcore`'s parser (would fully evaluate to a float, destroying the
-  intentionally-unreduced symbolic form `ResolvedSolution::Symbolic` exists to preserve for
-  display).
+  word-boundary-aware identifier scanner: find maximal runs of `[A-Za-z_][A-Za-z0-9_]*`
+  that do not begin inside a number or identifier, and replace a run with its formatted value
+  only if it exactly equals a declared parameter name — anything else (a `mathcore` constant
+  like `pi`, a function name like `sin`, or the exponent in `1e3`) is left untouched.
+  Negative substituted values are parenthesized so exponentiation retains the parameter's
+  value (`coeff^2` with `coeff = -2` becomes `(-2)^2`). Deliberately not reusing
+  `constraint.rs`'s parser (no `^`/power operator in that grammar) or `mathcore`'s parser
+  (would fully evaluate to a float, destroying the intentionally-unreduced symbolic form
+  `ResolvedSolution::Symbolic` exists to preserve for display).
 
 Both are pure string transforms with no failure mode of their own (an identifier that
 doesn't match any parameter name is simply left alone) — neither needs a `GenerationError`
 variant.
 
-`format_number` formats an integer-typed value without a trailing `.0` (e.g. `4` not `4.0`)
-and a float-typed value with enough precision to round-trip; the exact formatting only
-matters for the substituted text a learner reads and the substituted expression `mathcore`
-re-parses, both of which tolerate ordinary `f64` `Display` formatting for whole numbers
-already, so no bespoke formatting logic beyond checking `value.fract() == 0.0`.
+`format_number` uses ordinary `f64` `Display` formatting, which omits a trailing `.0` for
+whole numbers and retains enough precision to round-trip. It does not cast whole values to
+`i64`, which would truncate or saturate valid large finite values.
 
 Hints substitute in the same order the family's `hints: Vec<Hint>` are already ordered
 (ascending `level`, already enforced by task 054's validation) — `ProblemInstance.hints:

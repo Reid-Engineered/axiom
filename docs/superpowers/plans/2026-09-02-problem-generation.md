@@ -460,6 +460,7 @@ pub use constraint::{ArithOp, CompareOp, ConstraintExpr, Term};
 to:
 
 ```rust
+#[cfg(test)]
 pub(crate) use constraint::parse_constraint;
 pub use constraint::{ArithOp, CompareOp, ConstraintExpr, Term};
 ```
@@ -713,7 +714,10 @@ mod tests {
         let constraint = crate::knowledge::parse_constraint("test", "x == 1").unwrap();
         let family = minimal_family(parameters, vec![constraint]);
 
-        let mut rng = DeterministicRng::new(1);
+        let mut first_attempt = DeterministicRng::new(0);
+        assert_eq!(first_attempt.sample_integer(1, 2), 2);
+
+        let mut rng = DeterministicRng::new(0);
         let resolved = resolve_parameters(&family, &mut rng).unwrap();
         assert_eq!(resolved["x"], 1.0);
     }
@@ -779,8 +783,9 @@ pub(crate) fn substitute_identifiers(
 ) -> String {
     let mut result = String::with_capacity(template.len());
     let mut chars = template.chars().peekable();
+    let mut previous_is_identifier_continue = false;
     while let Some(&c) = chars.peek() {
-        if c.is_ascii_alphabetic() || c == '_' {
+        if (c.is_ascii_alphabetic() || c == '_') && !previous_is_identifier_continue {
             let mut identifier = String::new();
             while let Some(&c) = chars.peek() {
                 if c.is_ascii_alphanumeric() || c == '_' {
@@ -791,23 +796,26 @@ pub(crate) fn substitute_identifiers(
                 }
             }
             match resolved_parameters.get(&identifier) {
+                Some(value) if value.is_sign_negative() => {
+                    result.push('(');
+                    result.push_str(&format_number(*value));
+                    result.push(')');
+                }
                 Some(value) => result.push_str(&format_number(*value)),
                 None => result.push_str(&identifier),
             }
+            previous_is_identifier_continue = true;
         } else {
             result.push(c);
             chars.next();
+            previous_is_identifier_continue = c.is_ascii_alphanumeric() || c == '_';
         }
     }
     result
 }
 
 fn format_number(value: f64) -> String {
-    if value.is_finite() && value.fract() == 0.0 {
-        format!("{}", value as i64)
-    } else {
-        value.to_string()
-    }
+    value.to_string()
 }
 
 #[cfg(test)]
@@ -858,10 +866,27 @@ mod tests {
     }
 
     #[test]
+    fn substitute_identifiers_groups_negative_parameter_values() {
+        let result = substitute_identifiers("coeff^2", &params(&[("coeff", -2.0)]));
+        assert_eq!(result, "(-2)^2");
+    }
+
+    #[test]
+    fn substitute_identifiers_does_not_replace_a_scientific_exponent() {
+        let result = substitute_identifiers("1e3 + e3", &params(&[("e3", 7.0)]));
+        assert_eq!(result, "1e3 + 7");
+    }
+
+    #[test]
     fn format_number_omits_trailing_zero_for_whole_numbers() {
         assert_eq!(format_number(4.0), "4");
         assert_eq!(format_number(-2.0), "-2");
         assert_eq!(format_number(2.5), "2.5");
+    }
+
+    #[test]
+    fn format_number_preserves_large_whole_values() {
+        assert_eq!(format_number(1e20), "100000000000000000000");
     }
 }
 ```
@@ -881,7 +906,7 @@ pub use error::GenerationError;
 
 Run: `cd src-tauri && cargo test --locked generation::template -- --nocapture`
 
-Expected: all 6 tests pass.
+Expected: all 9 tests pass.
 
 - [ ] **Step 3: Commit**
 
@@ -964,7 +989,7 @@ fn generate_generic(
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     use super::*;
     use std::path::Path;
 
@@ -1031,15 +1056,18 @@ mod tests {
         let family = shell_y_poly_family();
         let instance = generate_problem_instance(&family, 7).unwrap();
 
-        assert!(!instance.prompt.contains('{'));
-        for hint in &instance.hints {
-            assert!(!hint.contains('{'));
+        for name in family.parameters.keys() {
+            let placeholder = format!("{{{name}}}");
+            assert!(!instance.prompt.contains(&placeholder));
+            for hint in &instance.hints {
+                assert!(!hint.contains(&placeholder));
+            }
         }
 
         let ResolvedSolution::Symbolic(expression) = &instance.canonical_solution else {
             panic!("problem.shell_y_poly is a SymbolicExpression family");
         };
-        for name in ["coeff", "a", "b"] {
+        for name in family.parameters.keys() {
             assert!(
                 !expression
                     .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
@@ -1176,7 +1204,7 @@ git commit -m "test(generation): domain-validity property test for gen.shell_y_p
 Run: `cd src-tauri && cargo test --locked --quiet`
 
 Expected: every existing test still passes, plus every test added in Tasks 1–7 (4 + 4 + 3 +
-5 + 6 + 5 + 1 = 28 new tests — count them and confirm the total matches before proceeding).
+5 + 9 + 5 + 1 = 31 new tests — count them and confirm the total matches before proceeding).
 
 - [ ] **Step 2: Run clippy**
 

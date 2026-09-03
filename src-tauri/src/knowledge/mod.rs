@@ -17,6 +17,8 @@ mod relationships;
 mod types;
 mod validate;
 
+#[cfg(test)]
+pub(crate) use constraint::parse_constraint;
 pub use constraint::{ArithOp, CompareOp, ConstraintExpr, Term};
 pub use error::KnowledgeError;
 pub use identifier::{
