@@ -69,6 +69,7 @@ axiom/
       commands/               domain IPC handlers + shared serialized DTOs
       db/                      connection setup, schema, migrations, queries
         migrations/            ordered SQL migrations embedded in the Rust binary
+      capabilities/            first-party capability providers and embedded manifests
       modules/                 validated module manifests, discovery boundary, and capability
                                registry runtime
       main.rs

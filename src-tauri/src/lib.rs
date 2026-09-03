@@ -1,3 +1,4 @@
+pub mod capabilities;
 pub mod commands;
 pub mod db;
 pub mod knowledge;

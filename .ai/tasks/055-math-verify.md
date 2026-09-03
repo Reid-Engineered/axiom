@@ -1,7 +1,7 @@
 ---
 id: 055
 title: math.verify capability (deterministic numeric + mathcore symbolic-expression)
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: [054]
@@ -28,14 +28,17 @@ see the plan's Global Constraints); any UI (sub-projects 5–6).
 
 ## Plan
 
-Files to be created or touched (all new — no existing file outside `Cargo.toml`/`lib.rs` is
-modified; see the plan's 7 tasks for exact per-file, per-step detail):
-- New dependency: `mathcore = "=0.3.1"` (MIT, `default-features = false, features = ["std"]`)
+Implementation files created or touched (all new — no existing production file outside
+`Cargo.toml`/`lib.rs` is modified; see the plan's 7 tasks for exact per-file, per-step detail):
+- New dependency: `mathcore = "=0.3.1"` (MIT, `default-features = false`; the published
+  crate has no `std` feature)
   in `src-tauri/Cargo.toml`.
 - Modify: `src-tauri/src/lib.rs` (add `pub mod capabilities;`).
 - Create: `src-tauri/src/capabilities/mod.rs`,
   `src-tauri/src/capabilities/math_verify/{mod.rs,types.rs,error.rs,provider.rs,module.toml}`,
   `src-tauri/src/capabilities/math_verify/tests/mod.rs`.
+- Documentation bookkeeping: this task file, the implementation plan correction, and the
+  `ARCHITECTURE.md` folder tree required for the new top-level backend directory.
 
 ## Worklog
 
@@ -47,10 +50,46 @@ modified; see the plan's 7 tasks for exact per-file, per-step detail):
   its narrow `MathCore::calculate` parse+evaluate surface, never its differentiation/
   integration/solve/matrix code. Spec and plan written by Claude (architect role per
   `AGENTS.md`), handed to Codex for implementation.
+- 2026-09-02 — Codex started implementation directly on `master` per the current workflow.
+  Confirmed the checked-in registry interfaces and preserved the unrelated untracked
+  `.claude/` directory.
+- 2026-09-02 — The plan's dependency declaration did not resolve: published `mathcore`
+  0.3.1 has no `std` feature. Confirmed from `cargo info` and the downloaded crate manifest
+  that its optional features are `parallel`, `fft`, `full`, and `wasm`; retained the intended
+  minimal build as `default-features = false` with no feature list.
+- 2026-09-02 — Implemented the complete capability and embedded manifest. The focused suite
+  passes with 26 tests. This corrects the plan's stated total of 30 (its listed groups total
+  23) by adding the spec-required `tan` case, both tolerance-boundary directions, and an
+  unknown-version case. Non-finite numeric input is exercised against the typed verifier
+  because JSON cannot represent `NaN` or infinity.
+- 2026-09-02 — Final validation passed: `cargo check --locked`, all 204 Rust tests,
+  Clippy with warnings denied, rustfmt, and `git diff --check`. The first native E2E attempt
+  could not launch because the host lacked both drivers. Installed `tauri-driver` and the
+  Ubuntu WebKit driver into a disposable `/tmp` tree, reran `npm run test:e2e:linux`, and
+  both native flows passed; the temporary tree was then removed.
 
 ## What was built / tested / left out
 
-(filled in when moving to review)
+Built the `math.verify` v1 provider with typed numeric/symbolic requests, correctness
+results, canonical-expression failure handling, the exact absolute/relative tolerance
+comparison, narrow `MathCore::calculate` symbolic evaluation, and an embedded first-party
+manifest. Added the `capabilities/` module to the backend architecture tree. Corrected the
+implementation plan and task dependency text after confirming published `mathcore` 0.3.1
+has no `std` feature; its default Rayon/FFT features remain disabled and absent from the
+dependency graph.
+
+Validation on 2026-09-02:
+
+- `cargo check --locked --quiet` — pass
+- `cargo test --locked --quiet` — pass, 204 tests total (26 new capability tests)
+- `cargo clippy --all-targets --locked --quiet -- -D warnings` — pass
+- `cargo fmt --all --check` — pass
+- `git diff --check` — pass
+- `npm run test:e2e:linux` — pass, 2 native flows (using disposable local driver installs)
+
+Partial credit, diagnostics/hint selection, free-variable equivalence, generator functions,
+Practice Core/app-startup registration, Tauri commands, and UI remain out of scope as
+specified.
 
 ## Review
 

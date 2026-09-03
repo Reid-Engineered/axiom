@@ -1,0 +1,10 @@
+manifest_version = 1
+id = "core.math_verify"
+name = "Core Math Verify"
+version = "1.0.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
+
+[[provides]]
+id = "math.verify"
+version = 1

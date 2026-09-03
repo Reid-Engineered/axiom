@@ -6,7 +6,7 @@
 
 **Architecture:** New sibling module to `knowledge/` and `modules/`, following the same raw-types/error/tests file-split convention. One `CapabilityProvider` impl branches on `response_type`: `Numeric` is plain float comparison (no dependency); `SymbolicExpression` parses and evaluates both the canonical and student expression strings with the new `mathcore` crate's `MathCore::calculate`, then applies the same tolerance comparison. The manifest ships embedded via `include_str!`, matching the pattern `modules::EmbeddedManifestSource` already established for first-party modules — but this plan does not wire it into `modules::EmbeddedManifestSource::default()` or any Tauri command/app-startup path; that's app-layer work, out of scope here (the same boundary sub-project 1 of the module-capability runtime and task 054 both respected).
 
-**Tech Stack:** Rust, `serde`/`serde_json` (already dependencies), one new crate: `mathcore = "=0.3.1"` (MIT), `default-features = false, features = ["std"]` (skips `mathcore`'s `parallel`/`fft` default features — `rayon`/`rustfft` — since only `MathCore::calculate`'s parse+evaluate path is used; no threading or FFT needed).
+**Tech Stack:** Rust, `serde`/`serde_json` (already dependencies), one new crate: `mathcore = "=0.3.1"` (MIT), `default-features = false` (the published crate has no `std` feature; disabling defaults skips `mathcore`'s `parallel`/`fft` features — `rayon`/`rustfft` — since only `MathCore::calculate`'s parse+evaluate path is used; no threading or FFT needed).
 
 **Spec:** `docs/superpowers/specs/2026-09-02-math-verify-design.md`
 
@@ -55,7 +55,7 @@ In `src-tauri/Cargo.toml`, in the `[dependencies]` section (after the existing `
 line, to keep the file's existing top-to-bottom exact-pin style), add:
 
 ```toml
-mathcore = { version = "=0.3.1", default-features = false, features = ["std"] }
+mathcore = { version = "=0.3.1", default-features = false }
 ```
 
 - [ ] **Step 2: Verify it resolves and builds**
@@ -430,8 +430,14 @@ mod tests {
     }
 
     #[test]
-    fn just_outside_tolerance_is_incorrect() {
-        let output = invoke(request(1.0, 1.0 + 1e-6)).unwrap();
+    fn just_above_tolerance_is_incorrect() {
+        let output = invoke(request(1.0, 1.0 + 2e-9)).unwrap();
+        assert_eq!(output["is_correct"], false);
+    }
+
+    #[test]
+    fn just_below_tolerance_is_incorrect() {
+        let output = invoke(request(1.0, 1.0 - 2e-9)).unwrap();
         assert_eq!(output["is_correct"], false);
     }
 
@@ -449,11 +455,16 @@ mod tests {
 
     #[test]
     fn non_finite_student_response_is_incorrect_not_an_error() {
-        let output = invoke(request(4.0, f64::NAN)).unwrap();
-        assert_eq!(output["is_correct"], false);
+        for student_response in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let result = verify(VerifyRequest::Numeric {
+                canonical_solution: 4.0,
+                student_response,
+            })
+            .unwrap();
 
-        let output = invoke(request(4.0, f64::INFINITY)).unwrap();
-        assert_eq!(output["is_correct"], false);
+            assert!(!result.is_correct);
+            assert_eq!(result.error, None);
+        }
     }
 
     #[test]
@@ -462,6 +473,20 @@ mod tests {
         let result = tauri::async_runtime::block_on(MathVerifyProvider.invoke(
             &capability_id,
             CAPABILITY_VERSION,
+            request(1.0, 1.0),
+        ));
+        assert!(matches!(
+            result,
+            Err(InvocationError::UnknownCapability { .. })
+        ));
+    }
+
+    #[test]
+    fn unknown_capability_version_is_rejected() {
+        let capability_id = CapabilityId::new(CAPABILITY_ID).unwrap();
+        let result = tauri::async_runtime::block_on(MathVerifyProvider.invoke(
+            &capability_id,
+            CAPABILITY_VERSION + 1,
             request(1.0, 1.0),
         ));
         assert!(matches!(
@@ -487,7 +512,7 @@ mod tests {
 
 Run: `cd src-tauri && cargo test --locked capabilities::math_verify::provider -- --nocapture`
 
-Expected: all 8 tests pass. (The `SymbolicExpression` arm's `unimplemented!` is never
+Expected: all 10 tests pass. (The `SymbolicExpression` arm's `unimplemented!` is never
 reached by these tests — every test here sends `response_type: "numeric"`.)
 
 - [ ] **Step 3: Export it and commit**
@@ -626,6 +651,13 @@ Add these tests to the `#[cfg(test)] mod tests` block in the same file:
     }
 
     #[test]
+    fn tangent_function_matches_hand_computed_value() {
+        // tan(pi/4) = 1
+        let output = invoke(symbolic_request("1", "tan(pi/4)")).unwrap();
+        assert_eq!(output["is_correct"], true);
+    }
+
+    #[test]
     fn exponential_function_matches_hand_computed_value() {
         // exp(1) = e
         let output = invoke(symbolic_request("e", "exp(1)")).unwrap();
@@ -651,8 +683,8 @@ Add these tests to the `#[cfg(test)] mod tests` block in the same file:
 
 Run: `cd src-tauri && cargo test --locked capabilities::math_verify -- --nocapture`
 
-Expected: all tests in `capabilities::math_verify::provider` pass (the 8 from Task 4 plus
-the 9 added here). If `sqrt_function_matches_hand_computed_value` or
+Expected: all tests in `capabilities::math_verify::provider` pass (the 10 from Task 4 plus
+the 10 added here). If `sqrt_function_matches_hand_computed_value` or
 `natural_log_function_matches_hand_computed_value` fails because `mathcore` rounds
 differently than expected, print the actual computed values
 (`math.calculate("sqrt(2)^2")`) with `--nocapture` and confirm the discrepancy is a genuine
@@ -807,8 +839,8 @@ git commit -m "feat(math-verify): embed first-party manifest, full registry roun
 
 Run: `cd src-tauri && cargo test --locked --quiet`
 
-Expected: every existing test still passes, plus every test added in Tasks 2–6 (30 new
-tests: 4 + 1 + 8 + 9 + 1 — count them and confirm the total matches before proceeding).
+Expected: every existing test still passes, plus every test added in Tasks 2–6 (26 new
+tests: 4 + 1 + 10 + 10 + 1 — count them and confirm the total matches before proceeding).
 
 - [ ] **Step 2: Run clippy**
 
