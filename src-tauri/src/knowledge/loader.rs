@@ -32,6 +32,7 @@ pub fn load_knowledge_package(root: &Path) -> Result<KnowledgePackage, Knowledge
         concepts: entities.concepts,
         objectives: entities.objectives,
         examples: entities.examples,
+        problem_families: entities.problem_families,
         sources,
     })
 }

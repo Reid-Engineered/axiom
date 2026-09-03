@@ -5,12 +5,14 @@ use super::concept::parse_concept_file;
 use super::error::KnowledgeError;
 use super::example::parse_example_file;
 use super::objective::parse_objective_file;
-use super::types::{Concept, Example, Objective};
+use super::problem_family::parse_problem_family_file;
+use super::types::{Concept, Example, Objective, ProblemFamily};
 
 pub(crate) struct DiscoveredEntities {
     pub concepts: Vec<Concept>,
     pub objectives: Vec<Objective>,
     pub examples: Vec<Example>,
+    pub problem_families: Vec<ProblemFamily>,
 }
 
 pub(crate) fn read_package_toml(root: &Path) -> Result<String, KnowledgeError> {
@@ -35,11 +37,18 @@ pub(crate) fn discover_entities(root: &Path) -> Result<DiscoveredEntities, Knowl
     let examples = load_entities(root, "examples", parse_example_file, |e: &Example| {
         e.id.as_str().to_owned()
     })?;
+    let problem_families = load_entities(
+        root,
+        "problems",
+        parse_problem_family_file,
+        |p: &ProblemFamily| p.id.as_str().to_owned(),
+    )?;
 
     Ok(DiscoveredEntities {
         concepts,
         objectives,
         examples,
+        problem_families,
     })
 }
 

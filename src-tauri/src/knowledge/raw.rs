@@ -67,6 +67,77 @@ pub(crate) struct RawExampleFrontmatter {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub(crate) struct RawProblemFamilyFrontmatter {
+    pub id: String,
+    pub concept_id: String,
+    #[serde(default)]
+    pub objective_ids: Vec<String>,
+    pub difficulty: RawDifficultyRange,
+    pub generator: RawGeneratorRef,
+    #[serde(default)]
+    pub parameters: std::collections::BTreeMap<String, RawParameterSpec>,
+    #[serde(default)]
+    pub constraints: Vec<String>,
+    pub response_type: String,
+    pub canonical_solution: RawCanonicalSolution,
+    #[serde(default)]
+    pub hints: Vec<RawHint>,
+    #[serde(default)]
+    pub provenance_refs: Vec<RawProvenanceRef>,
+    pub status: String,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawDifficultyRange {
+    pub min: u8,
+    pub max: u8,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawGeneratorRef {
+    pub id: String,
+    pub version: u32,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged, deny_unknown_fields)]
+pub(crate) enum RawBound {
+    Literal(f64),
+    Reference {
+        parameter: String,
+        #[serde(default)]
+        offset: f64,
+    },
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawParameterSpec {
+    #[serde(rename = "type")]
+    pub kind: String,
+    #[serde(default)]
+    pub value: Option<RawBound>,
+    #[serde(default)]
+    pub min: Option<RawBound>,
+    #[serde(default)]
+    pub max: Option<RawBound>,
+    #[serde(default)]
+    pub description: Option<String>,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawCanonicalSolution {
+    #[serde(default)]
+    pub expression: Option<String>,
+    #[serde(default)]
+    pub value: Option<f64>,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawHint {
+    pub level: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct RawProvenanceRef {
     pub source_id: String,
     #[serde(default)]

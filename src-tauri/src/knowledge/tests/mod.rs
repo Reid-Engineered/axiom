@@ -5,6 +5,9 @@ mod canonical;
 mod conformance;
 
 #[cfg(test)]
+mod conformance_problem_family;
+
+#[cfg(test)]
 mod migration;
 
 #[cfg(test)]
