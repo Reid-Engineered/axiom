@@ -1,7 +1,7 @@
 ---
 id: 056
 title: Problem generation engine (deterministic seeded sampling + domain-validity property test)
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [054, 055]
@@ -119,7 +119,8 @@ command wiring, frontend integration, and UI remain out of scope as specified.
 Reviewed by Claude (`/code-review`, high effort, cross-file + manual verification) against
 commit `dc05aa1` on `master`. One blocking finding.
 
-- [ ] Correctness — FAIL: `src-tauri/src/generation/rng.rs:18` — `sample_integer(min, max)`
+- [x] Correctness — FAIL, then fixed and independently re-verified (see below):
+      `src-tauri/src/generation/rng.rs:18` — `sample_integer(min, max)`
       has no guard against `min > max`. `range = (max - min + 1) as u64` becomes `0` (a
       `next_u64() % 0` panic) when `min == max + 1`, or wraps into an enormous `u64` via the
       negative-to-unsigned cast when `min` is further above `max`, in which case the
@@ -159,6 +160,32 @@ reversed floats would otherwise collapse to the same `i64`.
 Regression coverage is named in the latest worklog entry above. Task returned to `review`
 for an independent verdict; the original review checkbox remains unchanged until that
 review occurs.
+
+### 2026-09-02 — Independent re-verification (Claude)
+
+Read `rng.rs`/`sampling.rs`/`error.rs` directly against commit `3a96234` rather than taking
+the fix report at face value (the prior report for this task didn't match what was actually
+on `master`). Confirmed correct:
+
+- `sample_integer`/`sample_float` return `Option`, `None` on `min > max`, and a dedicated
+  test (`reversed_ranges_are_rejected_without_consuming_rng_state`) proves rejection doesn't
+  consume RNG state.
+- Integer span arithmetic goes through `i128`/`u128`
+  (`full_width_integer_range_does_not_overflow` exercises the entire `i64::MIN..=i64::MAX`
+  span).
+- The subtle case I hadn't even asked for is handled and tested:
+  `reversed_integer_bounds_are_rejected_before_saturating_conversion` uses `min = 1e20`,
+  `max = 9e19` — both beyond `i64::MAX`, which would saturate to the *same* `i64::MAX` under
+  a naive cast and silently bypass an RNG-only guard. `resolve_parameter` checks `min > max`
+  on the resolved `f64` values before any lossy cast, catching exactly this.
+- Independently re-ran (not just read the reported numbers): `cargo test --locked` (240
+  passed), `cargo clippy --all-targets --locked -- -D warnings`, `cargo fmt --all --check`,
+  `git diff --check` — all clean.
+
+No new `ARCHITECTURE.md` edit in this commit (the prior process note about `codex` editing
+Claude-reserved docs doesn't recur here).
+
+Verdict: **done**.
 
 ## Follow-ups
 
