@@ -76,13 +76,20 @@ Ships one first-party manifest, `module.toml`, embedded via `include_str!` at co
 (`modules::EmbeddedManifestSource`). The manifest declares exactly one capability:
 
 ```toml
-[module]
-id = "core.math-verify"
+manifest_version = 1
+id = "core.math_verify"
+name = "Core Math Verify"
+version = "1.0.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
 
-[[capability]]
+[[provides]]
 id = "math.verify"
 version = 1
 ```
+
+Note the module id uses `_` not `-` — `src-tauri/src/modules/identifier.rs`'s grammar
+(dot-separated segments, ASCII lowercase/digit/underscore only) rejects hyphens.
 
 (Exact manifest field names/grammar follow `src-tauri/src/modules/manifest.rs` as it exists
 today — this design does not change that grammar.)
@@ -132,10 +139,11 @@ already rejects it at authoring time via `NonFiniteCanonicalSolution`) but is no
 re-validated here; if it somehow occurred, the comparison would just always fail.
 
 **SymbolicExpression.** Parse and evaluate `canonical_solution` and `student_response` with
-`mathcore::MathCore::evaluate` (the same call for both — no free variables, so no
-`evaluate_with_vars` needed), each producing an `f64`. Only `evaluate`/`parse` are used;
-`differentiate`/`integrate`/`solve`/matrix/precision APIs are never called from this
-capability. If `student_response` fails to parse or evaluate, return
+`MathCore::new().calculate(&str) -> Result<f64, MathError>` (the same call for both — no free
+variables, so no `evaluate_with_vars` needed), each producing an `f64` directly (`calculate`
+internally parses and rejects non-real results). `differentiate`/`integrate`/`solve`/
+`simplify`/matrix/precision APIs are never called from this capability. If
+`student_response` fails to parse or evaluate, return
 `VerifyResult { is_correct: false, error: Some(<mathcore's error message>) }`. If
 `canonical_solution` fails to parse (should be impossible — sub-project 1 doesn't validate
 that its `expression` string is `mathcore`-parseable, a gap noted in §8), treat it as an
