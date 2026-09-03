@@ -12,22 +12,20 @@ import { Sidebar } from './components/workspace/Sidebar';
 import { Stage3StubRouteMenu } from './components/workspace/Stage3StubRouteMenu';
 import type { WorkspaceTreeProps } from './components/workspace/WorkspaceTree';
 import { NavigationProvider } from './hooks/NavigationProvider';
+import { useExploreSampleWorkspace } from './hooks/useExploreSampleWorkspace';
 import { useKeyboardShortcut } from './hooks/useKeyboardShortcut';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import { useNavigation, type Route } from './hooks/useNavigation';
 import { WorkspaceProvider } from './hooks/WorkspaceProvider';
 import { useWorkspace } from './hooks/useWorkspace';
+import { useWorkspaces } from './hooks/useWorkspaces';
 import { AppShell } from './layouts/AppShell';
 import { RouteContent } from './layouts/RouteContent';
 import { DevGalleryPage } from './pages/DevGalleryPage';
 import { GoalEditingSheet } from './pages/GoalEditingSheet';
 import styles from './App.module.css';
 
-const WORKSPACES = [
-  { id: 'workspace-calculus-ii', name: 'Calculus II' },
-  { id: 'workspace-linear-algebra', name: 'Linear Algebra' },
-  { id: 'workspace-physics', name: 'Mechanics' },
-];
+const FALLBACK_WORKSPACE_ID = 'workspace-calculus-ii';
 
 function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {
   if (route.type === 'workspaceOverview') return 'overview';
@@ -40,8 +38,19 @@ function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {
 function Application() {
   const { route, overlay, navigate, openOverlay, closeOverlay } = useNavigation();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspace();
-  const workspaceId = activeWorkspaceId ?? WORKSPACES[0].id;
+  const { workspaces, refresh: refreshWorkspaces } = useWorkspaces();
+  const sampleWorkspace = useExploreSampleWorkspace();
+  const workspaceId = activeWorkspaceId ?? workspaces[0]?.id ?? FALLBACK_WORKSPACE_ID;
   const palette = useCommandPalette(workspaceId);
+
+  // Workspace creation and sample import each happen through their own page-level hook
+  // instance (FirstLaunchPage, CreateWorkspacePage, or this sidebar's own sampleWorkspace
+  // hook) — none of them share this component's `useWorkspaces()` cache. Refetching on
+  // arrival at Home is what makes the sidebar (which persists across routes, unlike a page)
+  // reflect a workspace created or imported through any of those paths.
+  useEffect(() => {
+    if (route.type === 'home') void refreshWorkspaces();
+  }, [route.type, refreshWorkspaces]);
 
   const commandGroups: CommandPaletteResultGroup[] = [
     {
@@ -95,13 +104,16 @@ function Application() {
 
   const sidebar = (
     <Sidebar
-      workspaces={WORKSPACES}
+      workspaces={workspaces}
       openWorkspaceId={activeWorkspaceId ?? undefined}
       activeSubItem={activeSubItem(route)}
       onSearch={palette.open}
       onHome={() => navigate({ type: 'home' })}
       onMarketplace={() => navigate({ type: 'marketplace', forWorkspaceId: workspaceId })}
       onCreateWorkspace={() => navigate({ type: 'createWorkspace' })}
+      onExploreSample={sampleWorkspace.explore}
+      exploringSample={sampleWorkspace.importing}
+      exploreSampleError={sampleWorkspace.error}
       onSelectWorkspace={(selectedWorkspaceId) => {
         setActiveWorkspaceId(selectedWorkspaceId);
         navigate({ type: 'workspaceOverview', workspaceId: selectedWorkspaceId });
@@ -139,7 +151,7 @@ function Application() {
         query={palette.query}
         onQueryChange={palette.setQuery}
         groups={commandGroups}
-        scopeLabel={WORKSPACES.find((workspace) => workspace.id === workspaceId)?.name}
+        scopeLabel={workspaces.find((workspace) => workspace.id === workspaceId)?.name}
       />
       {overlay?.type === 'goalEditing' ? (
         <GoalEditingSheet

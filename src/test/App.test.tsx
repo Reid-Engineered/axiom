@@ -1,10 +1,18 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
 
+/**
+ * "Explore a sample workspace" appears twice once the empty sidebar is visible alongside
+ * First Launch's own content (same action, two entry points) — this picks the one outside
+ * the sidebar, matching a learner reading the page rather than using the persistent chrome.
+ */
 async function enterSampleWorkspace() {
-  fireEvent.click(screen.getByRole('button', { name: 'Explore a sample workspace' }));
+  const sidebar = screen.queryByRole('navigation', { name: 'Primary' });
+  const buttons = screen.getAllByRole('button', { name: 'Explore a sample workspace' });
+  const pageButton = buttons.find((button) => !sidebar?.contains(button)) ?? buttons[0];
+  fireEvent.click(pageButton);
   await waitFor(() => expect(document.querySelector('[data-route="home"]')).not.toBeNull());
 }
 
@@ -62,11 +70,12 @@ describe('Stage 3 navigation', () => {
     render(<App />);
 
     fireEvent.keyDown(window, { key: 'k', metaKey: true });
-    expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
-    expect(await screen.findByText('Practice the Shell Method')).toBeVisible();
-    expect(screen.getByText('From your work')).toBeVisible();
-    expect(screen.getByText(/Note —/)).toBeVisible();
-    expect(screen.getByText('Marketplace')).toBeVisible();
+    const dialog = screen.getByRole('dialog', { name: 'Command palette' });
+    expect(dialog).toBeVisible();
+    expect(await within(dialog).findByText('Practice the Shell Method')).toBeVisible();
+    expect(within(dialog).getByText('From your work')).toBeVisible();
+    expect(within(dialog).getByText(/Note —/)).toBeVisible();
+    expect(within(dialog).getByText('Marketplace')).toBeVisible();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'Command palette' })).toBeNull();
   });
@@ -106,15 +115,36 @@ describe('Stage 3 navigation', () => {
     expect(container.querySelector('[data-overlay="goalEditing"]')).not.toBeNull();
   });
 
-  it('starts without a sidebar and continues to workspace setup', () => {
+  it('shows a visible sidebar (not absent) on first launch and continues to workspace setup', () => {
     const { container } = render(<App />);
 
     expect(screen.getByRole('heading', { name: 'What are you learning?' })).toBeVisible();
-    expect(container.querySelector('aside')).toBeNull();
+    expect(container.querySelector('aside')).not.toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+
     expect(screen.getByRole('textbox', { name: 'Subject' })).toHaveValue('');
     expect(screen.getByPlaceholderText('Calculus II')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(container.querySelector('[data-route="createWorkspace"]')).not.toBeNull();
+    expect(container.querySelector('aside')).not.toBeNull();
+  });
+
+  it('reflects a newly created workspace in the sidebar once Home is reached', async () => {
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.change(screen.getByLabelText('Subject'), {
+      target: { value: 'Sidebar Regression Subject' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Workspace' }));
+    await waitFor(() => expect(container.querySelector('[data-route="home"]')).not.toBeNull());
+
+    const sidebar = screen.getByRole('navigation', { name: 'Primary' });
+    await waitFor(() =>
+      expect(
+        within(sidebar).getByRole('button', { name: 'Sidebar Regression Subject' }),
+      ).toBeVisible(),
+    );
   });
 
   it('completes the Stage 5 launch-to-populated-overview path', async () => {

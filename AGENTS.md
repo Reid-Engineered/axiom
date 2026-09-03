@@ -38,6 +38,14 @@ suggestions. The two most likely to be violated by an agent moving fast:
   thing is a signal to split it, not to add a `// section` comment and keep going.
 - **No comments explaining what code does.** Comment only a non-obvious *why* — a
   constraint from the handoff doc, a workaround, an invariant a reader could otherwise miss.
+- **A fresh install never auto-populates workspaces, concepts, sessions, or any sample
+  data.** First Launch always starts with zero real workspaces; the sidebar shows an
+  intentional empty state (`components/workspace/Sidebar.tsx`), not hardcoded mock content.
+  The sample workspace exists only behind an explicit, learner-triggered "Explore a sample
+  workspace" action (`useExploreSampleWorkspace`) and is never treated as, or silently
+  substituted for, the learner's real workspace. If you're tempted to hardcode a workspace
+  list "to make the sidebar look right" while building something else, that's this
+  invariant — wire the real hook instead.
 
 ## UI rules
 

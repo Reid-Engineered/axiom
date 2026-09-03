@@ -84,3 +84,23 @@
   border-top: var(--border-width-hairline) solid var(--color-hairline);
   padding-top: var(--space-lg);
 }
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+}
+
+.emptyStateMessage {
+  margin: 0 0 var(--space-2xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-small-plus);
+}
+
+.emptyStateError {
+  margin: 0;
+  color: var(--accent-amber);
+  font-size: var(--font-size-small);
+}

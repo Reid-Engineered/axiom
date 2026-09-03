@@ -201,8 +201,21 @@ high-value flow rather than full-screen browser coverage.
 
 ## 7. Explicitly out of scope here
 
-Per `AXIOM-HANDOFF.md` §7 ("Not yet designed"): empty states, notifications, the full
-concept-graph view, tutor voice mode, in-app reading mode, settings, module authoring,
+Per `AXIOM-HANDOFF.md` §7 ("Not yet designed"): empty states generally, notifications, the
+full concept-graph view, tutor voice mode, in-app reading mode, settings, module authoring,
 import onboarding, and responsive behavior below ~1100px. This document does not invent
 structure for any of them — they get their own design pass, and their own architecture
 addendum, when they're designed.
+
+One empty state is designed, as an exception: on a fresh install, `Sidebar`
+(`components/workspace/Sidebar.tsx`) renders with zero workspaces — First Launch and
+Create Workspace both pass it to `AppShell` (previously omitted entirely on those two
+routes). With `workspaces.length === 0`, `Sidebar` shows a primary "Create workspace" and
+secondary "Explore a sample workspace" action in place of `WorkspaceTree` and its
+"+ New Workspace" row; the top nav (Search/Home/Marketplace) stays. The sample-workspace
+import is explicit opt-in only (`useExploreSampleWorkspace`, shared with `FirstLaunchPage`'s
+own copy) — it never runs automatically and never substitutes for a learner's real
+workspace. `Application` (`App.tsx`) owns the one `useWorkspaces()` instance behind the
+sidebar and refetches it on navigating to `home`, since `Sidebar` (unlike a page) persists
+across routes and would otherwise miss a workspace created through a different page's own
+hook instance — per §5 rule 3, this is a `refresh()` call, not a lifted/shared store.

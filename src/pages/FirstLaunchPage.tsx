@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '../components/primitives/Button';
+import { useExploreSampleWorkspace } from '../hooks/useExploreSampleWorkspace';
 import { useNavigation } from '../hooks/useNavigation';
-import { useWorkspace } from '../hooks/useWorkspace';
-import { useWorkspaces } from '../hooks/useWorkspaces';
 import { CenteredColumnLayout } from '../layouts/CenteredColumnLayout';
 import styles from './FirstLaunchPage.module.css';
 
@@ -12,30 +11,14 @@ export type FirstLaunchPageProps = Record<string, never>;
 /** First-run entry for choosing what the learner wants to study. */
 export function FirstLaunchPage(_props: FirstLaunchPageProps) {
   const { navigate } = useNavigation();
-  const { setActiveWorkspaceId } = useWorkspace();
-  const { importSampleWorkspace } = useWorkspaces();
+  const { explore: exploreSampleWorkspace, importing: importingSample, error: sampleImportError } =
+    useExploreSampleWorkspace();
   const [subject, setSubject] = useState('');
-  const [sampleImportError, setSampleImportError] = useState<string>();
-  const [importingSample, setImportingSample] = useState(false);
 
   const continueToSetup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const submittedSubject = subject.trim() || 'Calculus II';
     navigate({ type: 'createWorkspace', subject: submittedSubject });
-  };
-
-  const exploreSampleWorkspace = async () => {
-    setImportingSample(true);
-    setSampleImportError(undefined);
-    try {
-      const workspace = await importSampleWorkspace();
-      setActiveWorkspaceId(workspace.id);
-      navigate({ type: 'home' });
-    } catch {
-      setSampleImportError('The sample workspace could not be prepared. Try again.');
-    } finally {
-      setImportingSample(false);
-    }
   };
 
   return (

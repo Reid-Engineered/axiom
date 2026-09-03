@@ -25,13 +25,13 @@ export function RouteContent({ route, sidebar }: RouteContentProps) {
   switch (route.type) {
     case 'firstLaunch':
       return (
-        <AppShell>
+        <AppShell sidebar={sidebar}>
           <FirstLaunchPage />
         </AppShell>
       );
     case 'createWorkspace':
       return (
-        <AppShell>
+        <AppShell sidebar={sidebar}>
           <CreateWorkspacePage subject={route.subject} />
         </AppShell>
       );

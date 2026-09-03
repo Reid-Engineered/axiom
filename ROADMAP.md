@@ -203,8 +203,10 @@ revolution, shell, annotation) as real API surface now, even though nothing rend
 - `src/services/*` swapped from `mockData/` reads to `invoke()` calls — signatures
   unchanged from Stage 2/4 (this is the swap `ARCHITECTURE.md` §5 was written to make
   cheap).
-- Mock fixtures repurposed as seed data for first-launch / sample-workspace flows, not
-  deleted.
+- Mock fixtures repurposed as seed data for the *opt-in* sample-workspace import (never
+  auto-populated) and for tests (`test/mockBackend.ts`), not deleted. A fresh install's
+  first launch starts with zero workspaces — fixtures back what "Explore a sample
+  workspace" imports if a learner chooses it, not what's there by default.
 
 **Acceptance criteria**
 - `cargo test` covers command handlers and queries.

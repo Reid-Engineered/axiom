@@ -94,6 +94,28 @@ test(
         10_000,
       );
       assert.equal(await firstLaunch.isDisplayed(), true);
+
+      // A fresh install (isolated XDG_DATA_HOME, no prior SQLite data) must show the
+      // sidebar for visual continuity, but with zero workspaces — the intentional empty
+      // state, never the populated tree.
+      const sidebarNav = await driver.wait(
+        until.elementLocated(By.css('aside nav[aria-label="Primary"]')),
+        10_000,
+      );
+      assert.equal(await sidebarNav.isDisplayed(), true);
+      const emptyStateMessages = await sidebarNav.findElements(
+        By.xpath(".//p[normalize-space(.)='No workspaces yet.']"),
+      );
+      assert.ok(emptyStateMessages.length > 0, 'expected the intentional empty sidebar state');
+      const populatedTreeAffordance = await sidebarNav.findElements(
+        By.xpath(".//button[normalize-space(.)='+ New Workspace']"),
+      );
+      assert.equal(
+        populatedTreeAffordance.length,
+        0,
+        'the populated-tree affordance must not render before any workspace exists',
+      );
+
       await driver.findElement(By.xpath("//button[normalize-space(.)='Continue']")).click();
 
       await driver.wait(until.elementLocated(By.css('[data-route="createWorkspace"]')), 10_000);
@@ -119,6 +141,20 @@ test(
         By.xpath("//button[contains(normalize-space(.), 'Axiom E2E Subject')]"),
       );
       assert.ok(createdWorkspaceEntries.length > 0);
+
+      // The sidebar persists across the whole flow — confirm it specifically picked up
+      // the newly created workspace (not just that it appears somewhere on the page) and
+      // no longer shows the first-launch empty state.
+      await driver.wait(async () => {
+        const entries = await sidebarNav.findElements(
+          By.xpath(".//button[contains(normalize-space(.), 'Axiom E2E Subject')]"),
+        );
+        return entries.length > 0;
+      }, 10_000, 'sidebar did not pick up the newly created workspace');
+      const emptyStateAfterCreate = await sidebarNav.findElements(
+        By.xpath(".//p[normalize-space(.)='No workspaces yet.']"),
+      );
+      assert.equal(emptyStateAfterCreate.length, 0);
     } finally {
       if (driver) await driver.quit().catch(() => undefined);
       await stopProcess(driverProcess);

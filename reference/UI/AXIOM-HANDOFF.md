@@ -113,7 +113,7 @@ Circuit Analysis
 ── footer: avatar · name · settings
 ```
 
-Rules: only the open workspace expands; the tree never exceeds two levels; modules are never rows in this sidebar. The sidebar is absent on first launch (nothing to navigate) and hidden only in Full Visualization mode, which offers a single "‹ Session" return.
+Rules: only the open workspace expands; the tree never exceeds two levels; modules are never rows in this sidebar. The sidebar stays visible on First Launch and Create Workspace, for orientation and visual continuity — with zero workspaces to show, it renders an intentional empty state (primary "Create workspace", secondary "Explore a sample workspace" — the same opt-in sample flow as First Launch's own content, never triggered automatically) in place of the tree and its "+ New Workspace" row. It is hidden only in Full Visualization mode, which offers a single "‹ Session" return.
 
 Rejected alternatives, kept for reference: **B** 64px icon rail + header workspace switcher + segmented areas (max content width, weaker recognisability); **C** sidebar scoped to one workspace with its concepts and tools inline (deepest focus, harder cross-subject work).
 
@@ -122,10 +122,10 @@ Rejected alternatives, kept for reference: **B** 64px icon rail + header workspa
 ## 4. Screens
 
 ### Screen 1 — First Launch · `screenshots/01-first-launch.png`
-Centred column, max 520px, on a soft radial wash. Logo lockup (26px square outline with a rotated accent diamond) + "Axiom". H1 "What are you learning?", one sentence of reassurance, a single text field pre-filled with a ghost "Calculus II" plus **Continue**. Below a hairline: three text rows in ascending commitment — install a workspace template / import a syllabus, PDF, notes / explore a sample workspace. No sidebar, no account step, no tour, no mention of modules.
+Centred column, max 520px, on a soft radial wash. Logo lockup (26px square outline with a rotated accent diamond) + "Axiom". H1 "What are you learning?", one sentence of reassurance, a single text field pre-filled with a ghost "Calculus II" plus **Continue**. Below a hairline: three text rows in ascending commitment — install a workspace template / import a syllabus, PDF, notes / explore a sample workspace. No account step, no tour, no mention of modules. The sidebar frames this screen too (§3) — empty state, no pre-created workspaces — for continuity into Create Workspace and Home; it is not part of this centred column's own content.
 
 ### Screen 2 — Create Workspace · `screenshots/02-create-workspace.png`
-Two fields only: **Subject** (text) and **What are you trying to accomplish?** (textarea, natural language, focus ring visible). Below them a panel titled **"Axiom read that as"** showing inferred structure as removable chips (Deadline · Dec 12 / Mastery · conceptual, not just procedural / 14 concepts / Pacing · 4 sessions per week / Tools · Tutor, Practice, Visualizer, Notes) with an **Adjust** link that expands comfort level, materials drop target, and pacing in place. Footer: Create Workspace · Cancel · "Nothing here is permanent". Deadline and level are **never asked as form fields** — they are inferred and correctable.
+Sidebar (still the empty state — no workspace exists until this screen's submit) + content. Two fields only: **Subject** (text) and **What are you trying to accomplish?** (textarea, natural language, focus ring visible). Below them a panel titled **"Axiom read that as"** showing inferred structure as removable chips (Deadline · Dec 12 / Mastery · conceptual, not just procedural / 14 concepts / Pacing · 4 sessions per week / Tools · Tutor, Practice, Visualizer, Notes) with an **Adjust** link that expands comfort level, materials drop target, and pacing in place. Footer: Create Workspace · Cancel · "Nothing here is permanent". Deadline and level are **never asked as form fields** — they are inferred and correctable.
 
 ### Screen 3 — Home · `screenshots/03-home.png`
 Sidebar + content, max 800px measure. One line of remembered context ("Thursday afternoon · 3 days since your last session"). **Continue card**: eyebrow, "Calculus II — Shell Method", one sentence of exactly where you stopped, the half-finished integral typeset (`V = 2π∫₁³ x(x² − 1) dx`), Resume session / Open workspace, and a 206×150 thumbnail holding the visualization's last camera position. Then **Workspaces** — three cards, each carrying name, goal sentence, 3px unlabelled progress, last concept + relative time (a paused workspace says "Paused"). Footer text row: Templates · Marketplace · Import material. No dashboard, no analytics.
@@ -220,7 +220,7 @@ The learning canvas is the one place Axiom **inverts its own palette**: dark sta
 
 ## 7. Not yet designed
 
-Empty states, notifications and menus, the full concept-graph view, tutor voice mode, in-app reading mode (the page view behind Material), settings, developer-facing module authoring, onboarding for imported material, and responsive behaviour below ~1100px window width.
+Empty states generally, notifications and menus, the full concept-graph view, tutor voice mode, in-app reading mode (the page view behind Material), settings, developer-facing module authoring, onboarding for imported material, and responsive behaviour below ~1100px window width. One empty state is designed, as an exception: the sidebar's zero-workspace state (§3), shown from First Launch through Create Workspace on every fresh install.
 
 ## 8. Screenshot index
 

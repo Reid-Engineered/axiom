@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { Button } from '../primitives/Button';
 import {
   WorkspaceTree,
   type WorkspaceTreeEntry,
@@ -17,11 +18,19 @@ export interface SidebarProps
   onHome?: () => void;
   onMarketplace?: () => void;
   onCreateWorkspace?: () => void;
+  /** Opt-in only — never invoked automatically. */
+  onExploreSample?: () => void;
+  exploringSample?: boolean;
+  exploreSampleError?: string;
   footer?: ReactNode;
   className?: string;
 }
 
-/** Permanent navigation for global destinations and the two-level workspace tree. */
+/**
+ * Permanent navigation for global destinations and the two-level workspace tree. With no
+ * workspaces (a fresh install, before First Launch → Create Workspace completes) the
+ * workspaces section shows an intentional empty state instead of a blank tree.
+ */
 export function Sidebar({
   workspaces,
   openWorkspaceId,
@@ -32,6 +41,9 @@ export function Sidebar({
   onHome,
   onMarketplace,
   onCreateWorkspace,
+  onExploreSample,
+  exploringSample = false,
+  exploreSampleError,
   footer,
   className = '',
 }: SidebarProps) {
@@ -51,16 +63,40 @@ export function Sidebar({
       </div>
       <div className={styles.workspaces}>
         <div className={styles.eyebrow}>Workspaces</div>
-        <WorkspaceTree
-          workspaces={workspaces}
-          openWorkspaceId={openWorkspaceId}
-          activeSubItem={activeSubItem}
-          onSelectWorkspace={onSelectWorkspace}
-          onSelectSubItem={onSelectSubItem}
-        />
-        <button type="button" className={styles.createButton} onClick={onCreateWorkspace}>
-          + New Workspace
-        </button>
+        {workspaces.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyStateMessage}>No workspaces yet.</p>
+            <Button size="sm" onClick={onCreateWorkspace}>
+              Create workspace
+            </Button>
+            <Button
+              size="sm"
+              variant="tertiary"
+              onClick={onExploreSample}
+              disabled={exploringSample}
+            >
+              Explore a sample workspace
+            </Button>
+            {exploreSampleError ? (
+              <p className={styles.emptyStateError} role="alert">
+                {exploreSampleError}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <>
+            <WorkspaceTree
+              workspaces={workspaces}
+              openWorkspaceId={openWorkspaceId}
+              activeSubItem={activeSubItem}
+              onSelectWorkspace={onSelectWorkspace}
+              onSelectSubItem={onSelectSubItem}
+            />
+            <button type="button" className={styles.createButton} onClick={onCreateWorkspace}>
+              + New Workspace
+            </button>
+          </>
+        )}
       </div>
       {footer ? <div className={styles.footer}>{footer}</div> : null}
     </nav>
