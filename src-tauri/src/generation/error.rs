@@ -12,6 +12,12 @@ pub enum GenerationError {
         family_id: ProblemFamilyId,
         parameter: String,
     },
+    InvalidParameterBounds {
+        family_id: ProblemFamilyId,
+        parameter: String,
+        min: f64,
+        max: f64,
+    },
     ConstraintsUnsatisfiable {
         family_id: ProblemFamilyId,
         attempts: u32,
@@ -31,6 +37,16 @@ impl fmt::Display for GenerationError {
                 formatter,
                 "{family_id}: parameter {parameter:?} has neither a fixed value nor both a \
                  min and max bound, so it cannot be sampled"
+            ),
+            Self::InvalidParameterBounds {
+                family_id,
+                parameter,
+                min,
+                max,
+            } => write!(
+                formatter,
+                "{family_id}: parameter {parameter:?} has invalid resolved bounds: \
+                 min {min} is greater than max {max}"
             ),
             Self::ConstraintsUnsatisfiable {
                 family_id,
@@ -84,6 +100,20 @@ mod tests {
             error.to_string(),
             "problem.test: no combination of sampled parameters satisfied every declared \
              constraint after 1000 attempts"
+        );
+    }
+
+    #[test]
+    fn invalid_parameter_bounds_displays_family_parameter_and_bounds() {
+        let error = GenerationError::InvalidParameterBounds {
+            family_id: ProblemFamilyId::new("problem.test").unwrap(),
+            parameter: "x".to_owned(),
+            min: 6.0,
+            max: 5.0,
+        };
+        assert_eq!(
+            error.to_string(),
+            "problem.test: parameter \"x\" has invalid resolved bounds: min 6 is greater than max 5"
         );
     }
 }

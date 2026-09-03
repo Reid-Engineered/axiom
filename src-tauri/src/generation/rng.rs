@@ -15,13 +15,22 @@ impl DeterministicRng {
         z ^ (z >> 31)
     }
 
-    pub(crate) fn sample_integer(&mut self, min: i64, max: i64) -> i64 {
-        let range = (max - min + 1) as u64;
-        min + (self.next_u64() % range) as i64
+    pub(crate) fn sample_integer(&mut self, min: i64, max: i64) -> Option<i64> {
+        if min > max {
+            return None;
+        }
+
+        let range = (i128::from(max) - i128::from(min) + 1) as u128;
+        let offset = u128::from(self.next_u64()) % range;
+        Some((i128::from(min) + offset as i128) as i64)
     }
 
-    pub(crate) fn sample_float(&mut self, min: f64, max: f64) -> f64 {
-        min + (self.next_u64() as f64 / u64::MAX as f64) * (max - min)
+    pub(crate) fn sample_float(&mut self, min: f64, max: f64) -> Option<f64> {
+        if min > max {
+            return None;
+        }
+
+        Some(min + (self.next_u64() as f64 / u64::MAX as f64) * (max - min))
     }
 }
 
@@ -51,7 +60,7 @@ mod tests {
         let mut saw_min = false;
         let mut saw_max = false;
         for _ in 0..10_000 {
-            let value = rng.sample_integer(3, 5);
+            let value = rng.sample_integer(3, 5).unwrap();
             assert!((3..=5).contains(&value));
             saw_min |= value == 3;
             saw_max |= value == 5;
@@ -64,8 +73,30 @@ mod tests {
     fn sample_float_stays_within_bounds() {
         let mut rng = DeterministicRng::new(99);
         for _ in 0..10_000 {
-            let value = rng.sample_float(-2.5, 4.5);
+            let value = rng.sample_float(-2.5, 4.5).unwrap();
             assert!((-2.5..=4.5).contains(&value));
+        }
+    }
+
+    #[test]
+    fn reversed_ranges_are_rejected_without_consuming_rng_state() {
+        let mut baseline = DeterministicRng::new(11);
+        let expected_next = baseline.next_u64();
+
+        let mut integer_rng = DeterministicRng::new(11);
+        assert_eq!(integer_rng.sample_integer(2, 1), None);
+        assert_eq!(integer_rng.next_u64(), expected_next);
+
+        let mut float_rng = DeterministicRng::new(11);
+        assert_eq!(float_rng.sample_float(2.0, 1.0), None);
+        assert_eq!(float_rng.next_u64(), expected_next);
+    }
+
+    #[test]
+    fn full_width_integer_range_does_not_overflow() {
+        let mut rng = DeterministicRng::new(13);
+        for _ in 0..100 {
+            assert!(rng.sample_integer(i64::MIN, i64::MAX).is_some());
         }
     }
 }

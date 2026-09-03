@@ -1,7 +1,7 @@
 ---
 id: 056
 title: Problem generation engine (deterministic seeded sampling + domain-validity property test)
-status: changes-requested
+status: review
 owner: codex
 stage: 8
 depends_on: [054, 055]
@@ -78,6 +78,19 @@ the plan's 8 tasks for exact per-file, per-step detail):
   Clippy with warnings denied, rustfmt, and `git diff --check`. Installed `tauri-driver` and
   the Ubuntu WebKit driver into a disposable `/tmp` tree for the native gate;
   `npm run test:e2e:linux` passed both flows, and the temporary tree was removed.
+- 2026-09-02 — Codex began the requested review-fix pass after confirming the blocking
+  finding remained live in `dc05aa1`. Added explicit reversed-range rejection to both RNG
+  sampling helpers, widened integer range arithmetic through `i128`/`u128`, and mapped
+  invalid resolved bounds to contextual `GenerationError::InvalidParameterBounds`.
+- 2026-09-02 — Self-review moved the authoritative reversed-bound check ahead of the
+  `f64`-to-`i64` conversion, preventing very large reversed integer bounds from collapsing
+  to the same saturated integer and bypassing the RNG-level guard.
+- 2026-09-02 — Review-fix validation passed: `cargo check --locked`, all 240 Rust tests,
+  Clippy with warnings denied, rustfmt, and `git diff --check`. Five new regressions cover
+  reversed integer/float RNG ranges without state consumption, full-width `i64` sampling,
+  contextual error display, reference-offset reversal, and pre-conversion reversal. The
+  native E2E suite passed three consecutive runs after separate test-infrastructure fixes;
+  ESLint passed and the final run left no isolated app-data directory behind.
 
 ## What was built / tested / left out
 
@@ -91,7 +104,7 @@ development dependency was added.
 Validation on 2026-09-02:
 
 - `cargo check --locked --quiet` — pass
-- `cargo test --locked --quiet` — pass, 235 tests total (31 new tests)
+- `cargo test --locked --quiet` — pass, 240 tests total (36 new tests)
 - `cargo clippy --all-targets --locked --quiet -- -D warnings` — pass
 - `cargo fmt --all --check` — pass
 - `git diff --check` — pass
@@ -132,6 +145,20 @@ Two additional non-blocking findings, confirmed by direct reading, moved to Foll
 
 Verdict: **changes-requested** — fix the `sample_integer` bounds guard, then resubmit for
 re-review.
+
+### 2026-09-02 — Codex response to blocking finding
+
+Implemented the requested bounds guard. `sample_integer` and `sample_float` now return
+`None` for reversed ranges before consuming RNG state; integer span arithmetic uses
+`i128`/`u128`, so the full inclusive `i64` range cannot overflow. `resolve_parameter`
+checks resolved floating-point bounds before integer conversion and maps an invalid range to
+`GenerationError::InvalidParameterBounds { family_id, parameter, min, max }`. This covers
+the review's reachable reference-offset case and the saturation edge where very large
+reversed floats would otherwise collapse to the same `i64`.
+
+Regression coverage is named in the latest worklog entry above. Task returned to `review`
+for an independent verdict; the original review checkbox remains unchanged until that
+review occurs.
 
 ## Follow-ups
 

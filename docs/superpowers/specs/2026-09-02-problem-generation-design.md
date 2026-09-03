@@ -100,6 +100,9 @@ than through that validated load path).
   uniformly within `[min, max]`, inclusive, respecting `ParameterType`:
   `Integer` rounds `min`/`max` to whole numbers first, then samples an integer in that
   inclusive range; `Float` samples continuously.
+- If resolved `min` is greater than resolved `max`, fail with
+  `GenerationError::InvalidParameterBounds` before integer conversion or any RNG draw. This
+  can occur when an otherwise-valid reference offset reverses a parameter's runtime range.
 - If a parameter has neither `value` nor both `min` and `max` — schema-valid today (task
   054's validation only forbids `value` *and* bounds together, never requires either) but
   unsampleable — resolution fails with `GenerationError::UnderspecifiedParameter` (§7). This
@@ -185,13 +188,15 @@ impl DeterministicRng {
 
 Two sampling helpers built on `next_u64`:
 
-- Integer, inclusive `[min, max]`: `min + (rng.next_u64() % (max - min + 1)) as i64`. The
+- Integer, inclusive `[min, max]`: calculate the range through `i128`/`u128`, then use
+  `min + rng.next_u64() % range`. Widening is required for the valid full-width `i64` range.
+  Reversed ranges return `None` without consuming RNG state. The
   modulo-bias this introduces is real but astronomically negligible for the range sizes this
   schema actually produces (single digits to low hundreds against a 64-bit generator) — not
   worth rejection-sampling complexity for this use case; noted here explicitly so it reads as
   a deliberate tradeoff, not an oversight.
 - Float, continuous `[min, max]`: `min + (rng.next_u64() as f64 / u64::MAX as f64) * (max -
-  min)`.
+  min)`. Reversed ranges return `None` without consuming RNG state.
 
 Determinism guarantee: the same `(family, seed)` pair always produces byte-identical
 `ProblemInstance` output, forever — this is the property Practice (sub-project 4) and any
@@ -205,13 +210,14 @@ defined order per resolution/resample attempt (§4), so nothing about iteration 
 pub enum GenerationError {
     UnknownGenerator { id: GeneratorId },
     UnderspecifiedParameter { family_id: ProblemFamilyId, parameter: String },
+    InvalidParameterBounds { family_id: ProblemFamilyId, parameter: String, min: f64, max: f64 },
     ConstraintsUnsatisfiable { family_id: ProblemFamilyId, attempts: u32 },
 }
 ```
 
 `UnknownGenerator` is a dispatch miss (a `ProblemFamily.generator.id` this build has no match
-arm for — an authoring/deployment mismatch, not a runtime data problem). The other two are
-documented in §4. All three are genuine failures (never silently degrade to a wrong-but-
+arm for — an authoring/deployment mismatch, not a runtime data problem). The other variants
+are documented in §4. All are genuine failures (never silently degrade to a wrong-but-
 plausible instance) — mirrors `KnowledgeError`/`MathVerifyError`'s existing convention:
 hand-written `Display`, no `thiserror`.
 
@@ -219,11 +225,14 @@ hand-written `Display`, no `thiserror`.
 
 - `rng.rs`: `DeterministicRng::new(seed).next_u64()` is repeatable (same seed, same
   sequence); different seeds diverge; the two sampling helpers stay within `[min, max]`
-  across many draws and hit both endpoints over enough draws.
+  across many draws and hit both endpoints over enough draws; reversed ranges are rejected
+  without consuming RNG state; a full-width `i64` range does not overflow.
 - `sampling.rs`: a fixed-value parameter resolves without consuming RNG state; a
   `Bound::Reference` resolves relative to its target; a multi-level reference chain (`c`
   depends on `b` depends on `coeff`) resolves in dependency order; a parameter with neither
   `value` nor both bounds returns `UnderspecifiedParameter`; a synthetic fixture with an
+  offset that reverses resolved bounds returns `InvalidParameterBounds` before integer
+  conversion; a synthetic fixture with an
   unsatisfiable constraint set returns `ConstraintsUnsatisfiable` after exactly
   `MAX_RESAMPLE_ATTEMPTS` attempts; a synthetic fixture with a satisfiable-but-narrow
   constraint eventually succeeds.

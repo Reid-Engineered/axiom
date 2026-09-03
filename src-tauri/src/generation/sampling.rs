@@ -50,12 +50,26 @@ fn resolve_parameter(
             (Some(min), Some(max)) => {
                 let min = resolve_bound(min, parameters, resolved, rng, family)?;
                 let max = resolve_bound(max, parameters, resolved, rng, family)?;
+                if min > max {
+                    return Err(GenerationError::InvalidParameterBounds {
+                        family_id: family.id.clone(),
+                        parameter: name.to_owned(),
+                        min,
+                        max,
+                    });
+                }
                 match spec.kind {
-                    ParameterType::Integer => {
-                        rng.sample_integer(min.round() as i64, max.round() as i64) as f64
-                    }
+                    ParameterType::Integer => rng
+                        .sample_integer(min.round() as i64, max.round() as i64)
+                        .map(|value| value as f64),
                     ParameterType::Float => rng.sample_float(min, max),
                 }
+                .ok_or_else(|| GenerationError::InvalidParameterBounds {
+                    family_id: family.id.clone(),
+                    parameter: name.to_owned(),
+                    min,
+                    max,
+                })?
             }
             _ => {
                 return Err(GenerationError::UnderspecifiedParameter {
@@ -264,10 +278,69 @@ mod tests {
         let family = minimal_family(parameters, vec![constraint]);
 
         let mut first_attempt = DeterministicRng::new(0);
-        assert_eq!(first_attempt.sample_integer(1, 2), 2);
+        assert_eq!(first_attempt.sample_integer(1, 2), Some(2));
 
         let mut rng = DeterministicRng::new(0);
         let resolved = resolve_parameters(&family, &mut rng).unwrap();
         assert_eq!(resolved["x"], 1.0);
+    }
+
+    #[test]
+    fn reference_offset_that_reverses_bounds_is_rejected() {
+        for kind in [ParameterType::Integer, ParameterType::Float] {
+            let mut parameters = BTreeMap::new();
+            parameters.insert("base".to_owned(), fixed(5.0));
+            parameters.insert(
+                "x".to_owned(),
+                bounded(
+                    kind,
+                    Bound::Reference {
+                        parameter: "base".to_owned(),
+                        offset: 1.0,
+                    },
+                    Bound::Reference {
+                        parameter: "base".to_owned(),
+                        offset: 0.0,
+                    },
+                ),
+            );
+            let family = minimal_family(parameters, Vec::new());
+
+            let mut rng = DeterministicRng::new(1);
+            assert!(matches!(
+                resolve_parameters(&family, &mut rng),
+                Err(GenerationError::InvalidParameterBounds {
+                    parameter,
+                    min: 6.0,
+                    max: 5.0,
+                    ..
+                }) if parameter == "x"
+            ));
+        }
+    }
+
+    #[test]
+    fn reversed_integer_bounds_are_rejected_before_saturating_conversion() {
+        let mut parameters = BTreeMap::new();
+        parameters.insert(
+            "x".to_owned(),
+            bounded(
+                ParameterType::Integer,
+                Bound::Literal(1e20),
+                Bound::Literal(9e19),
+            ),
+        );
+        let family = minimal_family(parameters, Vec::new());
+
+        let mut rng = DeterministicRng::new(1);
+        assert!(matches!(
+            resolve_parameters(&family, &mut rng),
+            Err(GenerationError::InvalidParameterBounds {
+                parameter,
+                min,
+                max,
+                ..
+            }) if parameter == "x" && min == 1e20 && max == 9e19
+        ));
     }
 }

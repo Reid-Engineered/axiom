@@ -45,8 +45,8 @@
 
 **Interfaces:**
 - Produces: `DeterministicRng::new(seed: u64) -> Self`, `.next_u64(&mut self) -> u64`,
-  `.sample_integer(&mut self, min: i64, max: i64) -> i64`, `.sample_float(&mut self, min: f64,
-  max: f64) -> f64`. Task 4 consumes all four.
+  `.sample_integer(&mut self, min: i64, max: i64) -> Option<i64>`, `.sample_float(&mut self,
+  min: f64, max: f64) -> Option<f64>`. Task 4 consumes all four.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -70,13 +70,20 @@ impl DeterministicRng {
         z ^ (z >> 31)
     }
 
-    pub(crate) fn sample_integer(&mut self, min: i64, max: i64) -> i64 {
-        let range = (max - min + 1) as u64;
-        min + (self.next_u64() % range) as i64
+    pub(crate) fn sample_integer(&mut self, min: i64, max: i64) -> Option<i64> {
+        if min > max {
+            return None;
+        }
+        let range = (i128::from(max) - i128::from(min) + 1) as u128;
+        let offset = u128::from(self.next_u64()) % range;
+        Some((i128::from(min) + offset as i128) as i64)
     }
 
-    pub(crate) fn sample_float(&mut self, min: f64, max: f64) -> f64 {
-        min + (self.next_u64() as f64 / u64::MAX as f64) * (max - min)
+    pub(crate) fn sample_float(&mut self, min: f64, max: f64) -> Option<f64> {
+        if min > max {
+            return None;
+        }
+        Some(min + (self.next_u64() as f64 / u64::MAX as f64) * (max - min))
     }
 }
 
@@ -106,7 +113,7 @@ mod tests {
         let mut saw_min = false;
         let mut saw_max = false;
         for _ in 0..10_000 {
-            let value = rng.sample_integer(3, 5);
+            let value = rng.sample_integer(3, 5).unwrap();
             assert!((3..=5).contains(&value));
             saw_min |= value == 3;
             saw_max |= value == 5;
@@ -119,8 +126,30 @@ mod tests {
     fn sample_float_stays_within_bounds() {
         let mut rng = DeterministicRng::new(99);
         for _ in 0..10_000 {
-            let value = rng.sample_float(-2.5, 4.5);
+            let value = rng.sample_float(-2.5, 4.5).unwrap();
             assert!((-2.5..=4.5).contains(&value));
+        }
+    }
+
+    #[test]
+    fn reversed_ranges_are_rejected_without_consuming_rng_state() {
+        let mut baseline = DeterministicRng::new(11);
+        let expected_next = baseline.next_u64();
+
+        let mut integer_rng = DeterministicRng::new(11);
+        assert_eq!(integer_rng.sample_integer(2, 1), None);
+        assert_eq!(integer_rng.next_u64(), expected_next);
+
+        let mut float_rng = DeterministicRng::new(11);
+        assert_eq!(float_rng.sample_float(2.0, 1.0), None);
+        assert_eq!(float_rng.next_u64(), expected_next);
+    }
+
+    #[test]
+    fn full_width_integer_range_does_not_overflow() {
+        let mut rng = DeterministicRng::new(13);
+        for _ in 0..100 {
+            assert!(rng.sample_integer(i64::MIN, i64::MAX).is_some());
         }
     }
 }
@@ -142,7 +171,7 @@ mod rng;
 
 Run: `cd src-tauri && cargo test --locked generation::rng -- --nocapture`
 
-Expected: all 4 tests pass.
+Expected: all 6 tests pass.
 
 - [ ] **Step 3: Commit**
 
@@ -305,8 +334,9 @@ git commit -m "feat(knowledge): add ConstraintExpr::holds and Term::evaluate"
 
 **Interfaces:**
 - Consumes: `GeneratorId`, `ProblemFamilyId` (`crate::knowledge`, already exported).
-- Produces: `GenerationError` — Task 4 constructs `UnderspecifiedParameter` and
-  `ConstraintsUnsatisfiable`; Task 6 constructs `UnknownGenerator`.
+- Produces: `GenerationError` — Task 4 constructs `UnderspecifiedParameter`,
+  `InvalidParameterBounds`, and `ConstraintsUnsatisfiable`; Task 6 constructs
+  `UnknownGenerator`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -326,6 +356,12 @@ pub enum GenerationError {
     UnderspecifiedParameter {
         family_id: ProblemFamilyId,
         parameter: String,
+    },
+    InvalidParameterBounds {
+        family_id: ProblemFamilyId,
+        parameter: String,
+        min: f64,
+        max: f64,
     },
     ConstraintsUnsatisfiable {
         family_id: ProblemFamilyId,
@@ -354,6 +390,16 @@ impl fmt::Display for GenerationError {
                 formatter,
                 "{family_id}: no combination of sampled parameters satisfied every declared \
                  constraint after {attempts} attempts"
+            ),
+            Self::InvalidParameterBounds {
+                family_id,
+                parameter,
+                min,
+                max,
+            } => write!(
+                formatter,
+                "{family_id}: parameter {parameter:?} has invalid resolved bounds: \
+                 min {min} is greater than max {max}"
             ),
         }
     }
@@ -401,6 +447,17 @@ mod tests {
              constraint after 1000 attempts"
         );
     }
+
+    #[test]
+    fn invalid_parameter_bounds_displays_family_parameter_and_bounds() {
+        let error = GenerationError::InvalidParameterBounds {
+            family_id: ProblemFamilyId::new("problem.test").unwrap(),
+            parameter: "x".to_owned(),
+            min: 6.0,
+            max: 5.0,
+        };
+        assert!(error.to_string().contains("min 6 is greater than max 5"));
+    }
 }
 ```
 
@@ -417,7 +474,7 @@ pub use error::GenerationError;
 
 Run: `cd src-tauri && cargo test --locked generation::error -- --nocapture`
 
-Expected: all 3 tests pass.
+Expected: all 4 tests pass.
 
 - [ ] **Step 3: Commit**
 
@@ -518,12 +575,26 @@ fn resolve_parameter(
             (Some(min), Some(max)) => {
                 let min = resolve_bound(min, parameters, resolved, rng, family)?;
                 let max = resolve_bound(max, parameters, resolved, rng, family)?;
+                if min > max {
+                    return Err(GenerationError::InvalidParameterBounds {
+                        family_id: family.id.clone(),
+                        parameter: name.to_owned(),
+                        min,
+                        max,
+                    });
+                }
                 match spec.kind {
-                    ParameterType::Integer => {
-                        rng.sample_integer(min.round() as i64, max.round() as i64) as f64
-                    }
+                    ParameterType::Integer => rng
+                        .sample_integer(min.round() as i64, max.round() as i64)
+                        .map(|value| value as f64),
                     ParameterType::Float => rng.sample_float(min, max),
                 }
+                .ok_or_else(|| GenerationError::InvalidParameterBounds {
+                    family_id: family.id.clone(),
+                    parameter: name.to_owned(),
+                    min,
+                    max,
+                })?
             }
             _ => {
                 return Err(GenerationError::UnderspecifiedParameter {
@@ -715,7 +786,7 @@ mod tests {
         let family = minimal_family(parameters, vec![constraint]);
 
         let mut first_attempt = DeterministicRng::new(0);
-        assert_eq!(first_attempt.sample_integer(1, 2), 2);
+        assert_eq!(first_attempt.sample_integer(1, 2), Some(2));
 
         let mut rng = DeterministicRng::new(0);
         let resolved = resolve_parameters(&family, &mut rng).unwrap();
@@ -738,7 +809,7 @@ pub use error::GenerationError;
 
 Run: `cd src-tauri && cargo test --locked generation::sampling -- --nocapture`
 
-Expected: all 5 tests pass.
+Expected: all 7 tests pass.
 
 - [ ] **Step 3: Commit**
 
@@ -1203,8 +1274,8 @@ git commit -m "test(generation): domain-validity property test for gen.shell_y_p
 
 Run: `cd src-tauri && cargo test --locked --quiet`
 
-Expected: every existing test still passes, plus every test added in Tasks 1–7 (4 + 4 + 3 +
-5 + 9 + 5 + 1 = 31 new tests — count them and confirm the total matches before proceeding).
+Expected: every existing test still passes, plus every test added in Tasks 1–7 (6 + 4 + 4 +
+7 + 9 + 5 + 1 = 36 new tests — count them and confirm the total matches before proceeding).
 
 - [ ] **Step 2: Run clippy**
 
