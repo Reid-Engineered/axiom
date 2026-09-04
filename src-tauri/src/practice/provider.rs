@@ -3,14 +3,16 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::async_runtime::RwLock;
 
-use crate::knowledge::KnowledgePackage;
+use crate::capabilities::math_verify::{VerifyRequest, VerifyResult};
+use crate::knowledge::{KnowledgePackage, ResolvedSolution};
 use crate::modules::{
-    CapabilityId, CapabilityProvider, InvocationError, ModuleInstallation, ModuleRegistry,
+    CallEnvelope, CapabilityCall, CapabilityId, CapabilityProvider, CapabilityRequirement,
+    InvocationError, ModuleId, ModuleInstallation, ModuleRegistry,
 };
 
 use super::error::PracticeError;
 use super::store::PracticeStore;
-use super::types::{GenerateRequest, GenerateResponse};
+use super::types::{EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse, ResponseValue};
 
 pub struct PracticeProvider {
     store: PracticeStore,
@@ -21,7 +23,6 @@ pub struct PracticeProvider {
     // async-aware RwLock (tauri::async_runtime::RwLock, not std::sync::RwLock) because
     // Task 7's evaluate() holds the read guard across an inner `.await`, and only an
     // async-aware lock's guard is Send.
-    #[allow(dead_code)]
     registry: Arc<RwLock<ModuleRegistry>>,
     installation: ModuleInstallation,
 }
@@ -89,6 +90,107 @@ impl PracticeProvider {
             hints_total: instance.hints.len() as u32,
         })
     }
+
+    async fn handle_evaluate(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: EvaluateRequest = serde_json::from_value(input).map_err(|error| {
+            InvocationError::InvalidInput {
+                capability_id: capability_id("practice.evaluate"),
+                message: error.to_string(),
+            }
+        })?;
+        let response = self
+            .evaluate(request)
+            .await
+            .map_err(|error| to_invocation_error("practice.evaluate", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    async fn evaluate(
+        &self,
+        request: EvaluateRequest,
+    ) -> Result<EvaluateResponse, PracticeError> {
+        let attempt = self
+            .store
+            .load_attempt(&request.attempt_id, &request.workspace_id)?;
+        if attempt.status == super::types::AttemptStatus::Solved {
+            return Err(PracticeError::AlreadySolved {
+                attempt_id: request.attempt_id.clone(),
+            });
+        }
+
+        let verify_request = match (&attempt.instance.canonical_solution, &request.response) {
+            (ResolvedSolution::Numeric(canonical_solution), ResponseValue::Numeric { value }) => {
+                VerifyRequest::Numeric {
+                    canonical_solution: *canonical_solution,
+                    student_response: *value,
+                }
+            }
+            (
+                ResolvedSolution::Symbolic(canonical_solution),
+                ResponseValue::SymbolicExpression { value },
+            ) => VerifyRequest::SymbolicExpression {
+                canonical_solution: canonical_solution.clone(),
+                student_response: value.clone(),
+            },
+            _ => {
+                return Err(PracticeError::ResponseTypeMismatch {
+                    attempt_id: request.attempt_id.clone(),
+                })
+            }
+        };
+
+        let requirement = CapabilityRequirement {
+            id: capability_id("math.verify"),
+            min_version: 1,
+        };
+        let handle = {
+            let registry = self.registry.read().await;
+            registry
+                .resolve(&self.installation, &requirement)
+                .map_err(|error| PracticeError::VerificationFailed(error.to_string()))?
+        };
+        let call = CapabilityCall {
+            envelope: CallEnvelope {
+                workspace_id: request.workspace_id.clone(),
+                capability_id: requirement.id.clone(),
+                version: 1,
+                calling_module_id: ModuleId::new("org.axiom.practice")
+                    .expect("static module id is valid"),
+            },
+            input: verify_request,
+        };
+        let result: VerifyResult = {
+            let registry = self.registry.read().await;
+            registry
+                .invoke(&handle, &self.installation, call)
+                .await
+                .map_err(|error| PracticeError::VerificationFailed(error.to_string()))?
+        };
+
+        let response_json = serde_json::to_string(&request.response)
+            .map_err(|error| PracticeError::Storage(error.to_string()))?;
+        self.store.record_submission(
+            &request.attempt_id,
+            &response_json,
+            result.is_correct,
+        )?;
+        if result.is_correct {
+            self.store.mark_solved(&request.attempt_id)?;
+        }
+        let submission_count = self.store.count_submissions(&request.attempt_id)?;
+
+        Ok(EvaluateResponse {
+            correct: result.is_correct,
+            status: if result.is_correct {
+                super::types::AttemptStatus::Solved
+            } else {
+                super::types::AttemptStatus::Open
+            },
+            submission_count,
+        })
+    }
 }
 
 #[async_trait::async_trait]
@@ -101,6 +203,7 @@ impl CapabilityProvider for PracticeProvider {
     ) -> Result<Value, InvocationError> {
         match (capability_id.as_str(), version) {
             ("practice.generate", 1) => self.handle_generate(input).await,
+            ("practice.evaluate", 1) => self.handle_evaluate(input).await,
             _ => Err(InvocationError::UnknownCapability {
                 capability_id: capability_id.clone(),
                 version,
@@ -146,7 +249,10 @@ mod tests {
     use std::path::Path;
 
     use super::*;
+    use crate::capabilities::math_verify::MathVerifyProvider;
+    use crate::knowledge::ResolvedSolution;
     use crate::modules::ModuleId;
+    use crate::practice::{AttemptStatus, EvaluateRequest, ResponseValue};
 
     fn fixture_package() -> KnowledgePackage {
         let fixture_root =
@@ -181,6 +287,55 @@ mod tests {
             enabled_module_ids: vec![ModuleId::new("org.axiom.practice").unwrap()],
         };
         PracticeProvider::new(store, fixture_package(), registry, installation)
+    }
+
+    fn registry_with_math_verify_and_practice() -> (
+        Arc<RwLock<ModuleRegistry>>,
+        ModuleInstallation,
+        PracticeProvider,
+    ) {
+        let math_verify_manifest =
+            crate::modules::parse(crate::capabilities::math_verify::MANIFEST_TOML).unwrap();
+        let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+        registry
+            .blocking_write()
+            .register(math_verify_manifest, Box::new(MathVerifyProvider))
+            .unwrap();
+
+        let store = PracticeStore::new(crate::db::open_in_memory().unwrap());
+        {
+            let mut connection = store.connection_for_test();
+            let transaction = connection.transaction().unwrap();
+            transaction
+                .execute(
+                    "INSERT INTO workspaces (id, name, guiding_goal_id, progress, paused)
+                     VALUES ('ws-1', 'Test', 'goal-1', 0.0, 0)",
+                    [],
+                )
+                .unwrap();
+            transaction
+                .execute(
+                    "INSERT INTO goals (id, workspace_id, text, state, created_at, updated_at)
+                     VALUES ('goal-1', 'ws-1', 'Test goal', 'Guiding', ?1, ?1)",
+                    ["2026-09-04T12:00:00Z"],
+                )
+                .unwrap();
+            transaction.commit().unwrap();
+        }
+        let installation = ModuleInstallation {
+            workspace_id: "ws-1".to_owned(),
+            enabled_module_ids: vec![
+                ModuleId::new("core.math_verify").unwrap(),
+                ModuleId::new("org.axiom.practice").unwrap(),
+            ],
+        };
+        let provider = PracticeProvider::new(
+            store,
+            fixture_package(),
+            Arc::clone(&registry),
+            installation.clone(),
+        );
+        (registry, installation, provider)
     }
 
     #[test]
@@ -263,5 +418,130 @@ mod tests {
             result,
             Err(InvocationError::UnknownCapability { .. })
         ));
+    }
+
+    #[test]
+    fn evaluate_a_correct_response_solves_the_attempt_via_math_verify() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+
+        let generate_input = serde_json::json!({
+            "workspace_id": "ws-1",
+            "family_id": "problem.shell_y_poly",
+            "seed": 42,
+        });
+        let generated = tauri::async_runtime::block_on(
+            provider.generate(serde_json::from_value(generate_input).unwrap()),
+        )
+        .unwrap();
+
+        let family = provider
+            .knowledge_package
+            .problem_families
+            .iter()
+            .find(|family| family.id.as_str() == "problem.shell_y_poly")
+            .unwrap();
+        let instance = crate::generation::generate_problem_instance(family, 42).unwrap();
+        let ResolvedSolution::Symbolic(expression) = &instance.canonical_solution else {
+            panic!("fixture family is symbolic");
+        };
+        let correct_value = mathcore::MathCore::new().calculate(expression).unwrap();
+
+        let response = tauri::async_runtime::block_on(provider.evaluate(EvaluateRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id,
+            response: ResponseValue::SymbolicExpression {
+                value: correct_value.to_string(),
+            },
+        }))
+        .unwrap();
+
+        assert!(response.correct);
+        assert_eq!(response.status, AttemptStatus::Solved);
+        assert_eq!(response.submission_count, 1);
+    }
+
+    #[test]
+    fn evaluate_an_incorrect_response_stays_open_and_counts_the_submission() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+
+        let response = tauri::async_runtime::block_on(provider.evaluate(EvaluateRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id,
+            response: ResponseValue::SymbolicExpression {
+                value: "0".to_owned(),
+            },
+        }))
+        .unwrap();
+
+        assert!(!response.correct);
+        assert_eq!(response.status, AttemptStatus::Open);
+        assert_eq!(response.submission_count, 1);
+    }
+
+    #[test]
+    fn evaluate_after_already_solved_is_rejected() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+        let family = provider
+            .knowledge_package
+            .problem_families
+            .iter()
+            .find(|family| family.id.as_str() == "problem.shell_y_poly")
+            .unwrap();
+        let instance = crate::generation::generate_problem_instance(family, 42).unwrap();
+        let ResolvedSolution::Symbolic(expression) = &instance.canonical_solution else {
+            panic!("fixture family is symbolic");
+        };
+        let correct_value = mathcore::MathCore::new().calculate(expression).unwrap();
+        tauri::async_runtime::block_on(provider.evaluate(EvaluateRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id.clone(),
+            response: ResponseValue::SymbolicExpression {
+                value: correct_value.to_string(),
+            },
+        }))
+        .unwrap();
+
+        let result = tauri::async_runtime::block_on(provider.evaluate(EvaluateRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id,
+            response: ResponseValue::SymbolicExpression {
+                value: correct_value.to_string(),
+            },
+        }));
+
+        assert!(matches!(result, Err(PracticeError::AlreadySolved { .. })));
+    }
+
+    #[test]
+    fn evaluate_checks_the_stored_instance_not_a_caller_supplied_solution() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(1),
+        }))
+        .unwrap();
+
+        let result = tauri::async_runtime::block_on(provider.evaluate(EvaluateRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id,
+            response: ResponseValue::SymbolicExpression {
+                value: "0".to_owned(),
+            },
+        }));
+
+        assert!(result.is_ok());
     }
 }

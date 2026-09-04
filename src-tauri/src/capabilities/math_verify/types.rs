@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "response_type", rename_all = "kebab-case")]
 pub enum VerifyRequest {
     SymbolicExpression {
@@ -13,7 +13,7 @@ pub enum VerifyRequest {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct VerifyResult {
     pub is_correct: bool,
     pub error: Option<String>,

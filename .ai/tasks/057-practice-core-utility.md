@@ -52,6 +52,11 @@ implementation plan.
   five passing provider tests. Reused the schema-valid workspace/goal fixture and removed
   the plan snippet's unused `ProblemFamilyId` import. Deferred `#[cfg(test)] mod tests;`
   until Task 9 because Rust cannot declare the planned test module before its file exists.
+- 2026-09-04 — Task 7 complete: added `practice.evaluate@1`; nine focused provider tests
+  and all 265 crate tests pass. `tauri::async_runtime::RwLock::blocking_write` is available.
+  The first typed inter-capability call exposed that existing `VerifyRequest` was
+  deserialize-only and `VerifyResult` serialize-only; added the inverse serde derives so
+  both satisfy `ModuleRegistry::invoke`'s typed input/output bounds.
 
 ## What was built / tested / left out
 
