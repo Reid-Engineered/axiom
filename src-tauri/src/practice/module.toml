@@ -1,0 +1,22 @@
+manifest_version = 1
+id = "org.axiom.practice"
+name = "Axiom Practice"
+version = "0.1.0"
+minimum_axiom_version = "0.1.0"
+offline = "full"
+
+[[provides]]
+id = "practice.generate"
+version = 1
+
+[[provides]]
+id = "practice.evaluate"
+version = 1
+
+[[provides]]
+id = "practice.hint"
+version = 1
+
+[[requires]]
+id = "math.verify"
+min_version = 1

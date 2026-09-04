@@ -48,6 +48,10 @@ implementation plan.
   violated the existing deferred workspace/goal foreign-key cycle by inserting only the
   workspace; fixed it by inserting both rows in one transaction. Removed unused serde
   imports from the plan snippet.
+- 2026-09-04 — Task 6 complete: added the Practice manifest and `practice.generate@1` with
+  five passing provider tests. Reused the schema-valid workspace/goal fixture and removed
+  the plan snippet's unused `ProblemFamilyId` import. Deferred `#[cfg(test)] mod tests;`
+  until Task 9 because Rust cannot declare the planned test module before its file exists.
 
 ## What was built / tested / left out
 

@@ -165,6 +165,13 @@ fn new_id() -> String {
 }
 
 #[cfg(test)]
+impl PracticeStore {
+    pub(crate) fn connection_for_test(&self) -> MutexGuard<'_, Connection> {
+        self.connection().unwrap()
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
