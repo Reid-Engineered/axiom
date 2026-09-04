@@ -38,6 +38,11 @@ implementation plan.
   serialization tests. The plan's initial red command passed with zero tests because the
   unwired source file was not compiled; declared `pub mod practice;` first to confirm the
   intended missing-module failure, then added the planned `mod.rs` skeleton.
+- 2026-09-04 — Task 4 complete: added `PracticeError` and three passing focused tests. As
+  in Task 3, the undeclared source file produced zero tests instead of the plan's expected
+  red compile failure. The plan's `-p axiom_lib` Clippy selector is also invalid because
+  `axiom_lib` is a library target, not a package; used `-p axiom --lib`. Interim dead-code
+  warnings remain for private Task 3 types until their planned public exports in Task 6.
 
 ## What was built / tested / left out
 
