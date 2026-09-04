@@ -57,6 +57,10 @@ implementation plan.
   The first typed inter-capability call exposed that existing `VerifyRequest` was
   deserialize-only and `VerifyResult` serialize-only; added the inverse serde derives so
   both satisfy `ModuleRegistry::invoke`'s typed input/output bounds.
+- 2026-09-04 — Task 8 complete: added `practice.hint@1`; all 13 provider tests, all 269
+  crate tests, and strict Clippy pass. The plan declared `hint` as synchronous but wrapped
+  its direct test calls in `block_on`; kept the specified synchronous API and removed those
+  invalid wrappers.
 
 ## What was built / tested / left out
 

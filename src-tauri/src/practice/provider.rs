@@ -12,7 +12,10 @@ use crate::modules::{
 
 use super::error::PracticeError;
 use super::store::PracticeStore;
-use super::types::{EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse, ResponseValue};
+use super::types::{
+    EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse, HintRequest,
+    HintResponse, ResponseValue,
+};
 
 pub struct PracticeProvider {
     store: PracticeStore,
@@ -191,6 +194,42 @@ impl PracticeProvider {
             submission_count,
         })
     }
+
+    async fn handle_hint(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: HintRequest = serde_json::from_value(input).map_err(|error| {
+            InvocationError::InvalidInput {
+                capability_id: capability_id("practice.hint"),
+                message: error.to_string(),
+            }
+        })?;
+        let response = self
+            .hint(request)
+            .map_err(|error| to_invocation_error("practice.hint", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    fn hint(&self, request: HintRequest) -> Result<HintResponse, PracticeError> {
+        let attempt = self
+            .store
+            .load_attempt(&request.attempt_id, &request.workspace_id)?;
+        let hints_total = attempt.instance.hints.len() as u32;
+        if attempt.hints_revealed >= hints_total {
+            return Err(PracticeError::NoMoreHints {
+                attempt_id: request.attempt_id.clone(),
+            });
+        }
+
+        let hints_revealed = self.store.increment_hints_revealed(&request.attempt_id)?;
+        let hint_text = attempt.instance.hints[(hints_revealed - 1) as usize].clone();
+
+        Ok(HintResponse {
+            hint_text,
+            hints_revealed,
+            hints_total,
+        })
+    }
 }
 
 #[async_trait::async_trait]
@@ -204,6 +243,7 @@ impl CapabilityProvider for PracticeProvider {
         match (capability_id.as_str(), version) {
             ("practice.generate", 1) => self.handle_generate(input).await,
             ("practice.evaluate", 1) => self.handle_evaluate(input).await,
+            ("practice.hint", 1) => self.handle_hint(input).await,
             _ => Err(InvocationError::UnknownCapability {
                 capability_id: capability_id.clone(),
                 version,
@@ -252,7 +292,7 @@ mod tests {
     use crate::capabilities::math_verify::MathVerifyProvider;
     use crate::knowledge::ResolvedSolution;
     use crate::modules::ModuleId;
-    use crate::practice::{AttemptStatus, EvaluateRequest, ResponseValue};
+    use crate::practice::{AttemptStatus, EvaluateRequest, HintRequest, ResponseValue};
 
     fn fixture_package() -> KnowledgePackage {
         let fixture_root =
@@ -543,5 +583,98 @@ mod tests {
         }));
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn hint_reveals_hints_in_order_and_tracks_the_count() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+        assert!(
+            generated.hints_total >= 1,
+            "fixture family must have at least one hint"
+        );
+
+        let first = provider
+            .hint(HintRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id.clone(),
+            })
+            .unwrap();
+
+        assert_eq!(first.hints_revealed, 1);
+        assert_eq!(first.hints_total, generated.hints_total);
+        assert!(!first.hint_text.is_empty());
+    }
+
+    #[test]
+    fn hint_past_the_total_is_no_more_hints() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+
+        for _ in 0..generated.hints_total {
+            provider
+                .hint(HintRequest {
+                    workspace_id: "ws-1".to_owned(),
+                    attempt_id: generated.attempt_id.clone(),
+                })
+                .unwrap();
+        }
+
+        let result = provider.hint(HintRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: generated.attempt_id,
+        });
+
+        assert!(matches!(result, Err(PracticeError::NoMoreHints { .. })));
+    }
+
+    #[test]
+    fn hint_response_never_exposes_the_full_hint_list() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+        let capability_id = CapabilityId::new("practice.hint").unwrap();
+        let input = serde_json::json!({
+            "workspace_id": "ws-1",
+            "attempt_id": generated.attempt_id,
+        });
+
+        let output = tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input))
+            .unwrap();
+
+        assert!(output.get("hints").is_none());
+        assert!(output["hint_text"].is_string());
+    }
+
+    #[test]
+    fn hint_on_an_attempt_from_another_workspace_is_not_found() {
+        let (_registry, _installation, provider) = registry_with_math_verify_and_practice();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+
+        let result = provider.hint(HintRequest {
+            workspace_id: "ws-other".to_owned(),
+            attempt_id: generated.attempt_id,
+        });
+
+        assert!(matches!(result, Err(PracticeError::AttemptNotFound { .. })));
     }
 }
