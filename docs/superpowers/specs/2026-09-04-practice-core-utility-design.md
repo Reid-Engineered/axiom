@@ -108,14 +108,23 @@ order of preference:
 
 **Chosen: Practice resolves and invokes `math.verify` through the same `ModuleRegistry`
 path any external caller would use.** `ModuleRegistry` is constructed and wrapped in
-`Arc<RwLock<ModuleRegistry>>` at app wiring time (`src-tauri/src/lib.rs` or equivalent
-setup code, wherever Tauri managed state is assembled). Registration order: register
-`math_verify` first, then construct `PracticeProvider` holding a clone of that `Arc` plus
-the `ModuleInstallation` context it needs for resolution, then register `practice` into the
+`Arc<tauri::async_runtime::RwLock<ModuleRegistry>>` — the async-aware `RwLock` Tauri
+re-exports (backed by `tokio::sync::RwLock`), not `std::sync::RwLock` — at app wiring time
+(`src-tauri/src/lib.rs` or equivalent setup code, wherever Tauri managed state is
+assembled). This choice is load-bearing, not cosmetic: `practice.evaluate` must hold the
+lock guard across the inner `registry.invoke(...).await`, and a `std::sync::RwLock`'s guard
+is not `Send` — holding one across an `.await` inside an `async fn` that
+`CapabilityProvider::invoke` requires to stay `Send` (via `async_trait`'s default) simply
+won't compile. `tokio::sync::RwLock`'s guards are `Send`, and its `read()`/`write()` are
+themselves `async fn`s, awaited rather than nested inside a synchronous `block_on` (nesting
+`block_on` inside code that may itself already be running on the async runtime risks a
+runtime panic, not just an ergonomics cost). Registration order: register `math_verify`
+first, then construct `PracticeProvider` holding a clone of that `Arc` plus the
+`ModuleInstallation` context it needs for resolution, then register `practice` into the
 same registry. Inside the `practice.evaluate` handler, Practice calls
 `registry.resolve(&installation, &CapabilityRequirement { id: "math.verify", min_version:
-1 })` to get a `CapabilityHandle`, then `registry.invoke(&handle, &installation, call)` —
-identical to how Core or a future frontend-facing orchestration layer would call
+1 })` to get a `CapabilityHandle`, then `registry.invoke(&handle, &installation, call).await`
+— identical to how Core or a future frontend-facing orchestration layer would call
 `math.verify` directly. No hardcoded reference to `MathVerifyProvider`; if a workspace ever
 had a different `math.verify`-providing module enabled ahead of the first-party one in its
 `enabled_module_ids`, Practice would transparently call that one instead.
@@ -131,12 +140,12 @@ session.** Would invert the domain-boundary doc's own diagram — Practice sits 
 `math.verify`, calling *into* it to answer "what do we give this learner now?" — and would
 leak correctness-computation responsibility into a layer meant to stay UI-facing.
 
-This makes `Arc<RwLock<ModuleRegistry>>` construction order load-bearing for the first
-time: `math_verify` must be registered before the `Arc` is cloned into `PracticeProvider`.
-Registration itself (`&mut self`) still requires the write lock; `resolve`/`invoke` calls
-from within `practice.evaluate` take only the read lock, so a workspace's Practice calls
-never contend with each other on the registry lock, only (briefly, at startup) with
-registration.
+This makes `Arc<tauri::async_runtime::RwLock<ModuleRegistry>>` construction order
+load-bearing for the first time: `math_verify` must be registered before the `Arc` is
+cloned into `PracticeProvider`. Registration itself (`&mut self`) still requires the write
+lock; `resolve`/`invoke` calls from within `practice.evaluate` take only the read lock, so
+a workspace's Practice calls never contend with each other on the registry lock, only
+(briefly, at startup) with registration.
 
 ## 5. Capability contracts
 
