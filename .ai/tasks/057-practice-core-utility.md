@@ -34,6 +34,10 @@ implementation plan.
   updated the existing schema regression test from one migration/24 tables to the current
   migration count/26 tables. Cargo was unavailable on the Windows `PATH`, so Rust checks
   run through the installed WSL toolchain with a WSL-native target cache.
+- 2026-09-04 — Task 3 complete: added Practice request/response contracts and six passing
+  serialization tests. The plan's initial red command passed with zero tests because the
+  unwired source file was not compiled; declared `pub mod practice;` first to confirm the
+  intended missing-module failure, then added the planned `mod.rs` skeleton.
 
 ## What was built / tested / left out
 

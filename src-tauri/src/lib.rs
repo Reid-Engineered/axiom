@@ -4,6 +4,7 @@ pub mod db;
 pub mod generation;
 pub mod knowledge;
 pub mod modules;
+pub mod practice;
 
 use tauri::Manager;
 
