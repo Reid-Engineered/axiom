@@ -43,6 +43,11 @@ implementation plan.
   red compile failure. The plan's `-p axiom_lib` Clippy selector is also invalid because
   `axiom_lib` is a library target, not a package; used `-p axiom --lib`. Interim dead-code
   warnings remain for private Task 3 types until their planned public exports in Task 6.
+- 2026-09-04 — Task 5 complete: added the SQLite-backed attempt/submission store and six
+  passing persistence tests, including an on-disk reopen. The plan's workspace fixture
+  violated the existing deferred workspace/goal foreign-key cycle by inserting only the
+  workspace; fixed it by inserting both rows in one transaction. Removed unused serde
+  imports from the plan snippet.
 
 ## What was built / tested / left out
 
