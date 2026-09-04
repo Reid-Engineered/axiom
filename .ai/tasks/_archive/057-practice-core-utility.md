@@ -1,7 +1,7 @@
 ---
 id: 057
 title: Practice Core Utility
-status: review
+status: done
 owner: claude-code
 stage: 8
 depends_on: [45, 46, 47, 48, 54, 55, 56]
@@ -139,11 +139,9 @@ Date: 2026-09-04
       `math.verify` as a typed capability rather than raw JSON. No `ARCHITECTURE.md` update
       needed (no frontend structural change).
 
-Verdict: approved, no blocking findings. Frontmatter `status` left at `review` rather than
-`done` — per `.ai/lifecycle.md`, `done` means "review passed, merged to main," and this
-branch (`agent/codex/057-practice-core-utility`) hasn't been merged yet. Merging is a
-repo-affecting action for the human/owning agent to trigger, not something a review should
-do on its own authority.
+Verdict: approved, no blocking findings. Merged to `master` (fast-forward from
+`agent/codex/057-practice-core-utility`) per the user's explicit instruction; frontmatter
+`status` set to `done` and this file archived, per `.ai/lifecycle.md`.
 
 ## Follow-ups
 
