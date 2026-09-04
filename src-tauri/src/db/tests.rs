@@ -76,8 +76,8 @@ fn migration_applies_the_current_schema_once() {
         .unwrap();
 
     assert_eq!(version, LATEST_SCHEMA_VERSION);
-    assert_eq!(migration_count, 1);
-    assert_eq!(domain_table_count, 24);
+    assert_eq!(migration_count, LATEST_SCHEMA_VERSION);
+    assert_eq!(domain_table_count, 26);
 }
 
 #[test]
@@ -137,4 +137,27 @@ fn note_triggers_keep_concept_counts_synchronized() {
         .execute("DELETE FROM notes WHERE id = 'note-one'", [])
         .unwrap();
     assert_eq!(notes_count(&connection, "concept-washers"), 0);
+}
+
+#[test]
+fn practice_tables_exist_after_migration() {
+    let connection = crate::db::open_in_memory().unwrap();
+
+    let attempts_columns: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('practice_attempts')",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(attempts_columns, 9);
+
+    let submissions_columns: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('practice_submissions')",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(submissions_columns, 5);
 }

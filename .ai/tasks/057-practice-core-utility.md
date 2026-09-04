@@ -30,6 +30,10 @@ implementation plan.
 ## Worklog
 
 - 2026-09-04 — started, claimed by claude-code
+- 2026-09-04 — Task 2 complete: added migration 0002 and verified the new Practice tables;
+  updated the existing schema regression test from one migration/24 tables to the current
+  migration count/26 tables. Cargo was unavailable on the Windows `PATH`, so Rust checks
+  run through the installed WSL toolchain with a WSL-native target cache.
 
 ## What was built / tested / left out
 
