@@ -93,8 +93,61 @@ the network-disabled offline acceptance test (depends on Study Session UI existi
 
 ## Review
 
-(filled in by reviewer)
+Reviewer: claude-code
+Date: 2026-09-04
+
+- [x] Correctness — pass. `provider.rs`, `store.rs`, `types.rs`, `error.rs` match the plan's
+      contracts and the design spec §4-§8. `practice.evaluate` resolves and invokes
+      `math.verify` through `registry.resolve`/`registry.invoke` (`provider.rs:139-165`),
+      never calling `MathVerifyProvider`'s Rust code directly, per spec §4. `canonical_solution`
+      and unrevealed hint text never leave `GenerateResponse`/`HintResponse`
+      (`types.rs:29-33,58-62`, verified by both the serde-structural tests and
+      `generate_response_never_exposes_the_canonical_solution`/`hint_response_never_exposes_the_full_hint_list`).
+      Workspace isolation is enforced by `load_attempt`'s `WHERE id = ?1 AND workspace_id =
+      ?2` (`store.rs:60-64`) on every one of the three capability handlers. Edge cases
+      (`AlreadySolved`, `NoMoreHints`, `ResponseTypeMismatch`, wrong-workspace `AttemptNotFound`)
+      are each covered by a dedicated test, not just the happy path.
+- [x] Independent re-verification — pass. Re-ran the full gate myself from a clean checkout
+      rather than trusting the task file: `cargo test` → 271 passed, 0 failed;
+      `cargo clippy -p axiom --lib -- -D warnings` → clean; `cargo fmt --check` → clean.
+      Matches the worklog's claims exactly.
+- [x] Inter-capability lock correctness — pass, and worth calling out since it's the one
+      genuinely new mechanism this task adds to the runtime. The plan originally specified
+      `std::sync::RwLock`, which would not compile here (`evaluate()` holds the guard across
+      an inner `.await`, and `std::sync::RwLockReadGuard` isn't `Send`, which `async_trait`'s
+      default `Send`-future bound on `CapabilityProvider::invoke` requires). The plan was
+      corrected before handoff to `tauri::async_runtime::RwLock`; the shipped code
+      (`provider.rs:4,29,144,160`) uses it correctly, with `.read().await` inside the async
+      path and `.blocking_write()`/`.blocking_read()` confined to sync test helpers
+      (`provider.rs:329`, `tests/mod.rs`). Confirmed this compiles and passes in Rust as
+      written, not just in the plan's pseudocode.
+- [ ] Architecture conformance (`ARCHITECTURE.md`) — N/A. That document governs the
+      frontend (`src/`); this task is entirely `src-tauri/`. The equivalent backend
+      contract is `CORE.md`, which this task conforms to (module registers via
+      `module.toml` + `CapabilityProvider`, no first-party shortcut around the capability
+      boundary — see the inter-capability point above).
+- [ ] UI rules (`AGENTS.md`) — N/A, no `src/` or UI changes in this task.
+- [x] Process — pass. Worklog is dated and specific, not batched (per-task entries with
+      honest deviation notes: the FK-cycle fixture fix in Task 5, the `axiom_lib` →
+      `-p axiom --lib` Clippy selector correction, the sync/async `hint()` cleanup in Task
+      8). Scope matches the task's own stated scope — no Tauri command, frontend, or UI
+      code snuck in. `math_verify/types.rs`'s two added serde derives
+      (`Serialize` on `VerifyRequest`, `Deserialize` on `VerifyResult`) are the one file
+      touched outside `practice/` — legitimate and minimal: `ModuleRegistry::invoke`'s
+      generic bounds (`Input: Serialize`, `Output: DeserializeOwned`) require both, and
+      this is the first real caller to need them: Practice is the first module to invoke
+      `math.verify` as a typed capability rather than raw JSON. No `ARCHITECTURE.md` update
+      needed (no frontend structural change).
+
+Verdict: approved, no blocking findings. Frontmatter `status` left at `review` rather than
+`done` — per `.ai/lifecycle.md`, `done` means "review passed, merged to main," and this
+branch (`agent/codex/057-practice-core-utility`) hasn't been merged yet. Merging is a
+repo-affecting action for the human/owning agent to trigger, not something a review should
+do on its own authority.
 
 ## Follow-ups
 
-(filled in if anything is noticed during implementation/review)
+None identified during review. Next Stage 8 sub-projects (per `ROADMAP.md`): Tauri command
++ frontend service wiring for `practice.*`, Study Session UI integration, adaptive
+family/difficulty selection, and the network-disabled offline acceptance test — none
+required or attempted here, per spec §1/§9.
