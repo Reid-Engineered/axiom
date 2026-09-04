@@ -12,3 +12,6 @@ pub use types::{
 
 /// The embedded first-party manifest for this module.
 pub const MANIFEST_TOML: &str = include_str!("module.toml");
+
+#[cfg(test)]
+mod tests;

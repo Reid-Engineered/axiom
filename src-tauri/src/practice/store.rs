@@ -232,7 +232,13 @@ mod tests {
         let store = store();
         seed_workspace(&store);
         store
-            .insert_attempt("attempt-1", "ws-1", "problem.shell_y_poly", 7, &sample_instance())
+            .insert_attempt(
+                "attempt-1",
+                "ws-1",
+                "problem.shell_y_poly",
+                7,
+                &sample_instance(),
+            )
             .unwrap();
 
         let result = store.load_attempt("attempt-1", "ws-other");
@@ -245,12 +251,24 @@ mod tests {
         let store = store();
         seed_workspace(&store);
         store
-            .insert_attempt("attempt-1", "ws-1", "problem.shell_y_poly", 7, &sample_instance())
+            .insert_attempt(
+                "attempt-1",
+                "ws-1",
+                "problem.shell_y_poly",
+                7,
+                &sample_instance(),
+            )
             .unwrap();
 
         assert_eq!(store.increment_hints_revealed("attempt-1").unwrap(), 1);
         assert_eq!(store.increment_hints_revealed("attempt-1").unwrap(), 2);
-        assert_eq!(store.load_attempt("attempt-1", "ws-1").unwrap().hints_revealed, 2);
+        assert_eq!(
+            store
+                .load_attempt("attempt-1", "ws-1")
+                .unwrap()
+                .hints_revealed,
+            2
+        );
     }
 
     #[test]
@@ -258,11 +276,21 @@ mod tests {
         let store = store();
         seed_workspace(&store);
         store
-            .insert_attempt("attempt-1", "ws-1", "problem.shell_y_poly", 7, &sample_instance())
+            .insert_attempt(
+                "attempt-1",
+                "ws-1",
+                "problem.shell_y_poly",
+                7,
+                &sample_instance(),
+            )
             .unwrap();
 
-        store.record_submission("attempt-1", "{\"value\":1.0}", false).unwrap();
-        store.record_submission("attempt-1", "{\"value\":4.0}", true).unwrap();
+        store
+            .record_submission("attempt-1", "{\"value\":1.0}", false)
+            .unwrap();
+        store
+            .record_submission("attempt-1", "{\"value\":4.0}", true)
+            .unwrap();
 
         assert_eq!(store.count_submissions("attempt-1").unwrap(), 2);
     }
@@ -272,17 +300,27 @@ mod tests {
         let store = store();
         seed_workspace(&store);
         store
-            .insert_attempt("attempt-1", "ws-1", "problem.shell_y_poly", 7, &sample_instance())
+            .insert_attempt(
+                "attempt-1",
+                "ws-1",
+                "problem.shell_y_poly",
+                7,
+                &sample_instance(),
+            )
             .unwrap();
 
         store.mark_solved("attempt-1").unwrap();
 
-        assert_eq!(store.load_attempt("attempt-1", "ws-1").unwrap().status, AttemptStatus::Solved);
+        assert_eq!(
+            store.load_attempt("attempt-1", "ws-1").unwrap().status,
+            AttemptStatus::Solved
+        );
     }
 
     #[test]
     fn attempt_surviving_a_fresh_connection_to_the_same_file_reads_back_identically() {
-        let dir = std::env::temp_dir().join(format!("axiom-practice-test-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("axiom-practice-test-{}", uuid::Uuid::new_v4()));
         let db_path = dir.join("axiom.sqlite3");
         std::fs::create_dir_all(&dir).unwrap();
 
@@ -290,7 +328,13 @@ mod tests {
             let store = PracticeStore::new(crate::db::open(&db_path).unwrap());
             seed_workspace(&store);
             store
-                .insert_attempt("attempt-1", "ws-1", "problem.shell_y_poly", 7, &sample_instance())
+                .insert_attempt(
+                    "attempt-1",
+                    "ws-1",
+                    "problem.shell_y_poly",
+                    7,
+                    &sample_instance(),
+                )
                 .unwrap();
         }
 

@@ -22,7 +22,10 @@ impl fmt::Display for PracticeError {
                 write!(formatter, "no problem family {family_id:?} exists")
             }
             Self::AttemptNotFound { attempt_id } => {
-                write!(formatter, "no attempt {attempt_id:?} exists in this workspace")
+                write!(
+                    formatter,
+                    "no attempt {attempt_id:?} exists in this workspace"
+                )
             }
             Self::NoMoreHints { attempt_id } => write!(
                 formatter,

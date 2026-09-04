@@ -113,7 +113,9 @@ mod tests {
         let response: ResponseValue = serde_json::from_value(value).unwrap();
         assert_eq!(
             response,
-            ResponseValue::SymbolicExpression { value: "2*pi".to_owned() }
+            ResponseValue::SymbolicExpression {
+                value: "2*pi".to_owned()
+            }
         );
     }
 

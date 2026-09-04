@@ -1,7 +1,7 @@
 ---
 id: 057
 title: Practice Core Utility
-status: in-progress
+status: review
 owner: claude-code
 stage: 8
 depends_on: [45, 46, 47, 48, 54, 55, 56]
@@ -61,10 +61,35 @@ implementation plan.
   crate tests, and strict Clippy pass. The plan declared `hint` as synchronous but wrapped
   its direct test calls in `block_on`; kept the specified synchronous API and removed those
   invalid wrappers.
+- 2026-09-04 — Task 9 complete: added two full-registry tests and moved the task to review.
+  Adapted the workspace fixture to seed its required guiding goal transactionally and
+  declared the test module alongside its file (an undeclared Rust source file is ignored,
+  not a compile failure). The first formatting check found drift; ran `cargo fmt`, then the
+  full gate passed with 271 tests. Used `cargo clippy -p axiom --lib -- -D warnings`, the
+  valid equivalent of the plan's invalid package selector `-p axiom_lib`.
 
 ## What was built / tested / left out
 
-(filled in at Task 9)
+Built: `src-tauri/src/practice/` (types, error, store, provider, module.toml), a new
+migration (`practice_attempts`, `practice_submissions`), and `pub mod practice;` in
+`lib.rs`. `practice.generate@1`, `practice.evaluate@1`, `practice.hint@1` registered on
+the module-capability runtime; `practice.evaluate` resolves and invokes `math.verify`
+through `Arc<RwLock<ModuleRegistry>>` rather than calling `math_verify`'s Rust code
+directly (spec §4) -- the first real inter-capability call the runtime has carried.
+
+Tested: `cargo test` across `practice::types`, `practice::error`, `practice::store`,
+`practice::provider`, `practice::tests` (round-trip through a real registry with both
+`math_verify` and `practice` registered) -- generation-matches-the-engine, hidden
+canonical-solution/hints in every outward response, workspace isolation on all three
+capabilities, multi-submission-until-solved, `AlreadySolved`/`NoMoreHints` edge cases,
+attempt persistence surviving a fresh connection to the same on-disk database. Gates run:
+`cargo check`, `cargo test`, `cargo clippy -p axiom --lib -- -D warnings`,
+`cargo fmt --check` (all `src-tauri/` changes; no `src/` changes in this task, so the
+npm-side gates in `.ai/quality-gates.md` don't apply).
+
+Left out (per spec §1/§9, by design): any `#[tauri::command]` or frontend service
+wiring, Study Session UI, adaptive family/difficulty selection, adaptive hint selection,
+the network-disabled offline acceptance test (depends on Study Session UI existing first).
 
 ## Review
 

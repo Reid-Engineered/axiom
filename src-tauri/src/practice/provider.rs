@@ -46,12 +46,11 @@ impl PracticeProvider {
     }
 
     async fn handle_generate(&self, input: Value) -> Result<Value, InvocationError> {
-        let request: GenerateRequest = serde_json::from_value(input).map_err(|error| {
-            InvocationError::InvalidInput {
+        let request: GenerateRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
                 capability_id: capability_id("practice.generate"),
                 message: error.to_string(),
-            }
-        })?;
+            })?;
         let response = self
             .generate(request)
             .await
@@ -61,10 +60,7 @@ impl PracticeProvider {
         })
     }
 
-    async fn generate(
-        &self,
-        request: GenerateRequest,
-    ) -> Result<GenerateResponse, PracticeError> {
+    async fn generate(&self, request: GenerateRequest) -> Result<GenerateResponse, PracticeError> {
         let family = self
             .knowledge_package
             .problem_families
@@ -95,12 +91,11 @@ impl PracticeProvider {
     }
 
     async fn handle_evaluate(&self, input: Value) -> Result<Value, InvocationError> {
-        let request: EvaluateRequest = serde_json::from_value(input).map_err(|error| {
-            InvocationError::InvalidInput {
+        let request: EvaluateRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
                 capability_id: capability_id("practice.evaluate"),
                 message: error.to_string(),
-            }
-        })?;
+            })?;
         let response = self
             .evaluate(request)
             .await
@@ -110,10 +105,7 @@ impl PracticeProvider {
         })
     }
 
-    async fn evaluate(
-        &self,
-        request: EvaluateRequest,
-    ) -> Result<EvaluateResponse, PracticeError> {
+    async fn evaluate(&self, request: EvaluateRequest) -> Result<EvaluateResponse, PracticeError> {
         let attempt = self
             .store
             .load_attempt(&request.attempt_id, &request.workspace_id)?;
@@ -174,11 +166,8 @@ impl PracticeProvider {
 
         let response_json = serde_json::to_string(&request.response)
             .map_err(|error| PracticeError::Storage(error.to_string()))?;
-        self.store.record_submission(
-            &request.attempt_id,
-            &response_json,
-            result.is_correct,
-        )?;
+        self.store
+            .record_submission(&request.attempt_id, &response_json, result.is_correct)?;
         if result.is_correct {
             self.store.mark_solved(&request.attempt_id)?;
         }
@@ -196,12 +185,11 @@ impl PracticeProvider {
     }
 
     async fn handle_hint(&self, input: Value) -> Result<Value, InvocationError> {
-        let request: HintRequest = serde_json::from_value(input).map_err(|error| {
-            InvocationError::InvalidInput {
+        let request: HintRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
                 capability_id: capability_id("practice.hint"),
                 message: error.to_string(),
-            }
-        })?;
+            })?;
         let response = self
             .hint(request)
             .map_err(|error| to_invocation_error("practice.hint", error))?;
@@ -410,8 +398,8 @@ mod tests {
             "seed": 42,
         });
 
-        let output = tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input))
-            .unwrap();
+        let output =
+            tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input)).unwrap();
 
         assert!(output.get("canonical_solution").is_none());
         assert!(output.get("hints").is_none());
@@ -441,8 +429,8 @@ mod tests {
             "family_id": "problem.shell_y_poly",
         });
 
-        let output = tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input))
-            .unwrap();
+        let output =
+            tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input)).unwrap();
 
         let attempt_id = output["attempt_id"].as_str().unwrap();
         assert!(provider.store.load_attempt(attempt_id, "ws-1").is_ok());
@@ -601,8 +589,8 @@ mod tests {
 
         let first = provider
             .hint(HintRequest {
-            workspace_id: "ws-1".to_owned(),
-            attempt_id: generated.attempt_id.clone(),
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: generated.attempt_id.clone(),
             })
             .unwrap();
 
@@ -653,8 +641,8 @@ mod tests {
             "attempt_id": generated.attempt_id,
         });
 
-        let output = tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input))
-            .unwrap();
+        let output =
+            tauri::async_runtime::block_on(provider.invoke(&capability_id, 1, input)).unwrap();
 
         assert!(output.get("hints").is_none());
         assert!(output["hint_text"].is_string());
