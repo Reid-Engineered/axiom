@@ -44,6 +44,18 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 2 complete: both registry tests pass; blocking_write works on the installed Tauri runtime.
 
+- 2026-09-05 — Task 3 started: added the plan's three command tests before command implementation to confirm an actual red result.
+
+- 2026-09-05 — Task 3 red confirmed: 12 compiler errors for the absent command types/handlers. Added the plan's full command implementation next; checking it against the actual capability types.
+
+- 2026-09-05 — Task 3 compile finding: all three capability request types lack Serialize and all three responses lack Deserialize (E0277). Added only those reciprocal derives in practice/types.rs; field names and snake_case wire contract are unchanged. This matches task 057's earlier math_verify derive fix. Cargo cache moved to /var/tmp/axiom-058-target after confirming Windows-mounted cache timestamps caused unchanged dependencies to rebuild.
+
+- 2026-09-05 — Content finding: the real knowledge-package has concepts/objectives/examples but zero canonical problem families (confirmed by knowledge/tests/migration.rs and package contents). Startup loads this real package as approved; successful generation is covered by the canonical test fixture. Authoring production families remains a content follow-up, not a test-fixture fallback or a scope expansion.
+
+- 2026-09-05 — Task 3 compatibility regressions confirmed red: actual generated Tauri command name was generate_attempt, and symbolic-expression JSON was rejected in favor of symbolicExpression. Added explicit command rename attributes and kebab-case response variants, preserving camelCase field names. Tests also cover numeric translation and nonempty missing-provider errors.
+
+- 2026-09-05 — Task 3 complete: all 8 command tests and 279 crate tests pass; cargo clippy --lib -- -D warnings and cargo fmt --check pass. Async Tauri State wrappers compile without workaround. No new dependency was needed.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
@@ -54,4 +66,4 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 ## Follow-ups
 
-(filled in if anything is noticed during implementation/review)
+Add canonical ProblemFamily content to the real knowledge-package before Study Session generation is exposed; the existing package currently contains only worked examples.

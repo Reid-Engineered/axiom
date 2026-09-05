@@ -47,19 +47,323 @@ pub fn build_practice_registry(
     (registry, installation)
 }
 
+use serde::{Deserialize, Serialize};
+use tauri::State;
+
+use crate::knowledge::ResponseType;
+use crate::modules::{
+    CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement, RegistryError,
+};
+use crate::practice::{
+    AttemptStatus as PracticeAttemptStatus, EvaluateRequest, EvaluateResponse, GenerateRequest,
+    GenerateResponse, HintRequest, HintResponse, ResponseValue,
+};
+
+use super::CommandResult;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GenerateAttemptInput {
+    pub workspace_id: String,
+    pub family_id: String,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Attempt {
+    pub attempt_id: String,
+    pub prompt: String,
+    pub response_type: ResponseType,
+    pub hints_total: u32,
+}
+
+impl From<GenerateResponse> for Attempt {
+    fn from(response: GenerateResponse) -> Self {
+        Self {
+            attempt_id: response.attempt_id,
+            prompt: response.prompt,
+            response_type: response.response_type,
+            hints_total: response.hints_total,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "responseType", rename_all = "kebab-case")]
+pub enum ResponseValueInput {
+    SymbolicExpression { value: String },
+    Numeric { value: f64 },
+}
+
+impl From<ResponseValueInput> for ResponseValue {
+    fn from(input: ResponseValueInput) -> Self {
+        match input {
+            ResponseValueInput::SymbolicExpression { value } => {
+                ResponseValue::SymbolicExpression { value }
+            }
+            ResponseValueInput::Numeric { value } => ResponseValue::Numeric { value },
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EvaluateAttemptInput {
+    pub workspace_id: String,
+    pub attempt_id: String,
+    pub response: ResponseValueInput,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AttemptStatus {
+    Open,
+    Solved,
+}
+
+impl From<PracticeAttemptStatus> for AttemptStatus {
+    fn from(status: PracticeAttemptStatus) -> Self {
+        match status {
+            PracticeAttemptStatus::Open => AttemptStatus::Open,
+            PracticeAttemptStatus::Solved => AttemptStatus::Solved,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct EvaluationResult {
+    pub correct: bool,
+    pub status: AttemptStatus,
+    pub submission_count: u32,
+}
+
+impl From<EvaluateResponse> for EvaluationResult {
+    fn from(response: EvaluateResponse) -> Self {
+        Self {
+            correct: response.correct,
+            status: response.status.into(),
+            submission_count: response.submission_count,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestHintInput {
+    pub workspace_id: String,
+    pub attempt_id: String,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Hint {
+    pub hint_text: String,
+    pub hints_revealed: u32,
+    pub hints_total: u32,
+}
+
+impl From<HintResponse> for Hint {
+    fn from(response: HintResponse) -> Self {
+        Self {
+            hint_text: response.hint_text,
+            hints_revealed: response.hints_revealed,
+            hints_total: response.hints_total,
+        }
+    }
+}
+
+async fn invoke_practice<Input, Output>(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    capability: &str,
+    workspace_id: String,
+    input: Input,
+) -> Result<Output, RegistryError>
+where
+    Input: Serialize,
+    Output: serde::de::DeserializeOwned,
+{
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new(capability).expect("static capability id is valid"),
+        min_version: 1,
+    };
+    let handle = {
+        let registry = registry.read().await;
+        registry.resolve(installation, &requirement)?
+    };
+    let call = CapabilityCall {
+        envelope: CallEnvelope {
+            workspace_id,
+            capability_id: requirement.id.clone(),
+            version: 1,
+            calling_module_id: ModuleId::new("core.tauri_commands")
+                .expect("static module id is valid"),
+        },
+        input,
+    };
+    let registry = registry.read().await;
+    registry.invoke(&handle, installation, call).await
+}
+
+fn practice_error(error: RegistryError) -> String {
+    error.to_string()
+}
+
+pub async fn generate_attempt_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: GenerateAttemptInput,
+) -> CommandResult<Attempt> {
+    let response: GenerateResponse = invoke_practice(
+        registry,
+        installation,
+        "practice.generate",
+        input.workspace_id.clone(),
+        GenerateRequest {
+            workspace_id: input.workspace_id,
+            family_id: input.family_id,
+            seed: None,
+        },
+    )
+    .await
+    .map_err(practice_error)?;
+    Ok(response.into())
+}
+
+#[tauri::command(rename = "generateAttempt", rename_all = "camelCase")]
+pub async fn generate_attempt(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: GenerateAttemptInput,
+) -> CommandResult<Attempt> {
+    generate_attempt_handler(&registry, &installation, input).await
+}
+
+pub async fn evaluate_attempt_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: EvaluateAttemptInput,
+) -> CommandResult<EvaluationResult> {
+    let response: EvaluateResponse = invoke_practice(
+        registry,
+        installation,
+        "practice.evaluate",
+        input.workspace_id.clone(),
+        EvaluateRequest {
+            workspace_id: input.workspace_id,
+            attempt_id: input.attempt_id,
+            response: input.response.into(),
+        },
+    )
+    .await
+    .map_err(practice_error)?;
+    Ok(response.into())
+}
+
+#[tauri::command(rename = "evaluateAttempt", rename_all = "camelCase")]
+pub async fn evaluate_attempt(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: EvaluateAttemptInput,
+) -> CommandResult<EvaluationResult> {
+    evaluate_attempt_handler(&registry, &installation, input).await
+}
+
+pub async fn request_hint_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: RequestHintInput,
+) -> CommandResult<Hint> {
+    let response: HintResponse = invoke_practice(
+        registry,
+        installation,
+        "practice.hint",
+        input.workspace_id.clone(),
+        HintRequest {
+            workspace_id: input.workspace_id,
+            attempt_id: input.attempt_id,
+        },
+    )
+    .await
+    .map_err(practice_error)?;
+    Ok(response.into())
+}
+
+#[tauri::command(rename = "requestHint", rename_all = "camelCase")]
+pub async fn request_hint(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: RequestHintInput,
+) -> CommandResult<Hint> {
+    request_hint_handler(&registry, &installation, input).await
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::Path;
 
-    use crate::modules::{
-        CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement,
-    };
+    use crate::modules::{CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement};
 
     use super::*;
 
+    #[test]
+    fn practice_command_names_match_frontend() {
+        assert_eq!(__tauri_command_name_generate_attempt!(), "generateAttempt");
+        assert_eq!(__tauri_command_name_evaluate_attempt!(), "evaluateAttempt");
+        assert_eq!(__tauri_command_name_request_hint!(), "requestHint");
+    }
+
+    #[test]
+    fn frontend_response_values_translate_to_the_capability_contract() {
+        for response in [
+            serde_json::json!({"responseType": "symbolic-expression", "value": "0"}),
+            serde_json::json!({"responseType": "numeric", "value": 0.0}),
+        ] {
+            let input: EvaluateAttemptInput = serde_json::from_value(serde_json::json!({
+                "workspaceId": "ws-1",
+                "attemptId": "attempt-1",
+                "response": response,
+            }))
+            .unwrap();
+            let request = EvaluateRequest {
+                workspace_id: input.workspace_id,
+                attempt_id: input.attempt_id,
+                response: input.response.into(),
+            };
+            let value = serde_json::to_value(request).unwrap();
+            assert_eq!(value["workspace_id"], "ws-1");
+            assert_eq!(value["attempt_id"], "attempt-1");
+            assert_eq!(value["response"]["response_type"], response["responseType"]);
+            assert_eq!(value["response"]["value"], response["value"]);
+            assert!(value.get("workspaceId").is_none());
+        }
+    }
+
+    #[test]
+    fn missing_provider_maps_to_a_nonempty_command_error() {
+        let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+        let installation = ModuleInstallation {
+            workspace_id: String::new(),
+            enabled_module_ids: Vec::new(),
+        };
+        let input: GenerateAttemptInput = serde_json::from_value(serde_json::json!({
+            "workspaceId": "ws-1",
+            "familyId": "problem.shell_y_poly",
+        }))
+        .unwrap();
+        let error = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            input,
+        ))
+        .unwrap_err();
+        assert!(!error.is_empty());
+    }
+
     fn fixture_package() -> KnowledgePackage {
-        let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("src/knowledge/tests/fixtures/canonical");
+        let fixture_root =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/knowledge/tests/fixtures/canonical");
         crate::knowledge::load_knowledge_package(&fixture_root).unwrap()
     }
 
@@ -86,7 +390,8 @@ mod tests {
 
     #[test]
     fn build_practice_registry_registers_both_first_party_modules() {
-        let (registry, installation) = build_practice_registry(fixture_package(), seeded_connection());
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
 
         let math_verify_handle = tauri::async_runtime::block_on(registry.read()).resolve(
             &installation,
@@ -109,7 +414,8 @@ mod tests {
 
     #[test]
     fn build_practice_registry_can_actually_generate_an_attempt() {
-        let (registry, installation) = build_practice_registry(fixture_package(), seeded_connection());
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
         let handle = tauri::async_runtime::block_on(registry.read())
             .resolve(
                 &installation,
@@ -141,5 +447,96 @@ mod tests {
         .unwrap();
 
         assert!(output["attempt_id"].is_string());
+    }
+    #[test]
+    fn generate_attempt_translates_response_to_camel_case_shape() {
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
+
+        let attempt = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            GenerateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                family_id: "problem.shell_y_poly".to_owned(),
+            },
+        ))
+        .unwrap();
+
+        assert!(!attempt.attempt_id.is_empty());
+        assert!(!attempt.prompt.is_empty());
+        assert!(attempt.hints_total >= 1);
+
+        let value = serde_json::to_value(&attempt).unwrap();
+        assert!(
+            value.get("attemptId").is_some(),
+            "expected camelCase attemptId key"
+        );
+        assert!(
+            value.get("attempt_id").is_none(),
+            "must not leak snake_case keys"
+        );
+    }
+
+    #[test]
+    fn generate_attempt_with_unknown_family_is_an_error() {
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
+
+        let result = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            GenerateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                family_id: "problem.nonexistent".to_owned(),
+            },
+        ));
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn full_generate_evaluate_hint_sequence_round_trips_through_the_command_layer() {
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
+
+        let attempt = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            GenerateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                family_id: "problem.shell_y_poly".to_owned(),
+            },
+        ))
+        .unwrap();
+
+        let hint = tauri::async_runtime::block_on(request_hint_handler(
+            &registry,
+            &installation,
+            RequestHintInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: attempt.attempt_id.clone(),
+            },
+        ))
+        .unwrap();
+        assert_eq!(hint.hints_revealed, 1);
+
+        let evaluation = tauri::async_runtime::block_on(evaluate_attempt_handler(
+            &registry,
+            &installation,
+            EvaluateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: attempt.attempt_id,
+                response: ResponseValueInput::SymbolicExpression {
+                    value: "0".to_owned(),
+                },
+            },
+        ))
+        .unwrap();
+        assert_eq!(evaluation.status, AttemptStatus::Open);
+        assert_eq!(evaluation.submission_count, 1);
+
+        let evaluation_value = serde_json::to_value(&evaluation).unwrap();
+        assert!(evaluation_value.get("submissionCount").is_some());
     }
 }

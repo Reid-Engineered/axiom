@@ -16,7 +16,7 @@ pub enum ResponseValue {
     Numeric { value: f64 },
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct GenerateRequest {
     pub workspace_id: String,
     pub family_id: String,
@@ -24,7 +24,7 @@ pub struct GenerateRequest {
     pub seed: Option<u64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateResponse {
     pub attempt_id: String,
     pub prompt: String,
@@ -32,27 +32,27 @@ pub struct GenerateResponse {
     pub hints_total: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct EvaluateRequest {
     pub workspace_id: String,
     pub attempt_id: String,
     pub response: ResponseValue,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EvaluateResponse {
     pub correct: bool,
     pub status: AttemptStatus,
     pub submission_count: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct HintRequest {
     pub workspace_id: String,
     pub attempt_id: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HintResponse {
     pub hint_text: String,
     pub hints_revealed: u32,
