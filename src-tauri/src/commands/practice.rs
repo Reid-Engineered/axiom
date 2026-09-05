@@ -539,4 +539,170 @@ mod tests {
         let evaluation_value = serde_json::to_value(&evaluation).unwrap();
         assert!(evaluation_value.get("submissionCount").is_some());
     }
+
+    fn bundled_package() -> KnowledgePackage {
+        let package_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge-package");
+        crate::knowledge::load_knowledge_package(&package_root)
+            .expect("the bundled knowledge-package must load")
+    }
+
+    fn bundled_shell_y_poly_family() -> crate::knowledge::ProblemFamily {
+        bundled_package()
+            .problem_families
+            .into_iter()
+            .find(|family| family.id.as_str() == "problem.shell_y_poly")
+            .expect("bundled knowledge-package must contain problem.shell_y_poly")
+    }
+
+    /// Generates an attempt at a known seed by calling `practice.generate` through the
+    /// registry, because the `generateAttempt` command deliberately exposes no `seed`
+    /// (task 058, spec §8) and the test needs to know which instance it is answering.
+    fn seeded_attempt_id(
+        registry: &Arc<RwLock<ModuleRegistry>>,
+        installation: &ModuleInstallation,
+        seed: u64,
+    ) -> String {
+        let handle = tauri::async_runtime::block_on(registry.read())
+            .resolve(
+                installation,
+                &CapabilityRequirement {
+                    id: CapabilityId::new("practice.generate").unwrap(),
+                    min_version: 1,
+                },
+            )
+            .unwrap();
+        let call = CapabilityCall {
+            envelope: CallEnvelope {
+                workspace_id: "ws-1".to_owned(),
+                capability_id: CapabilityId::new("practice.generate").unwrap(),
+                version: 1,
+                calling_module_id: ModuleId::new("core.test_caller").unwrap(),
+            },
+            input: serde_json::json!({
+                "workspace_id": "ws-1",
+                "family_id": "problem.shell_y_poly",
+                "seed": seed,
+            }),
+        };
+        let output: serde_json::Value = tauri::async_runtime::block_on(async {
+            let registry = registry.read().await;
+            registry.invoke(&handle, installation, call).await
+        })
+        .unwrap();
+        output["attempt_id"].as_str().unwrap().to_owned()
+    }
+
+    fn evaluate_symbolic(
+        registry: &Arc<RwLock<ModuleRegistry>>,
+        installation: &ModuleInstallation,
+        attempt_id: &str,
+        response: String,
+    ) -> EvaluationResult {
+        tauri::async_runtime::block_on(evaluate_attempt_handler(
+            registry,
+            installation,
+            EvaluateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: attempt_id.to_owned(),
+                response: ResponseValueInput::SymbolicExpression { value: response },
+            },
+        ))
+        .unwrap()
+    }
+
+    /// Task 059: the real bundled content, not the canonical test fixture, reaches the real
+    /// `generateAttempt` command and comes back as a usable problem.
+    #[test]
+    fn generate_attempt_succeeds_against_the_real_bundled_knowledge_package() {
+        let (registry, installation) =
+            build_practice_registry(bundled_package(), seeded_connection());
+
+        let attempt = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            GenerateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                family_id: "problem.shell_y_poly".to_owned(),
+            },
+        ))
+        .unwrap();
+
+        assert!(!attempt.attempt_id.is_empty());
+        assert_eq!(attempt.response_type, ResponseType::SymbolicExpression);
+        assert_eq!(attempt.hints_total, 4);
+        assert!(attempt.prompt.contains("revolving R around the y-axis"));
+        for placeholder in ["{coeff}", "{a}", "{b}"] {
+            assert!(
+                !attempt.prompt.contains(placeholder),
+                "prompt still contains {placeholder}: {}",
+                attempt.prompt
+            );
+        }
+
+        let hint = tauri::async_runtime::block_on(request_hint_handler(
+            &registry,
+            &installation,
+            RequestHintInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: attempt.attempt_id,
+            },
+        ))
+        .unwrap();
+        assert_eq!(hint.hints_total, 4);
+        assert!(!hint.hint_text.trim().is_empty());
+    }
+
+    /// Task 059: `math.verify` accepts a correct answer to the real bundled family --
+    /// independently computed from the closed form rather than echoing the generator's own
+    /// canonical string -- and still rejects a wrong one, through the real command handler.
+    #[test]
+    fn bundled_shell_y_poly_answers_are_accepted_by_math_verify_through_the_command_layer() {
+        let (registry, installation) =
+            build_practice_registry(bundled_package(), seeded_connection());
+        let family = bundled_shell_y_poly_family();
+
+        for seed in [1u64, 7, 42, 1_337, 90_210] {
+            let instance = crate::generation::generate_problem_instance(&family, seed).unwrap();
+            let coeff = instance.resolved_parameters["coeff"];
+            let b = instance.resolved_parameters["b"];
+            // V = 2*pi*(c*b^3/3 - b^4/4), derived by hand from Rule 2.6 -- see task 059.
+            let volume = 2.0 * std::f64::consts::PI * (coeff * b.powi(3) / 3.0 - b.powi(4) / 4.0);
+
+            let attempt_id = seeded_attempt_id(&registry, &installation, seed);
+            let wrong = evaluate_symbolic(
+                &registry,
+                &installation,
+                &attempt_id,
+                format!("{}", volume + 1.0),
+            );
+            assert!(
+                !wrong.correct,
+                "seed {seed}: an answer off by 1 was accepted"
+            );
+            assert_eq!(wrong.status, AttemptStatus::Open);
+
+            let right =
+                evaluate_symbolic(&registry, &installation, &attempt_id, format!("{volume}"));
+            assert!(
+                right.correct,
+                "seed {seed}: the hand-derived volume {volume} was rejected"
+            );
+            assert_eq!(right.status, AttemptStatus::Solved);
+            assert_eq!(right.submission_count, 2);
+
+            // A second attempt at the same instance, answered in an algebraically different
+            // but equivalent form, to show verification is by value and not by string match.
+            let equivalent_attempt_id = seeded_attempt_id(&registry, &installation, seed);
+            let equivalent = evaluate_symbolic(
+                &registry,
+                &installation,
+                &equivalent_attempt_id,
+                format!("pi*(2*{coeff}*{b}^3/3 - {b}^4/2)"),
+            );
+            assert!(
+                equivalent.correct,
+                "seed {seed}: an equivalent exact form was rejected"
+            );
+        }
+    }
 }
