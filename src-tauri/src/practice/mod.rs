@@ -5,6 +5,7 @@ mod types;
 
 pub use error::PracticeError;
 pub use provider::PracticeProvider;
+pub use store::PracticeStore;
 pub use types::{
     AttemptStatus, EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse,
     HintRequest, HintResponse, ResponseValue,
