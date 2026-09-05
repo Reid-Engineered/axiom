@@ -72,6 +72,10 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 7 complete: npm run typecheck passed; mock attempt state resets with the existing IPC fixtures.
 
+- 2026-09-05 — Task 8 started: added the plan's five service tests. As Task 8 Step 2 explicitly notes, Tasks 6–7 already implement the behavior, so the initial test run is expected to pass; no artificial failure is introduced.
+
+- 2026-09-05 — Task 8 complete: npm run test -- practiceService passed all 5 tests on both prescribed runs through handleMockInvoke, never a mocked service module. For final native validation, cache now uses /var/tmp/axiom-058/target: Tauri recognizes a literal target directory when resolving unbundled resources. Matching WebKit driver extracted to /tmp/axiom-058-webdriver; no system package changes.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
