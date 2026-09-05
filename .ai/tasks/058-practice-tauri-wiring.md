@@ -139,7 +139,56 @@ No PR or push was attempted, per the user's explicit local-only instruction.
 
 ## Review
 
-(filled in by reviewer)
+Reviewer: claude
+Date: 2026-09-05
+
+- [x] Correctness — pass. `commands/practice.rs` matches the "what was built" section
+      exactly: `build_practice_registry` registers `math_verify` then `practice`;
+      `generate_attempt`/`evaluate_attempt`/`request_hint` translate `practice::types`'
+      snake_case contract to camelCase DTOs via `From` impls, with explicit
+      `#[tauri::command(rename = "...")]` and kebab-case `ResponseValueInput` tag —
+      documented compatibility corrections against the original spec's `rename_all`-only
+      draft, verified against the actual Tauri 2.11.5/tauri-macros 2.6.3 behavior in the
+      worklog. Re-ran independently: `cargo test --lib` 279/279 passed,
+      `cargo clippy --lib -- -D warnings` clean, `cargo fmt --check` clean,
+      `npm run typecheck`/`lint`/`build` clean, `npm run test -- --run` 59 files / 149
+      tests passed including all 5 `practiceService.test.ts` cases (via the real
+      `mockIPC(handleMockInvoke)` wiring in `src/test/setup.ts`, not a mocked service
+      module). Tests cover translation edge cases beyond the happy path: unknown family id
+      (invalid input), missing provider (nonempty error string), already-solved
+      re-evaluation, camelCase-key structural assertions on both request and response
+      sides. Confirmed the stated "zero canonical ProblemFamily entries" limitation against
+      the real `knowledge-package/` directory — no family content exists there today, so
+      generation success is fixture-tested only, exactly as disclosed.
+- [x] Architecture conformance — pass. New types land in `src/types/practice.ts` and are
+      re-exported from `index.ts`; `practiceService.ts` functions are all
+      `async`/`Promise`-returning against mock data; no component or page yet imports
+      `practiceService` (none should — no consumer ships in this task), so rule 1 isn't
+      exercised either way; no new frontend global state was introduced (Rust-side
+      `ModuleRegistry`/`ModuleInstallation` are Tauri-managed state, the established
+      pattern `Database` already uses, not `src/` global state). `ARCHITECTURE.md` updated
+      with the new `knowledge/`/`practice/` module rows and a startup/data-flow paragraph
+      matching the actual wiring in `lib.rs`.
+- [x] UI rules — N/A. No UI/markup/design-token surface touched by this task (no Study
+      Session page ships here, matching stated scope).
+- [x] Process — pass. All mechanical gates in `.ai/quality-gates.md` re-verified directly
+      rather than trusted from the worklog (see Correctness). Worklog is detailed enough to
+      reconstruct the task-by-task shape of the change without reading the diff.
+      `git diff --check` clean (no whitespace errors). Diffed file set matches the task's
+      own "Plan" list exactly — no drive-by changes outside `commands/practice.rs`,
+      `commands/mod.rs`, `lib.rs`, `practice/mod.rs`, `practice/types.rs` (reciprocal serde
+      derives only, as planned), `tauri.conf.json`, the frontend Practice triad, and
+      `ARCHITECTURE.md`. Scope-out items (Study Session UI, per-workspace enablement, `seed`
+      param, offline acceptance test) are named in "Left out" and match the design's §1/§8
+      deferrals. One item not independently re-run: the native E2E flows and the release-
+      binary IPC smoke test (`test:e2e:linux`, the ad hoc `058-practice-tauri-ipc-smoke`)
+      require a full native WebKitWebDriver + release build round-trip; skipped here as
+      disproportionate given every other gate (279 Rust tests, 149 frontend tests, clippy,
+      fmt, typecheck, lint, build) passed independently and the worklog's driver-path
+      details are consistent with a real run. Not a blocking gap, but flagged so it's not
+      silently treated as independently confirmed.
+
+Verdict: approved
 
 ## Follow-ups
 
