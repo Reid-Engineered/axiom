@@ -64,6 +64,10 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 5 complete: npm run typecheck passed; all shared type consumers remain valid.
 
+- 2026-09-05 — Task 6 started: added generateAttempt, evaluateAttempt, and requestHint service functions exactly as planned.
+
+- 2026-09-05 — Task 6 complete: npm run typecheck and npm run lint passed with no warnings.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
