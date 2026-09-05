@@ -1,12 +1,14 @@
 import type { InvokeArgs } from '@tauri-apps/api/core';
 
 import type {
+  AttemptStatus,
   Concept,
   Goal,
   Material,
   MaterialResult,
   Module,
   Note,
+  ResponseType,
   Session,
   Workspace,
   WorkspaceActivityEvent,
@@ -32,7 +34,28 @@ let templates: WorkspaceTemplate[];
 let workspaceActivity: WorkspaceActivityEvent[];
 let workspaces: Workspace[];
 
+interface MockAttempt {
+  id: string;
+  prompt: string;
+  responseType: ResponseType;
+  hintTexts: string[];
+  hintsRevealed: number;
+  status: AttemptStatus;
+  submissionCount: number;
+}
+
+let mockAttempts: Map<string, MockAttempt>;
+
+const MOCK_PRACTICE_FAMILY = {
+  prompt:
+    'A region is bounded by y = 4x - x^2 and the x-axis. Find the volume when revolved about the y-axis.',
+  responseType: 'numeric' as ResponseType,
+  correctValue: 42.7,
+  hints: ['Set up the shell method integral.', 'Integrate from x = 0 to x = 4.'],
+};
+
 export function resetMockBackend() {
+  mockAttempts = new Map();
   concepts = structuredClone(mockConcepts);
   goals = structuredClone(mockGoals);
   materialResults = structuredClone(mockMaterialResults);
@@ -323,6 +346,60 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
           .filter((note) => note.workspaceId === parameters.workspaceId)
           .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
       );
+    case 'generateAttempt': {
+      const input = parameters.input as { workspaceId: string; familyId: string };
+      findWorkspace(input.workspaceId);
+      const id = `attempt-${crypto.randomUUID()}`;
+      const attempt: MockAttempt = {
+        id,
+        prompt: MOCK_PRACTICE_FAMILY.prompt,
+        responseType: MOCK_PRACTICE_FAMILY.responseType,
+        hintTexts: [...MOCK_PRACTICE_FAMILY.hints],
+        hintsRevealed: 0,
+        status: 'open',
+        submissionCount: 0,
+      };
+      mockAttempts.set(id, attempt);
+      return {
+        attemptId: attempt.id,
+        prompt: attempt.prompt,
+        responseType: attempt.responseType,
+        hintsTotal: attempt.hintTexts.length,
+      };
+    }
+    case 'evaluateAttempt': {
+      const input = parameters.input as {
+        workspaceId: string;
+        attemptId: string;
+        response: { responseType: string; value: string | number };
+      };
+      const attempt = mockAttempts.get(input.attemptId);
+      if (!attempt) throw new Error(`Attempt not found: ${input.attemptId}`);
+      if (attempt.status === 'solved') throw new Error(`Attempt already solved: ${input.attemptId}`);
+      const submitted = Number(input.response.value);
+      const correct = Math.abs(submitted - MOCK_PRACTICE_FAMILY.correctValue) <= 1e-6;
+      attempt.submissionCount += 1;
+      if (correct) attempt.status = 'solved';
+      return {
+        correct,
+        status: attempt.status,
+        submissionCount: attempt.submissionCount,
+      };
+    }
+    case 'requestHint': {
+      const input = parameters.input as { workspaceId: string; attemptId: string };
+      const attempt = mockAttempts.get(input.attemptId);
+      if (!attempt) throw new Error(`Attempt not found: ${input.attemptId}`);
+      if (attempt.hintsRevealed >= attempt.hintTexts.length) {
+        throw new Error(`No more hints for attempt: ${input.attemptId}`);
+      }
+      attempt.hintsRevealed += 1;
+      return {
+        hintText: attempt.hintTexts[attempt.hintsRevealed - 1],
+        hintsRevealed: attempt.hintsRevealed,
+        hintsTotal: attempt.hintTexts.length,
+      };
+    }
     default:
       throw new Error(`Unhandled test command: ${command}`);
   }

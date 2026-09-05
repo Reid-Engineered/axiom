@@ -68,6 +68,10 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 6 complete: npm run typecheck and npm run lint passed with no warnings.
 
+- 2026-09-05 — Task 7 started: added the exact planned mock family, resettable attempt map, and three IPC cases.
+
+- 2026-09-05 — Task 7 complete: npm run typecheck passed; mock attempt state resets with the existing IPC fixtures.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
