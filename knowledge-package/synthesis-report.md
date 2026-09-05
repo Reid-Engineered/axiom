@@ -49,7 +49,15 @@
 
 ---
 
-## Problem families
+## Problem families (migrated to `Example`s at v1)
+
+> **Superseded in part, task 059.** The paragraph below was written for the v1 migration
+> (task 051), when Knowledge Package v1 genuinely had no parametric-generation schema. Task
+> 054 later added a *canonical* `Problem` schema (`problems/`, spec `2026-09-01-canonical-
+> problem-schema-design.md`), so parametric families are representable again — but as a
+> distinct entity kind, not by restoring the pre-v1 shape. The migration described here
+> still stands: these six stayed `Example`s and were not converted back. What the bundled
+> package now carries in `problems/` is recorded in the next section.
 
 Knowledge Package v1 has no schema for parametric problem generation — no `generator`,
 `parameters`, `constraints`, `promptTemplate`, `canonicalSolution.expression`, `validator`,
@@ -109,6 +117,47 @@ candidates" below.
 
 ---
 
+## Canonical problem families (`problems/`)
+
+Added by task 059, against the canonical `Problem` schema (task 054) and the deterministic
+seeded generator (task 056). One family is authored so far; the generator dispatches only on
+`gen.shell_y_poly`, so any further family needs a new generator and is a separate task, not
+a content edit.
+
+1. **`problem.shell_y_poly` (Polynomial Bounded Region around the $y$-axis)**
+   - *Attaches to*: concept `shell.method_vertical_axis`; objectives
+     `shell.setup_radius_height_y_axis` (hint levels 1–2) and
+     `shell.compute_volume_y_axis_single_curve` (hint levels 3–4).
+   - *Generator*: `gen.shell_y_poly@1`. *Response type*: `symbolic-expression`.
+     *Difficulty*: 1–2. *Status*: `verified`.
+   - *Parameters*: `coeff` $= c \in \{2..6\}$; `a` $= 0$ (fixed, so the shell radius
+     $r(x) = x$ stays non-negative); `b` $\in \{1..c\}$, its inclusive maximum expressed as
+     a parameter reference to `coeff` rather than a `constraints` entry — so no sample is
+     ever rejected and resampled. 20 reachable $(c, b)$ pairs in total.
+   - *Prompt*: region bounded above by $f(x) = c x - x^2$ and below by the $x$-axis over
+     $[0, b]$, revolved about the $y$-axis.
+   - *Canonical solution*: $V = 2\pi\left(\frac{c b^3}{3} - \frac{b^4}{4}\right)$,
+     derived from Rule 2.6: $V = \int_0^b 2\pi x (c x - x^2)\,dx
+     = 2\pi\left[\frac{c x^3}{3} - \frac{x^4}{4}\right]_0^b$.
+   - *Why every instance is a real problem*: $f(x) = x(c - x) \ge 0$ exactly on $[0, c]$,
+     and $b \le c$ by construction, so the height is non-negative across the whole interval;
+     $V = 2\pi b^3(c/3 - b/4)$ with $b \le c$ and $b \ge 1$ gives
+     $c/3 - b/4 \ge b/12 > 0$, so the volume is always strictly positive.
+   - *OpenStax basis*: `direct` → §2.3 Rule 2.6 (the formula the family transcribes);
+     `derived` → §2.3 Example 2.13 (the single instance it generalizes). Two published
+     answers fall inside the family's own parameter space and are reproduced exactly by the
+     closed form: Example 2.13 at $(c, b) = (2, 2)$ gives $8\pi/3$, and Checkpoint 2.13 at
+     $(c, b) = (3, 3)$ gives $27\pi/2$.
+   - *Verification*: `cargo test` covers loading and reference resolution
+     (`knowledge/tests/migration.rs`), determinism and instance validity across 10 000 seeds
+     with all 20 $(c, b)$ pairs actually reached (`generation/tests/mod.rs`), and correct
+     answers accepted / wrong answers rejected by `math.verify` through the real
+     `generateAttempt`/`evaluateAttempt` command path (`commands/practice.rs`).
+   - *Limitations*: quadratics with a root at the origin only; integer parameters only;
+     rotation about the $y$-axis only.
+
+---
+
 ## Structural inferences
 1. **Explicit Separation of Horizontal and Vertical Shells**: While OpenStax groups both under Section 2.3, we separated `shell.method_vertical_axis` and `shell.method_horizontal_axis` into distinct concept nodes. This enables Practice to diagnose variable-of-integration confusion ($dx$ vs. $dy$).
 2. **Atomic Diagnostic Objective for Setup**: OpenStax blends setup and evaluation into worked examples. We created `shell.setup_radius_height_y_axis` and `shell.example_setup_integrand` to isolate integrand assembly from antiderivative computation.
@@ -141,5 +190,6 @@ candidates" below.
 
 ## Human review priorities
 1. **Integrand Formatting in Prompts**: Verify whether Practice UI renders LaTeX string templates (e.g., `\\int`) directly or via KaTeX/MathJax.
-2. **Tolerance Policy for Exact Expressions**: Confirm that `math.verify@1` evaluates symbolic expressions with exact constants ($\pi$, fractional powers) rather than floating-point approximations.
-3. **Difficulty Scale Alignment**: Verify that difficulty ratings (min 1 to max 3) match Axiom Practice's difficulty tiers.
+2. **Tolerance Policy for Exact Expressions**: ~~Confirm that `math.verify@1` evaluates symbolic expressions with exact constants ($\pi$, fractional powers) rather than floating-point approximations.~~ **Answered (task 055/059):** `math.verify@1` evaluates both sides numerically via `mathcore` and compares within `max(1e-9, 1e-9·|canonical|)`. It is a *value* check, not an exact-form check — an answer written as a decimal, as `2*pi*(...)`, or in any algebraically equivalent exact form all pass. Exact-form grading, if ever wanted, is a new capability, not a tolerance setting.
+3. **Difficulty Scale Alignment**: Verify that difficulty ratings (min 1 to max 3) match Axiom Practice's difficulty tiers. Still open — nothing consumes `difficulty` yet; `problem.shell_y_poly` declares 1–2 on the assumption that a single-curve shell integral is at the easy end.
+4. **OpenStax label check for `problem.shell_y_poly`** (task 059): the source PDF is not in this repo, so §2.3's "Rule 2.6" and "Example 2.13" labels are carried over from this report's own earlier source review rather than re-read from the text. The mathematics of both cited instances was re-derived independently and matches. A human with the PDF should confirm the two labels.

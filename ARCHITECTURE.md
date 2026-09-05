@@ -168,7 +168,10 @@ name. Practice owns a separate SQLite connection to the same database file. Both
 are always enabled through a fixed global installation; each command supplies the real
 workspace id in its call envelope and input. Per-workspace capability enablement and
 Study Session consumption of `practiceService.ts` remain separate follow-ups. The real
-package currently contains worked examples but no canonical ProblemFamily entries.
+package carries one canonical ProblemFamily, `problem.shell_y_poly` (task 059), alongside
+its worked examples, so `practice.generate` produces real content rather than only fixture
+content; the generator dispatches on `gen.shell_y_poly` alone, so further families need a
+generator before they need a file.
 
 Rules, in order of how often they'll be checked in review:
 
