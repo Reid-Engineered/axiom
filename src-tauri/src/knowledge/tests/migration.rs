@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use crate::knowledge::load_knowledge_package;
+use crate::knowledge::{
+    load_knowledge_package, Bound, CanonicalSolution, ProblemFamilyStatus, ProvenanceKind,
+    ResponseType,
+};
 
 fn migrated_package_root() -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge-package")
@@ -77,4 +80,90 @@ fn no_deprecated_json_or_problem_families_artifacts_remain() {
         let path = entry.unwrap().path();
         assert_eq!(path.extension().and_then(|e| e.to_str()), Some("md"));
     }
+}
+
+/// Task 059 -- the first production `ProblemFamily`. Task 058 shipped the Practice command
+/// layer against a package with zero families, so generation success was fixture-only; this
+/// pins that the *bundled* package now carries a loadable, fully-resolved family whose
+/// declared shape is the one `gen.shell_y_poly` and `math.verify` were built for.
+#[test]
+fn bundled_package_exposes_the_verified_shell_y_poly_problem_family() {
+    let package = load_knowledge_package(&migrated_package_root()).unwrap();
+
+    assert_eq!(package.problem_families.len(), 1);
+    let family = &package.problem_families[0];
+    assert_eq!(family.id.as_str(), "problem.shell_y_poly");
+    assert_eq!(family.status, ProblemFamilyStatus::Verified);
+    assert_eq!(family.response_type, ResponseType::SymbolicExpression);
+    assert_eq!(family.generator.id.as_str(), "gen.shell_y_poly");
+    assert_eq!(family.generator.version, 1);
+    assert_eq!(
+        family.canonical_solution,
+        CanonicalSolution::Symbolic {
+            expression: "2*pi*(coeff*b^3/3 - b^4/4)".to_owned()
+        }
+    );
+
+    // `load_knowledge_package` already enforces that concept_id/objective_ids resolve and
+    // that every objective belongs to the family's own concept (validate.rs); these pin
+    // *which* production entities it attached to, which is the part a content edit can get
+    // silently wrong.
+    assert_eq!(family.concept_id.as_str(), "shell.method_vertical_axis");
+    let objective_ids: Vec<&str> = family.objective_ids.iter().map(|id| id.as_str()).collect();
+    assert_eq!(
+        objective_ids,
+        vec![
+            "shell.setup_radius_height_y_axis",
+            "shell.compute_volume_y_axis_single_curve",
+        ]
+    );
+
+    // The generator is bound-driven, not constraint-driven: `b <= coeff` is expressed as a
+    // parameter reference so no instance is ever rejected and resampled.
+    assert!(family.constraints.is_empty());
+    assert_eq!(family.parameters.len(), 3);
+    assert_eq!(family.parameters["a"].value, Some(Bound::Literal(0.0)));
+    assert_eq!(family.parameters["coeff"].min, Some(Bound::Literal(2.0)));
+    assert_eq!(family.parameters["coeff"].max, Some(Bound::Literal(6.0)));
+    assert_eq!(family.parameters["b"].min, Some(Bound::Literal(1.0)));
+    assert_eq!(
+        family.parameters["b"].max,
+        Some(Bound::Reference {
+            parameter: "coeff".to_owned(),
+            offset: 0.0
+        })
+    );
+
+    let levels: Vec<u32> = family.hints.iter().map(|hint| hint.level).collect();
+    assert_eq!(levels, vec![1, 2, 3, 4]);
+    assert!(family.hints.iter().all(|hint| !hint.text.trim().is_empty()));
+
+    // Cites the rule it transcribes and the example it generalizes, with the
+    // direct/derived split the synthesis report defines.
+    let source_ids: Vec<&str> = family
+        .provenance_refs
+        .iter()
+        .map(|reference| reference.source_id.as_str())
+        .collect();
+    assert_eq!(source_ids, vec!["src.openstax_calc2", "src.openstax_calc2"]);
+    let labels: Vec<(&ProvenanceKind, Option<&str>)> = family
+        .provenance_refs
+        .iter()
+        .map(|reference| {
+            (
+                &reference.kind,
+                reference
+                    .locator
+                    .as_ref()
+                    .and_then(|locator| locator.label.as_deref()),
+            )
+        })
+        .collect();
+    assert_eq!(
+        labels,
+        vec![
+            (&ProvenanceKind::Direct, Some("Rule 2.6")),
+            (&ProvenanceKind::Derived, Some("Example 2.13")),
+        ]
+    );
 }
