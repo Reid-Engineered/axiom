@@ -38,6 +38,12 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 - 2026-09-05 — Environment: Windows has no Cargo; using the existing WSL Rust toolchain against this checkout. Frontend baseline could not start before installing the lockfile dependencies (`vitest` absent). Native WebKitWebDriver is not on PATH or in the searched system directories; tauri-driver and xvfb-run are installed.
 - 2026-09-05 — Task 1 complete: exported PracticeStore; WSL cargo check passed. Task file owner corrected from the plan's claude-code placeholder to codex per repo roles.
 
+- 2026-09-05 — Task 2 started: registry tests and todo body added before implementation.
+
+- 2026-09-05 — Task 2 red confirmed: both registry tests panic at todo!(); implemented the planned helper. Frontend baseline passed: 58 files / 144 tests, including GoalEditingSheet.
+
+- 2026-09-05 — Task 2 complete: both registry tests pass; blocking_write works on the installed Tauri runtime.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
