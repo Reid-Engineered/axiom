@@ -7,3 +7,4 @@ export * from './session';
 export * from './visualization';
 export * from './material';
 export * from './note';
+export * from './practice';

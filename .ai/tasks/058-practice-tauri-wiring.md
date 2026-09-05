@@ -60,6 +60,10 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 4 complete: cargo check/test (279)/clippy --lib -- -D warnings/fmt --check all pass. Verified the build-generated debug/knowledge-package tree exists and diff -qr matches the real source package. Native launch will be checked by the final E2E gate. ARCHITECTURE.md now records the startup, storage, and capability-to-IPC path.
 
+- 2026-09-05 — Task 5 started: added the approved frontend Practice types and barrel export.
+
+- 2026-09-05 — Task 5 complete: npm run typecheck passed; all shared type consumers remain valid.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
