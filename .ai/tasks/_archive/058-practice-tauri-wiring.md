@@ -1,7 +1,7 @@
 ---
 id: 058
 title: Practice Tauri command + frontend service wiring
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [57]
