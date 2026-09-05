@@ -71,8 +71,10 @@ axiom/
         migrations/            ordered SQL migrations embedded in the Rust binary
       capabilities/            first-party capability providers and embedded manifests
       generation/              deterministic problem-instance sampling and substitution
+      knowledge/               validated Knowledge Package loading and canonical content types
       modules/                 validated module manifests, discovery boundary, and capability
                                registry runtime
+      practice/                generation, evaluation, hints, and persisted learner attempts
       main.rs
     Cargo.toml
     tauri.conf.json
@@ -135,6 +137,7 @@ session.ts      Session, SessionIntent
 visualization.ts VisualizationScene and its verified rendering primitives
 material.ts     Material (a workspace's textbook), ChapterSegment, MaterialResult
 note.ts         Note — a learner's own note content, linked to a concept
+practice.ts     Attempt, ResponseValue, EvaluationResult, Hint — the Practice IPC contract
 index.ts        barrel re-export — the only import path components use
 ```
 
@@ -156,6 +159,16 @@ SQLite → #[tauri::command] → services/*Service.ts → hooks/use*.ts → page
 mockData/*.ts → test/mockBackend.ts → mocked Tauri IPC
  retained fixtures    test-only adapter     same service boundary
 ```
+
+Practice commands resolve and invoke capabilities through the managed module registry,
+translating its snake_case contract into the frontend's camelCase DTOs. Startup loads the
+real bundled `knowledge-package/` and constructs the registry with `math_verify` followed
+by `practice`; the bundle uses an explicit resource destination to retain that directory
+name. Practice owns a separate SQLite connection to the same database file. Both providers
+are always enabled through a fixed global installation; each command supplies the real
+workspace id in its call envelope and input. Per-workspace capability enablement and
+Study Session consumption of `practiceService.ts` remain separate follow-ups. The real
+package currently contains worked examples but no canonical ProblemFamily entries.
 
 Rules, in order of how often they'll be checked in review:
 

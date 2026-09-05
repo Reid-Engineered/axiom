@@ -56,6 +56,10 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 3 complete: all 8 command tests and 279 crate tests pass; cargo clippy --lib -- -D warnings and cargo fmt --check pass. Async Tauri State wrappers compile without workaround. No new dependency was needed.
 
+- 2026-09-05 — Task 4 started: wired startup/managed state and registered commands; explicit resource destination map corrects Tauri's _up_ mapping. Updating ARCHITECTURE.md for the new capability-to-IPC data path as required by the structural gate.
+
+- 2026-09-05 — Task 4 complete: cargo check/test (279)/clippy --lib -- -D warnings/fmt --check all pass. Verified the build-generated debug/knowledge-package tree exists and diff -qr matches the real source package. Native launch will be checked by the final E2E gate. ARCHITECTURE.md now records the startup, storage, and capability-to-IPC path.
+
 ## What was built / tested / left out
 
 (filled in at the final task)
