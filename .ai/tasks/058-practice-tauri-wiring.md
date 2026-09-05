@@ -1,7 +1,7 @@
 ---
 id: 058
 title: Practice Tauri command + frontend service wiring
-status: in-progress
+status: review
 owner: codex
 stage: 8
 depends_on: [57]
@@ -27,6 +27,7 @@ Session UI, per-workspace module enable/disable wired into capability resolution
 - `src/types/practice.ts` (new), `src/types/index.ts`
 - `src/services/practiceService.ts` (new), `src/services/practiceService.test.ts` (new)
 - `src/test/mockBackend.ts`
+- Compatibility additions: `src-tauri/src/practice/types.rs` (reciprocal serde derives only), `ARCHITECTURE.md` (required structural/data-flow documentation).
 
 See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by-task plan.
 
@@ -76,9 +77,65 @@ See `docs/superpowers/plans/2026-09-04-practice-tauri-wiring.md` for the task-by
 
 - 2026-09-05 — Task 8 complete: npm run test -- practiceService passed all 5 tests on both prescribed runs through handleMockInvoke, never a mocked service module. For final native validation, cache now uses /var/tmp/axiom-058/target: Tauri recognizes a literal target directory when resolving unbundled resources. Matching WebKit driver extracted to /tmp/axiom-058-webdriver; no system package changes.
 
+- 2026-09-05 — Task 9 started: running both complete gate sets, static structural checks, and the native E2E gate before changing status to review. No push or PR will be attempted, per user instruction.
+
+- 2026-09-05 — Task 9 backend gates passed (cargo check, 279 tests, clippy --lib with warnings denied, fmt check); frontend typecheck/lint/build passed and full tests are running. Static checks: no hardcoded design values, no production component-to-service imports, git diff --check clean. Independent read-only plan check found no unintended deviations in Tasks 1–8; formal human/Claude review is still pending.
+
+- 2026-09-05 — Task 9 complete: all backend/frontend gates and both native E2E flows passed, plus the real-app Practice IPC smoke. Status changed from in-progress to review now, after validation. Review remains pending; local branch is retained for the user. Task 9 is the final commit, with no push or PR.
+
 ## What was built / tested / left out
 
-(filled in at the final task)
+Built: `build_practice_registry` (`commands/practice.rs`) — a testable helper that
+constructs the `ModuleRegistry` + fixed `ModuleInstallation`, registering `math_verify`
+then `practice` in that order; `#[tauri::command]` handlers `generate_attempt`,
+`evaluate_attempt`, `request_hint`, each translating between `practice::types`' snake_case
+capability contract and a camelCase wire shape; real startup wiring in `lib.rs` (bundles
+`knowledge-package/` as a Tauri resource, loads it via `load_knowledge_package` for the
+first time outside a test, manages the registry + installation as Tauri state); the
+frontend triad `src/types/practice.ts` + `src/services/practiceService.ts` +
+`src/test/mockBackend.ts` wiring, tested through mocked IPC per `ARCHITECTURE.md` §5
+rule 2.
+
+Tested: `cargo test` across `commands::practice::tests` (registry construction, command
+translation including a structural camelCase-key assertion, a full
+generate→hint→evaluate sequence through the command layer); `npm run test` across
+`practiceService.test.ts` (generate/evaluate open+solved/hint sequencing/unknown-attempt
+errors), exercised through `handleMockInvoke`, never mocking the service module itself.
+Gates run: `cargo check`/`test`/`clippy --lib -- -D warnings`/`fmt --check`,
+`npm run typecheck`/`lint`/`build`/`test` — both sides, since this task touches `src-tauri/`
+and `src/`.
+
+Left out (per spec §1/§8, by design): Study Session UI (no page calls `practiceService.ts`
+yet — this ships the contract, not a consumer); per-workspace module enable/disable wired
+into capability resolution (fixed global `ModuleInstallation` instead); any `seed`
+parameter on the generate command; the network-disabled offline acceptance test (depends
+on Study Session UI existing first).
+
+Final validation: Rust 279 tests (including 8 command tests); frontend 59 files / 149
+tests, including all 5 Practice service tests. `GoalEditingSheet.test.tsx` passed on
+both the baseline and final runs; no flake rerun was needed. `npm run test:e2e:linux`
+passed both release-native flows: first launch → create workspace → home and restart
+persistence. A temporary, ignored `src-tauri/target/058-practice-ipc-smoke.test.mjs`
+also passed against the same release binary: `generateAttempt`, `evaluateAttempt`
+(symbolic and numeric payloads), and `requestHint` reached their real async handlers
+and returned the expected missing-family/attempt errors. This validates command names,
+serde input translation, managed state extraction, and real resource loading without
+substituting test content into the app.
+
+All requested backend and frontend gates passed. Native validation used WSL,
+`CARGO_TARGET_DIR=/var/tmp/axiom-058/target`,
+`AXIOM_E2E_APP=/var/tmp/axiom-058/target/release/axiom`,
+`TAURI_DRIVER_BIN=/home/marcus/.cargo/bin/tauri-driver`, and the matching WebKit driver
+on PATH from `/tmp/axiom-058-webdriver/extracted/usr/bin`. The native build reported
+the pre-existing `com.axiom.app` bundle-identifier warning; no new warnings were emitted
+by lint or clippy. No hardcoded design values or production component-to-service
+imports were introduced. ARCHITECTURE.md documents the new startup and IPC data path;
+all consumers of the new shared types typecheck.
+
+The real knowledge package currently has zero canonical ProblemFamily entries.
+Successful generation therefore remains fixture-tested until the content follow-up
+lands. No dependency, UI, module enablement policy, or capability wire naming changed.
+No PR or push was attempted, per the user's explicit local-only instruction.
 
 ## Review
 
