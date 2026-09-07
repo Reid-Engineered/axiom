@@ -59,6 +59,21 @@ Files touched:
   failure unchanged; it passed. CI is green except `backend-checks (windows-latest)`, which
   remains red for task 061's pre-existing SQLite cleanup failure. No source or test code
   changed. Work complete; `in-progress` → `review` for independent re-review.
+- 2026-09-06 — Re-review found that finding 4's index resolved for tasks 050/051 and
+  054–058 but not 049 or 059, and that the sentence incorrectly placed specifications
+  under `.ai/tasks/_archive/`. Codex resumed as owner; `review` → `in-progress`. Chose
+  the explicit-exception resolution: name `docs/superpowers/specs/` and
+  `.ai/tasks/_archive/` separately, and state that tasks 049 and 059 were scoped and
+  reviewed without formal acceptance criteria. Also chose to apply optional finding 8's
+  unfrozen half in `knowledge-package/synthesis-report.md` by citing both the Section 2.3
+  problem statement and Chapter 2 answer key. Archived task 059 remains untouched.
+- 2026-09-06 — Follow-up complete. Confirmed the seven applicable design-spec files exist
+  for tasks 050/051 and 054–058, while focused searches find no formal acceptance criteria
+  in archived tasks 049 or 059. Verified the two official OpenStax pages support their
+  separately attributed claims, `git diff --check` passes, and the changed-file list is
+  documentation-only with no diff in archived task 059. CI remains expected to be green
+  except `backend-checks (windows-latest)` for task 061's pre-existing failure; tasks 061
+  and 062 were not touched. Work complete; `in-progress` → `review` for re-review.
 
 ## What was built / tested / left out
 
@@ -73,21 +88,25 @@ Three documentation corrections, all verified independently during review:
    complete `ProblemInstance` to `instance_json` (`src-tauri/src/practice/store.rs:42-56`)
    and deserializes it on load (`store.rs:138`). Corrected.
 3. **Open review item 4 closed.** The synthesis report's "OpenStax label check" item is
-   marked answered against the published Section 2.3 page.
+   marked answered against the published Section 2.3 page for the problem statement and
+   the Chapter 2 answer key for the result.
 
 Gates: documentation-only, so `npm run *` and `cargo *` do not apply to changed files.
 CI on PR #4 is nevertheless red — see finding 1 below. `git diff --check` is clean.
 `ARCHITECTURE.md` not updated; no structural change was made, so none was needed.
 
-No acceptance criteria were copied into `ROADMAP.md`: finding 4 was resolved by making the
-roadmap an explicit index to the specifications and task records that contain them.
+No acceptance criteria were copied into `ROADMAP.md`: finding 4 was resolved by indexing
+formal criteria in `docs/superpowers/specs/` for tasks 050–051 and 054–058, completion
+evidence in `.ai/tasks/_archive/`, and explicitly disclosing that tasks 049 and 059 were
+scoped and reviewed without formal acceptance criteria.
 
 Revision for findings 4–7:
 
-4. Chose the indexing resolution: `ROADMAP.md` now states that the additional completed
-   sub-projects' acceptance criteria live in their specifications and task records under
-   `.ai/tasks/_archive/`, while the roadmap indexes them. The full criteria were not
-   duplicated into the roadmap.
+4. Chose the indexing resolution. After re-review exposed the incomplete pointer,
+   `ROADMAP.md` now distinguishes specifications under `docs/superpowers/specs/` from task
+   records under `.ai/tasks/_archive/`, names the task IDs covered by formal criteria, and
+   states plainly that tasks 049 and 059 had none. The full criteria were not duplicated
+   into the roadmap.
 5. Removed the duplicate module/capability-runtime list entry and the orphaned `(locked)`
    label. Its existing sub-project section remains the single description with full
    deliverables and acceptance criteria.
@@ -105,10 +124,10 @@ connection cleanup failure. The earlier `frontend-checks (ubuntu-latest)` task 0
 re-run without a code change as `.ai/quality-gates.md` directs and passed.
 
 Deliberately left out: findings 1 and 2's production test fixes remain tasks 061 and 062;
-finding 3 is recorded and requires no code change; optional finding 8 was skipped to honor
-the explicit instruction not to edit archived task 059 further and to keep this revision to
-the required process findings. No production Rust, frontend, schema, capability contract,
-or archived task 059 content changed.
+finding 3 is recorded and requires no code change; finding 8's archived-task-059 expression
+change remains frozen. Finding 8's independent synthesis-report citation half was applied
+after the re-review separated it from the frozen edit. No production Rust, frontend, schema,
+capability contract, or archived task 059 content changed.
 
 ## Review
 

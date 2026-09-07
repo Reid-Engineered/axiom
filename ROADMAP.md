@@ -282,9 +282,11 @@ capability-consuming code is built against it.
 - Tauri command and frontend service wiring (`058`).
 - First production family, `problem.shell_y_poly`, with property and command-path tests (`059`).
 
-For these additional completed sub-projects, the acceptance criteria live in each task's
-specification and task record under `.ai/tasks/_archive/`; this roadmap indexes those records
-rather than duplicating their definitions of done.
+Formal acceptance criteria for tasks `050`–`051` and `054`–`058` live in their design
+specifications under `docs/superpowers/specs/`, with completion evidence in their task records
+under `.ai/tasks/_archive/`. Tasks `049` and `059` were scoped and reviewed without formal
+acceptance criteria; their archived task records document their work and review. This roadmap
+indexes those sources rather than duplicating them.
 
 ### Remaining Stage 8 scope
 
