@@ -241,7 +241,7 @@ time, each through its own brainstorming pass. The runtime and content path thro
 production problem family is complete; the remaining session integration and offline proof
 follow the same brainstorm → spec → plan discipline.
 
-### Sub-project 1 — Module & Capability runtime (locked)
+### Sub-project 1 — Module & Capability runtime
 
 Design: `docs/superpowers/specs/2026-08-30-module-capability-runtime-design.md`.
 Tasks: `.ai/tasks/045-048`.
@@ -272,9 +272,8 @@ found here is cheap; the same mistake found after Practice (sub-project 4+) depe
 not. That's why it gets Claude's direct architectural review (task 045) before any
 capability-consuming code is built against it.
 
-### Completed Stage 8 sub-projects
+### Additional completed Stage 8 sub-projects
 
-- Module and capability runtime (`045`–`048`).
 - Knowledge Package v1 implementation, reference-package repair, and migration (`049`–`051`).
 - Canonical `ProblemFamily` / `ProblemInstance` schema (`054`).
 - Replaceable `math.verify@1` capability (`055`).
@@ -283,13 +282,19 @@ capability-consuming code is built against it.
 - Tauri command and frontend service wiring (`058`).
 - First production family, `problem.shell_y_poly`, with property and command-path tests (`059`).
 
+For these additional completed sub-projects, the acceptance criteria live in each task's
+specification and task record under `.ai/tasks/_archive/`; this roadmap indexes those records
+rather than duplicating their definitions of done.
+
 ### Remaining Stage 8 scope
 
 The critical path is now: lock how a study session selects a problem family and resumes its
-current attempt; wire Practice into `StudySessionPage` through a hook; polish the learner-facing
-problem, evaluation, and hint states against the authoritative session design; add the permanent
-Practice regression corpus; and prove the complete flow with an explicit network-disabled native
-acceptance test. Each step gets its own brainstorm → spec → plan cycle and acceptance criteria.
+current attempt; complete the Study Session UI integration (Antigravity, presentation only — no
+engine/contract changes) by wiring Practice into `StudySessionPage` through a hook and polishing
+the learner-facing problem, evaluation, and hint states against
+`reference/UI/AXIOM-HANDOFF.md`; add the permanent Practice regression corpus; and prove the
+complete flow with an explicit network-disabled native acceptance test. Each step gets its own
+brainstorm → spec → plan cycle and acceptance criteria.
 
 Generators and production content for the other five shell-method families expand subject
 breadth but do not block Stage 8's stated end-to-end proof, which requires one valid deterministic
