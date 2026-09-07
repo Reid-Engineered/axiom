@@ -338,10 +338,16 @@ mod tests {
                 .unwrap();
         }
 
-        let reopened = PracticeStore::new(crate::db::open(&db_path).unwrap());
-        let row = reopened.load_attempt("attempt-1", "ws-1").unwrap();
-        assert_eq!(row.instance, sample_instance());
+        // Scoped so the connection — and the WAL and SHM files it holds open — is closed
+        // before the directory is removed: Windows refuses to delete a file still open by
+        // this process. Asserting after cleanup keeps a failure from leaking the temp dir.
+        let instance = {
+            let reopened = PracticeStore::new(crate::db::open(&db_path).unwrap());
+            reopened.load_attempt("attempt-1", "ws-1").unwrap().instance
+        };
 
         std::fs::remove_dir_all(&dir).unwrap();
+
+        assert_eq!(instance, sample_instance());
     }
 }
