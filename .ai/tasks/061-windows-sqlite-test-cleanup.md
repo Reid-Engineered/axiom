@@ -1,8 +1,8 @@
 ---
 id: 061
 title: practice::store test fails on Windows CI — open SQLite handle across remove_dir_all
-status: proposed
-owner: unassigned
+status: review
+owner: claude
 stage: 8
 depends_on: []
 ---
@@ -59,9 +59,37 @@ Files to be touched:
 ## Worklog
 
 - 2026-09-05 — created as a follow-up from task 060's review of PR #4.
+- 2026-09-07 — claimed by claude; `proposed` → `in-progress`.
+- 2026-09-07 — fix applied, gates run, `in-progress` → `review`.
 
 ## What was built / tested / left out
+
+`src-tauri/src/practice/store.rs` — `reopened` is now scoped so its `Connection` drops
+before `remove_dir_all`, and the assertion moved after cleanup so a failing assert no longer
+leaks the temp directory. `crate::db::open` sets `PRAGMA journal_mode = WAL`
+(`src-tauri/src/db/mod.rs:30`), so the open handle held `axiom.sqlite3-wal` and
+`axiom.sqlite3-shm` open alongside the database file — dropping the connection closes all
+three. The test now binds only the `ProblemInstance` out of the scope, which is all the
+assertion needs.
+
+Gates run locally on Linux: `cargo test` 284 passed / 0 failed, `cargo fmt --check` clean,
+`cargo clippy --all-targets -- -D warnings` clean.
+
+**Not verified locally, and this is the point of the task:** the bug only reproduces on
+Windows, and this machine is Linux. A green Linux run says the fix is not a regression, not
+that it works. `backend-checks (windows-latest)` on a PR is the only real proof, and this
+task should not move past `review` until that check is green.
+
+Left out: the three other `std::env::temp_dir()` test helpers
+(`knowledge/loader.rs:47`, `knowledge/discover.rs:127`, `knowledge/tests/mod.rs:19`). Each was
+checked — none holds an open file handle across its cleanup, so none has this bug. A
+`tempfile` dev-dependency for RAII cleanup across all four was considered and not taken: it
+would add a dependency to fix three call sites that are not broken.
 
 ## Review
 
 ## Follow-ups
+
+- None of the four temp-dir test helpers is panic-safe if an `unwrap()` before the cleanup
+  line fails; each leaks a directory under the system temp dir. Not worth a dependency on its
+  own, but worth folding into any future task that touches this test scaffolding.
