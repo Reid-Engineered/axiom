@@ -88,6 +88,21 @@ would add a dependency to fix three call sites that are not broken.
 
 ## Review
 
+Reviewer: Codex
+Date: 2026-09-07
+Human sign-off: received from the repository owner on 2026-09-07.
+
+- [x] Correctness — pass: the reopened `PracticeStore` is dropped before cleanup, and the
+  Windows backend job completed `cargo test --locked` successfully.
+- [x] Architecture conformance — pass: the change is isolated to test lifetime management
+  and does not alter production data flow, types, or command wiring.
+- [x] UI rules — pass: not applicable; no frontend or styling files changed.
+- [x] Process — pass: all seven required PR checks are green, the worklog describes the
+  platform-specific verification, and the related flaky frontend test is separately scoped
+  as task 062.
+
+Verdict: pass
+
 ## Follow-ups
 
 - None of the four temp-dir test helpers is panic-safe if an `unwrap()` before the cleanup
