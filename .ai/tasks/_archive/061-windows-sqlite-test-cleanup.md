@@ -1,7 +1,7 @@
 ---
 id: 061
 title: practice::store test fails on Windows CI — open SQLite handle across remove_dir_all
-status: review
+status: done
 owner: claude
 stage: 8
 depends_on: []
@@ -61,6 +61,8 @@ Files to be touched:
 - 2026-09-05 — created as a follow-up from task 060's review of PR #4.
 - 2026-09-07 — claimed by claude; `proposed` → `in-progress`.
 - 2026-09-07 — fix applied, gates run, `in-progress` → `review`.
+- 2026-09-07 — PR #5 merged at `41f64ae` after all seven required checks passed;
+  independent review and human sign-off were recorded immediately afterward.
 
 ## What was built / tested / left out
 
@@ -87,6 +89,22 @@ checked — none holds an open file handle across its cleanup, so none has this 
 would add a dependency to fix three call sites that are not broken.
 
 ## Review
+
+Reviewer: Codex
+Date: 2026-09-07
+Human sign-off: received from the repository owner on 2026-09-07.
+
+- [x] Correctness — pass: the reopened `PracticeStore` is dropped before cleanup, and the
+  Windows backend job completed `cargo test --locked` successfully.
+- [x] Architecture conformance — pass: the change is isolated to test lifetime management
+  and does not alter production data flow, types, or command wiring.
+- [x] UI rules — pass: not applicable; no frontend or styling files changed.
+- [x] Process — pass: all seven required PR checks passed, the worklog describes the
+  platform-specific verification, and the related flaky frontend test is separately scoped
+  as task 062. PR #5 merged before this record was committed; this follow-up preserves the
+  required audit trail.
+
+Verdict: pass
 
 ## Follow-ups
 
