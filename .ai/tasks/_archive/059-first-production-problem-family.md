@@ -66,8 +66,8 @@ the y-axis.
    parameter space and are reproduced by the formula:
    - `(c, b) = (2, 2)` — Example 2.13, `f(x) = 2x − x²` on `[0, 2]`:
      `2π(8·2/3 − 16/4) = 2π(16/3 − 4) = 8π/3`. Matches the text's answer.
-   - `(c, b) = (3, 3)` — Checkpoint 2.13, `f(x) = 3x − x²` on `[0, 3]`:
-     `2π(27 − 81/4) = 2π(27/4) = 27π/2`. Matches the checkpoint's answer.
+   - `(c, b) = (3, 2)` — Checkpoint 2.13, `f(x) = 3x − x²` on `[0, 2]`:
+     `2π(8 − 4) = 8π`. Matches the checkpoint's answer.
 6. **Hints.** Four strictly-increasing levels: (1) name radius and height, (2) give
    `r(x) = x`, `h(x) = {coeff}x − x²`, (3) give the assembled definite integral, (4) give
    the antiderivative to evaluate. Level 4 still stops short of stating the final value, so
@@ -175,8 +175,9 @@ corrected.
   family's declared shape is pinned field by field, including *which* production entities it
   attached to and the direct/derived provenance split.
 - `generation::tests::bundled_shell_y_poly_is_deterministic_for_every_seed` — 2 000 seeds,
-  each generated twice and compared. This is the property the attempt store depends on: an
-  attempt persists only its seed and is replayed through the generator on every load.
+  each generated twice and compared. Attempts persist the complete generated
+  `ProblemInstance`; this test instead protects reproducible generation and gives the
+  regression corpus stable seed-to-instance mappings.
 - `generation::tests::bundled_shell_y_poly_instances_are_valid_across_ten_thousand_seeds` —
   per instance: parameters inside their declared bounds, `a = 0`, `b <= coeff`, shell height
   non-negative at 51 points across `[0, b]`, four hints, no surviving `{...}` placeholder in
@@ -211,14 +212,10 @@ unchanged from task 058's deferrals: Study Session UI consumption, a `seed` para
 `generateAttempt` command, and per-workspace module enablement. No production Rust, no
 dependency, no schema, and no capability contract changed.
 
-**One honest limit.** The OpenStax PDF is not in this repo. The `Rule 2.6` / `Example 2.13`
-*labels* are carried from the package's own earlier source review (the synthesis report and
-the citations already on the concept and objective this family attaches to), not re-read from
-the text. What is verified independently here is the mathematics: the closed form is derived
-from first principles above, and both cited instances' published answers — 8π/3 for
-Example 2.13 and 27π/2 for Checkpoint 2.13 — fall out of it at `(c,b) = (2,2)` and `(3,3)`,
-which would be a surprising coincidence if the labels were wrong. A human with the PDF should
-still confirm the two labels; this is recorded as review item 4 in the synthesis report.
+**Independent source check (2026-09-05).** The official OpenStax Section 2.3 page confirms
+Rule 2.6 and Example 2.13 as the cited shell formula and polynomial instance. It also shows
+that Checkpoint 2.13 uses `f(x) = 3x − x²` on `[0, 2]`, so the correct family cross-check is
+`(c,b) = (3,2)` → `8π`; the original handoff's `(3,3)` / `27π/2` claim was corrected above.
 
 ## Review
 
@@ -257,6 +254,24 @@ Date: 2026-09-05
       — it was written by the author.
 
 Verdict: approved (self-review; independent review not performed)
+
+### Independent follow-up review
+
+Reviewer: codex
+Date: 2026-09-05
+
+- [x] **Correctness — pass after documentation corrections.** Independently ran all 284
+      Rust tests. The production family, generator, command path, and mathematical formula
+      are correct. Corrected the handoff and synthesis report's Checkpoint 2.13 interval and
+      answer against the official OpenStax source.
+- [x] **Architecture conformance — pass.** Confirmed `PracticeStore` persists the complete
+      generated `ProblemInstance`; corrected the determinism-test rationale that had claimed
+      attempts were reconstructed from the seed.
+- [x] **UI rules — N/A.** No UI files changed.
+- [x] **Process — pass.** The previously missing independent review is now recorded; the
+      remaining follow-ups are explicitly scoped below.
+
+Verdict: approved
 
 ## Follow-ups
 
