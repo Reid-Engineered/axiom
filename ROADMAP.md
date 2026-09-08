@@ -237,12 +237,11 @@ Stage 7 proved Axiom's application architecture; Stage 8 proves its modular
 learning-platform architecture.
 
 Stage 8 is large enough that it's designed and scheduled incrementally, one sub-project at a
-time, each through its own brainstorming pass — the same discipline the previous version of
-this section applied to Stage 8 as a whole. Only the first sub-project is locked below; the
-rest get their own **Deliverables**/**Acceptance criteria** appended here once designed,
-not pre-decided now.
+time, each through its own brainstorming pass. The runtime and content path through the first
+production problem family is complete; the remaining session integration and offline proof
+follow the same brainstorm → spec → plan discipline.
 
-### Sub-project 1 — Module & Capability runtime (locked)
+### Sub-project 1 — Module & Capability runtime
 
 Design: `docs/superpowers/specs/2026-08-30-module-capability-runtime-design.md`.
 Tasks: `.ai/tasks/045-048`.
@@ -273,18 +272,35 @@ found here is cheap; the same mistake found after Practice (sub-project 4+) depe
 not. That's why it gets Claude's direct architectural review (task 045) before any
 capability-consuming code is built against it.
 
-### Remaining Stage 8 scope (not yet designed)
+### Additional completed Stage 8 sub-projects
 
-Each of the following becomes its own brainstorm → spec → plan cycle, built against
-sub-project 1's locked contract, roughly in this order: Knowledge Package v1 schema,
-canonical Problem schema, the `math.verify` verification capability (deterministic +
-Symbolica-CAS providers), a tiny reference Calculus II knowledge package, deterministic
-seeded problem generation, the Practice Core Utility itself
-(`practice.generate`/`practice.evaluate`/`practice.hint`), Practice's own heavy testing bar
-(property/generative tests, a permanent regression corpus), minimal Study Session UI
-integration (Antigravity, presentation only — no engine/contract changes), and an explicit
-network-disabled offline acceptance test end to end. None of these get deliverables or
-acceptance criteria here until they're designed.
+- Knowledge Package v1 implementation, reference-package repair, and migration (`049`–`051`).
+- Canonical `ProblemFamily` / `ProblemInstance` schema (`054`).
+- Replaceable `math.verify@1` capability (`055`).
+- Deterministic seeded problem generation (`056`).
+- Practice Core Utility with SQLite-backed attempts (`057`).
+- Tauri command and frontend service wiring (`058`).
+- First production family, `problem.shell_y_poly`, with property and command-path tests (`059`).
+
+Formal acceptance criteria for tasks `050`–`051` and `054`–`058` live in their design
+specifications under `docs/superpowers/specs/`, with completion evidence in their task records
+under `.ai/tasks/_archive/`. Tasks `049` and `059` were scoped and reviewed without formal
+acceptance criteria; their archived task records document their work and review. This roadmap
+indexes those sources rather than duplicating them.
+
+### Remaining Stage 8 scope
+
+The critical path is now: lock how a study session selects a problem family and resumes its
+current attempt; complete the Study Session UI integration (Antigravity, presentation only — no
+engine/contract changes) by wiring Practice into `StudySessionPage` through a hook and polishing
+the learner-facing problem, evaluation, and hint states against
+`reference/UI/AXIOM-HANDOFF.md`; add the permanent Practice regression corpus; and prove the
+complete flow with an explicit network-disabled native acceptance test. Each step gets its own
+brainstorm → spec → plan cycle and acceptance criteria.
+
+Generators and production content for the other five shell-method families expand subject
+breadth but do not block Stage 8's stated end-to-end proof, which requires one valid deterministic
+calculus family.
 
 ---
 
