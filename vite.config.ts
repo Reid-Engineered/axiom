@@ -32,7 +32,7 @@ export default defineConfig(async () => ({
 
   test: {
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', '.claude/**'],
     setupFiles: ['./src/test/setup.ts'],
     globals: false,
     // Stage 0 has no components yet — Stage 1 adds the first real render tests.

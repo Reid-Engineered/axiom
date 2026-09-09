@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { NavigationProvider } from '../hooks/NavigationProvider';
 import { useNavigation } from '../hooks/useNavigation';
-import { getSession } from '../services/sessionService';
+import * as practiceService from '../services/practiceService';
+import { getSession, startSession } from '../services/sessionService';
 import { StudySessionPage } from './StudySessionPage';
 
 function RouteObserver() {
@@ -11,10 +12,10 @@ function RouteObserver() {
   return <output aria-label="Current route">{route.type}</output>;
 }
 
-function renderSession() {
+function renderSession(sessionId = 'session-shell-method') {
   render(
-    <NavigationProvider initialRoute={{ type: 'studySession', sessionId: 'session-shell-method' }}>
-      <StudySessionPage sessionId="session-shell-method" />
+    <NavigationProvider initialRoute={{ type: 'studySession', sessionId }}>
+      <StudySessionPage sessionId={sessionId} />
       <RouteObserver />
     </NavigationProvider>,
   );
@@ -64,5 +65,81 @@ describe('StudySessionPage', () => {
     expect(screen.getByRole('status', { name: 'Current route' })).toHaveTextContent(
       'fullVisualization',
     );
+  });
+
+  it('renders the bound attempt prompt and no problem total', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+
+    expect(await screen.findByText(/revolved about the y-axis/i)).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Answer' })).toBeVisible();
+    expect(screen.queryByText(/of 1/)).not.toBeInTheDocument();
+  });
+
+  it('states plainly when a concept has no practice content', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-linear-algebra',
+      conceptId: 'linear-concept-1',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+
+    expect(await screen.findByText(/no practice content for this concept yet/i)).toBeVisible();
+    expect(screen.queryByRole('textbox', { name: 'Answer' })).not.toBeInTheDocument();
+  });
+
+  it('offers a hint as the explanation when an answer is wrong', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+    const answer = await screen.findByRole('textbox', { name: 'Answer' });
+
+    fireEvent.change(answer, { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    expect(await screen.findByText('Set up the shell method integral.')).toBeVisible();
+  });
+
+  it('shows a plain confirmation and a next problem action once solved', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+    const answer = await screen.findByRole('textbox', { name: 'Answer' });
+
+    fireEvent.change(answer, { target: { value: '42.7' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    expect(await screen.findByText('Correct.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Next problem' }));
+    await waitFor(() => expect(screen.getByText('Problem 2')).toBeVisible());
+  });
+
+  it('surfaces an error message when checking an answer fails', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+    const answer = await screen.findByRole('textbox', { name: 'Answer' });
+
+    vi.spyOn(practiceService, 'evaluateAttempt').mockRejectedValueOnce(
+      new Error('Evaluation failed'),
+    );
+
+    fireEvent.change(answer, { target: { value: '42.7' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Evaluation failed');
   });
 });

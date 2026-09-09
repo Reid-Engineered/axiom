@@ -1,9 +1,22 @@
 import { invoke } from '@tauri-apps/api/core';
 
-import type { Attempt, EvaluationResult, Hint, ResponseValue } from '../types';
+import type {
+  Attempt,
+  AttemptDescription,
+  EvaluationResult,
+  Hint,
+  ResponseValue,
+} from '../types';
 
 export async function generateAttempt(workspaceId: string, familyId: string): Promise<Attempt> {
   return invoke<Attempt>('generateAttempt', { input: { workspaceId, familyId } });
+}
+
+export async function describeAttempt(
+  workspaceId: string,
+  attemptId: string,
+): Promise<AttemptDescription> {
+  return invoke<AttemptDescription>('describeAttempt', { input: { workspaceId, attemptId } });
 }
 
 export async function evaluateAttempt(

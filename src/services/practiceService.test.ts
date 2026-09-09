@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { evaluateAttempt, generateAttempt, requestHint } from './practiceService';
+import { describeAttempt, evaluateAttempt, generateAttempt, requestHint } from './practiceService';
 
 const workspaceId = 'workspace-calculus-ii';
 
@@ -54,5 +54,17 @@ describe('practiceService', () => {
       evaluateAttempt(workspaceId, 'attempt-unknown', { responseType: 'numeric', value: 1 }),
     ).rejects.toThrow();
     await expect(requestHint(workspaceId, 'attempt-unknown')).rejects.toThrow();
+  });
+
+  it('describes a generated attempt in its current state', async () => {
+    const generated = await generateAttempt('workspace-calculus', 'problem.shell_y_poly');
+    const described = await describeAttempt('workspace-calculus', generated.attemptId);
+
+    expect(described.prompt).toBe(generated.prompt);
+    expect(described.responseType).toBe(generated.responseType);
+    expect(described.hintsTotal).toBe(generated.hintsTotal);
+    expect(described.hintsRevealed).toBe(0);
+    expect(described.status).toBe('open');
+    expect(described.submissionCount).toBe(0);
   });
 });

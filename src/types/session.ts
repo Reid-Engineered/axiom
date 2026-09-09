@@ -29,6 +29,8 @@ export interface Session {
   id: string;
   workspaceId: string;
   conceptId: string;
+  /** The Practice attempt bound to this session, if the concept has practice content. */
+  currentAttemptId?: string;
   status: 'active' | 'paused' | 'completed';
   intent: SessionIntent;
   /** One sentence of exactly where the learner stopped, for the Continue card. */

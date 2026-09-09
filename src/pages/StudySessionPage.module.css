@@ -113,6 +113,42 @@
   flex: 1;
 }
 
+.answerLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.answerLabelText {
+  font-size: var(--font-size-eyebrow);
+  color: var(--text-secondary);
+}
+
+.answerInput {
+  border: var(--border-width-hairline) solid var(--color-hairline-strong);
+  border-radius: var(--radius-control);
+  padding: var(--space-md);
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--color-content);
+}
+
+.feedback {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--text-secondary);
+}
+
+.hintList {
+  margin: 0;
+  padding-left: var(--space-xl);
+  color: var(--text-secondary);
+}
+
+.hintItem {
+  font-size: var(--font-size-body);
+}
+
 .problemActions {
   display: flex;
   align-items: center;
