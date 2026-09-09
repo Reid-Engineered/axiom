@@ -55,8 +55,8 @@ use crate::modules::{
     CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement, RegistryError,
 };
 use crate::practice::{
-    AttemptStatus as PracticeAttemptStatus, EvaluateRequest, EvaluateResponse, GenerateRequest,
-    GenerateResponse, HintRequest, HintResponse, ResponseValue,
+    AttemptStatus as PracticeAttemptStatus, DescribeRequest, DescribeResponse, EvaluateRequest,
+    EvaluateResponse, GenerateRequest, GenerateResponse, HintRequest, HintResponse, ResponseValue,
 };
 
 use super::CommandResult;
@@ -169,6 +169,37 @@ impl From<HintResponse> for Hint {
             hint_text: response.hint_text,
             hints_revealed: response.hints_revealed,
             hints_total: response.hints_total,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DescribeAttemptInput {
+    pub workspace_id: String,
+    pub attempt_id: String,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AttemptDescription {
+    pub prompt: String,
+    pub response_type: ResponseType,
+    pub hints_total: u32,
+    pub hints_revealed: u32,
+    pub status: AttemptStatus,
+    pub submission_count: u32,
+}
+
+impl From<DescribeResponse> for AttemptDescription {
+    fn from(response: DescribeResponse) -> Self {
+        Self {
+            prompt: response.prompt,
+            response_type: response.response_type,
+            hints_total: response.hints_total,
+            hints_revealed: response.hints_revealed,
+            status: response.status.into(),
+            submission_count: response.submission_count,
         }
     }
 }
@@ -297,6 +328,35 @@ pub async fn request_hint(
     input: RequestHintInput,
 ) -> CommandResult<Hint> {
     request_hint_handler(&registry, &installation, input).await
+}
+
+pub async fn describe_attempt_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: DescribeAttemptInput,
+) -> CommandResult<AttemptDescription> {
+    let response: DescribeResponse = invoke_practice(
+        registry,
+        installation,
+        "practice.describe",
+        input.workspace_id.clone(),
+        DescribeRequest {
+            workspace_id: input.workspace_id,
+            attempt_id: input.attempt_id,
+        },
+    )
+    .await
+    .map_err(practice_error)?;
+    Ok(response.into())
+}
+
+#[tauri::command(rename = "describeAttempt", rename_all = "camelCase")]
+pub async fn describe_attempt(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: DescribeAttemptInput,
+) -> CommandResult<AttemptDescription> {
+    describe_attempt_handler(&registry, &installation, input).await
 }
 
 #[cfg(test)]
@@ -489,6 +549,54 @@ mod tests {
             GenerateAttemptInput {
                 workspace_id: "ws-1".to_owned(),
                 family_id: "problem.nonexistent".to_owned(),
+            },
+        ));
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn describe_attempt_returns_the_current_state_of_a_generated_attempt() {
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
+        let generated = tauri::async_runtime::block_on(generate_attempt_handler(
+            &registry,
+            &installation,
+            GenerateAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                family_id: "problem.shell_y_poly".to_owned(),
+            },
+        ))
+        .unwrap();
+
+        let described = tauri::async_runtime::block_on(describe_attempt_handler(
+            &registry,
+            &installation,
+            DescribeAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: generated.attempt_id.clone(),
+            },
+        ))
+        .unwrap();
+
+        assert_eq!(described.prompt, generated.prompt);
+        assert_eq!(described.hints_total, generated.hints_total);
+        assert_eq!(described.hints_revealed, 0);
+        assert_eq!(described.status, AttemptStatus::Open);
+        assert_eq!(described.submission_count, 0);
+    }
+
+    #[test]
+    fn describe_attempt_for_an_unknown_id_is_an_error() {
+        let (registry, installation) =
+            build_practice_registry(fixture_package(), seeded_connection());
+
+        let result = tauri::async_runtime::block_on(describe_attempt_handler(
+            &registry,
+            &installation,
+            DescribeAttemptInput {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: "attempt-missing".to_owned(),
             },
         ));
 

@@ -65,6 +65,7 @@ pub fn run() {
             commands::practice::generate_attempt,
             commands::practice::evaluate_attempt,
             commands::practice::request_hint,
+            commands::practice::describe_attempt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
