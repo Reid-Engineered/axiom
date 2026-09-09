@@ -60,14 +60,15 @@ This task tracks the gate; the work is split across:
 
 - **061** (`done`, archived) — Windows SQLite connection-cleanup fix; criterion 4's Windows
   half is no longer blocked.
-- **062** (existing, `proposed`) — `GoalEditingSheet` flake fix, blocks criterion 4.
-- **063** (`review`, owner codex) — Study Session ↔ Practice attempt binding, spec'd in
-  `docs/superpowers/specs/2026-09-08-study-session-practice-binding-design.md`. This is the
-  session selection/resume piece; it blocks criteria 1–2 and is the prerequisite the
-  remaining three depend on.
-- **Study Session UI integration** — owned by Antigravity, presentation-only, no
-  engine/contract changes, against `reference/UI/AXIOM-HANDOFF.md`. Not yet filed as a task.
-  Blocks criteria 1 and 6.
+- **062** (`done`, archived) — `GoalEditingSheet` flake fix; criterion 4's Ubuntu half is no
+  longer blocked.
+- **063** (`done`, archived) — Study Session ↔ Practice attempt binding, spec'd in
+  `docs/superpowers/specs/2026-09-08-study-session-practice-binding-design.md`. The session
+  selection/resume piece the rest depend on.
+- **065** (`proposed`, owner codex) — the two Tauri commands (`describeAttempt`,
+  `nextProblem`) the UI needs. **The single largest blocker: see "Current blocker" below.**
+- **066** (`done`, archived) — the frontend half: `useAttempt`, `ProblemPane` rewired to real
+  attempts.
 - **067** (`proposed`) — Practice regression corpus. Supports criterion 1's "not a stub" bar
   with durable coverage, and criterion 4's CI-green bar going forward.
 - **068** (`proposed`) — network-disabled native acceptance test. Directly implements
@@ -76,8 +77,70 @@ This task tracks the gate; the work is split across:
 This task's own file gets updated (not the sub-tasks') as each dependency lands, and moves
 `proposed → in-progress` once the session-selection design task is filed and claimed.
 
+## Current blocker (as of 2026-09-09)
+
+**`master`'s practice loop does not work in a real build.** Task `066` merged the frontend
+that calls `describeAttempt` and `nextProblem`; task `065` — which registers those two
+commands in `lib.rs` — has not merged. So `src/services/practiceService.ts:19` and
+`sessionService.ts:51` invoke commands the backend does not expose, and the problem pane
+cannot hydrate.
+
+Every required check is nonetheless green, because frontend tests run against
+`src/test/mockBackend.ts` (which implements both) and the Rust tests never cross the IPC
+boundary. This is precisely the seam that the two parallel tasks were split along, and no
+existing suite covers it.
+
+The failure is at least **honest** rather than silent: `StudySessionPage.tsx:207` renders the
+real error, and the "no practice content for this concept yet" empty state at `:212` only
+renders when there is *no* error — so a missing command cannot masquerade as the
+`knowledge_concept_id` crosswalk gap.
+
+Merging `065` clears criteria 1, 2 (its end-to-end half) and 6 together. Nothing else should
+be attempted against this gate until it lands.
+
+## Criterion status
+
+Verified against the tree at `a7f7b2d4` on 2026-09-09. "Verified" below means a command was
+actually run or a check actually observed — not inferred from code.
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | End-to-end practice loop | **blocked** — `065` |
+| 2 | Survives restart | **half met** — persistence layer verified, loop blocked by `065` |
+| 3 | Fully offline | **not started** — `068` builds it |
+| 4 | CI green on required checks | **met** — `061`/`062` archived `done`; all 7 green on `a7f7b2d4` |
+| 5 | Builds + launchable installer | **met** — see below |
+| 6 | No dead ends | **blocked** — `065` |
+
+**Criterion 5 — met.** `npm run build` passes; `cargo check --release` passes;
+`cargo build --release` produces a 19MB binary; `npm run tauri build` produces three Linux
+installers — `Axiom_0.1.0_amd64.deb` (5.8M), `Axiom-0.1.0-1.x86_64.rpm` (5.8M), and
+`Axiom_0.1.0_amd64.AppImage` (81M). Launchability rests on CI's `e2e` job, green on
+`a7f7b2d4`, which builds the release binary and drives it through WebDriver; it could not be
+run locally because `WebKitWebDriver` is absent from the dev environment (`tauri-driver` is
+present). Worth knowing before cutting the beta: **AppImage bundling downloads `linuxdeploy`,
+`AppRun` and plugins from GitHub at build time**, so the first build on a clean machine needs
+network. That is a build-time requirement and does not bear on criterion 3, which is about
+the running app — but `068` should keep the two distinct.
+
+**Criterion 2 — persistence layer verified, end-to-end blocked.** This had no coverage at all
+and was untestable by construction: `database()` and `practice_connection()` in
+`commands/tests.rs` both build in-memory databases that die with the connection, and
+`e2e/restart-persistence.test.mjs` (task `042`) covers workspace data only — it predates
+Practice and never touches sessions or attempts. A test now covers the layer that does exist:
+a real file-backed database, a session that binds an attempt, both connections dropped and
+reopened, asserting the session keeps the same `current_attempt_id` *and* that
+`practice.describe` returns the identical prompt — i.e. the learner resumes the same problem,
+not merely some problem. The remaining half needs `065`.
+
 ## Worklog
 
+- 2026-09-09 — Verified criteria 2 and 5 against the tree at `a7f7b2d4` at the human's
+  request, rather than leaving them as inherited assumptions from Stages 0 and 7. Criterion 5
+  is met (three Linux installers produced). Criterion 2's persistence layer is verified by a
+  new test; its end-to-end half is blocked. Recorded the `065` blocker above, found while
+  verifying criterion 2 — `master` currently ships a frontend calling two unregistered
+  commands. Added the "Current blocker" and "Criterion status" sections.
 - 2026-09-09 — Filed the two remaining unfiled dependencies as `067` (regression corpus) and
   `068` (offline acceptance test), and updated this file's Plan and Follow-ups to point at
   them instead of "not yet filed". Every dependency this checkpoint names now exists as a
