@@ -1,8 +1,8 @@
 ---
 id: 063
 title: Study Session <-> Practice attempt binding
-status: proposed
-owner: unassigned
+status: in-progress
+owner: codex
 stage: 8
 depends_on: [059]
 ---
@@ -53,6 +53,9 @@ scope silently — see `.ai/lifecycle.md`.
 
 - 2026-09-08 — Brainstormed and spec'd by claude (`docs/superpowers/specs/2026-09-08-study-session-practice-binding-design.md`),
   approved by the human. Filed as `proposed` for whichever agent picks it up.
+- 2026-09-08 — Claimed by codex on `agent/codex/063-study-session-practice-binding`,
+  branched directly from `master`; implementation began only after the approved carrier PR
+  landed on `master`.
 
 ## What was built / tested / left out
 

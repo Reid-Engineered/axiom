@@ -1,5 +1,13 @@
+use std::sync::Arc;
+
 use rusqlite::{params, Connection, OptionalExtension};
-use tauri::State;
+use tauri::{async_runtime::RwLock, State};
+
+use crate::modules::{
+    CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement, ModuleId,
+    ModuleInstallation, ModuleRegistry,
+};
+use crate::practice::{StartRequest, StartResponse};
 
 use super::{
     database_error, new_id, now, CommandResult, Database, Session, SessionIntent,
@@ -11,7 +19,8 @@ pub(crate) fn load_session(connection: &Connection, id: &str) -> CommandResult<O
         .query_row(
             "SELECT id, workspace_id, concept_id, status, intent_activity, intent_detail,
                     intent_target_minutes, resume_summary, thumbnail_url, elapsed_minutes,
-                    problem_index, problem_count, open_question, started_at, paused_at
+                    problem_index, problem_count, open_question, started_at, paused_at,
+                    current_attempt_id
              FROM sessions WHERE id = ?1",
             [id],
             |row| {
@@ -19,6 +28,7 @@ pub(crate) fn load_session(connection: &Connection, id: &str) -> CommandResult<O
                     id: row.get(0)?,
                     workspace_id: row.get(1)?,
                     concept_id: row.get(2)?,
+                    current_attempt_id: row.get(15)?,
                     status: row.get(3)?,
                     intent: SessionIntent {
                         activity: row.get(4)?,
@@ -102,37 +112,51 @@ pub fn get_session_handler(database: &Database, id: &str) -> CommandResult<Sessi
     load_session(&connection, id)?.ok_or_else(|| format!("Session not found: {id}"))
 }
 
-pub fn start_session_handler(
+pub async fn start_session_handler(
     database: &Database,
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
     input: StartSessionInput,
 ) -> CommandResult<Session> {
-    let connection = database.connection()?;
-    let workspace_exists = connection
-        .query_row(
-            "SELECT EXISTS(SELECT 1 FROM workspaces WHERE id = ?1)",
-            [&input.workspace_id],
-            |row| row.get::<_, bool>(0),
-        )
-        .map_err(database_error)?;
-    if !workspace_exists {
-        return Err(format!("Workspace not found: {}", input.workspace_id));
-    }
-    let concept_name = connection
-        .query_row(
-            "SELECT name FROM concepts WHERE id = ?1 AND workspace_id = ?2",
-            params![input.concept_id, input.workspace_id],
-            |row| row.get::<_, String>(0),
-        )
-        .optional()
-        .map_err(database_error)?
-        .ok_or_else(|| format!("Concept not found in workspace: {}", input.concept_id))?;
+    let (concept_name, knowledge_concept_id) = {
+        let connection = database.connection()?;
+        let workspace_exists = connection
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM workspaces WHERE id = ?1)",
+                [&input.workspace_id],
+                |row| row.get::<_, bool>(0),
+            )
+            .map_err(database_error)?;
+        if !workspace_exists {
+            return Err(format!("Workspace not found: {}", input.workspace_id));
+        }
+        connection
+            .query_row(
+                "SELECT name, knowledge_concept_id FROM concepts
+                 WHERE id = ?1 AND workspace_id = ?2",
+                params![input.concept_id, input.workspace_id],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?)),
+            )
+            .optional()
+            .map_err(database_error)?
+            .ok_or_else(|| format!("Concept not found in workspace: {}", input.concept_id))?
+    };
+    let current_attempt_id = match knowledge_concept_id {
+        Some(concept_id) => {
+            start_practice_attempt(registry, installation, &input.workspace_id, concept_id).await
+        }
+        None => None,
+    };
+
     let id = new_id("session");
+    let connection = database.connection()?;
     connection
         .execute(
             "INSERT INTO sessions (
                 id, workspace_id, concept_id, status, intent_activity, intent_detail,
-                intent_target_minutes, resume_summary, elapsed_minutes, started_at
-            ) VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, 0, ?8)",
+                intent_target_minutes, resume_summary, elapsed_minutes, started_at,
+                current_attempt_id
+            ) VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, 0, ?8, ?9)",
             params![
                 id,
                 input.workspace_id,
@@ -142,10 +166,50 @@ pub fn start_session_handler(
                 input.intent.target_minutes,
                 format!("Ready to continue with {concept_name}."),
                 now(),
+                current_attempt_id,
             ],
         )
         .map_err(database_error)?;
     load_session(&connection, &id)?.ok_or_else(|| format!("Session not found: {id}"))
+}
+
+async fn start_practice_attempt(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    workspace_id: &str,
+    concept_id: String,
+) -> Option<String> {
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.start").expect("static capability id is valid"),
+        min_version: 1,
+    };
+    let handle = {
+        let registry = registry.read().await;
+        registry.resolve(installation, &requirement).ok()?
+    };
+    let call = CapabilityCall {
+        envelope: CallEnvelope {
+            workspace_id: workspace_id.to_owned(),
+            capability_id: requirement.id.clone(),
+            version: 1,
+            calling_module_id: ModuleId::new("core.session").expect("static module id is valid"),
+        },
+        input: StartRequest {
+            workspace_id: workspace_id.to_owned(),
+            concept_id,
+        },
+    };
+    let result: Result<StartResponse, _> = {
+        let registry = registry.read().await;
+        registry.invoke(&handle, installation, call).await
+    };
+    match result {
+        Ok(response) => response.attempt_id,
+        Err(error) => {
+            eprintln!("practice.start failed during session creation: {error}");
+            None
+        }
+    }
 }
 
 fn ensure_mutable_session(connection: &Connection, id: &str) -> CommandResult<()> {
@@ -250,11 +314,13 @@ pub fn get_session(database: State<'_, Database>, id: String) -> CommandResult<S
 }
 
 #[tauri::command(rename = "startSession")]
-pub fn start_session(
+pub async fn start_session(
     database: State<'_, Database>,
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
     input: StartSessionInput,
 ) -> CommandResult<Session> {
-    start_session_handler(&database, input)
+    start_session_handler(&database, &registry, &installation, input).await
 }
 
 #[tauri::command(rename = "pauseSession")]

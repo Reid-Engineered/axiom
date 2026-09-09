@@ -176,15 +176,22 @@ fn insert_concept_edges(
 
 fn insert_concepts(transaction: &Transaction<'_>, concepts: &[Concept]) -> CommandResult<()> {
     for concept in concepts {
+        // The retained sample generates Core ids by list position, while older fixtures use
+        // `concept-shells`; runtime resolution uses this stored crosswalk, never the name.
+        let knowledge_concept_id = (concept.id == "concept-shells"
+            || concept.name == "Shell method")
+            .then_some("shell.method_vertical_axis");
         // notes_count is deliberately omitted because SQLite's note triggers own this value.
         transaction
             .execute(
                 "INSERT INTO concepts (
                     id, workspace_id, name, chapter, mastery_state, was_mastery_state,
                     decayed_at, meaning, due_for_review_in_days, on_exam, display_formula,
-                    explanation, learner_heuristic, heuristic_evidence, last_activity_at
+                    explanation, learner_heuristic, heuristic_evidence, last_activity_at,
+                    knowledge_concept_id
                 ) VALUES (
-                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15
+                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
+                    ?16
                 )",
                 params![
                     concept.id,
@@ -202,6 +209,7 @@ fn insert_concepts(transaction: &Transaction<'_>, concepts: &[Concept]) -> Comma
                     concept.learner_heuristic,
                     concept.heuristic_evidence,
                     concept.last_activity_at,
+                    knowledge_concept_id,
                 ],
             )
             .map_err(database_error)?;
@@ -278,9 +286,11 @@ fn insert_sessions(transaction: &Transaction<'_>, sessions: &[Session]) -> Comma
                 "INSERT INTO sessions (
                     id, workspace_id, concept_id, status, intent_activity, intent_detail,
                     intent_target_minutes, resume_summary, thumbnail_url, elapsed_minutes,
-                    problem_index, problem_count, open_question, started_at, paused_at
+                    problem_index, problem_count, open_question, started_at, paused_at,
+                    current_attempt_id
                 ) VALUES (
-                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15
+                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
+                    ?16
                 )",
                 params![
                     session.id,
@@ -298,6 +308,7 @@ fn insert_sessions(transaction: &Transaction<'_>, sessions: &[Session]) -> Comma
                     session.open_question,
                     session.started_at,
                     session.paused_at,
+                    session.current_attempt_id,
                 ],
             )
             .map_err(database_error)?;

@@ -198,6 +198,8 @@ pub struct Session {
     pub id: String,
     pub workspace_id: String,
     pub concept_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_attempt_id: Option<String>,
     pub status: String,
     pub intent: SessionIntent,
     pub resume_summary: String,

@@ -1,6 +1,6 @@
 use std::sync::{Mutex, MutexGuard};
 
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 
 use crate::knowledge::ProblemInstance;
 
@@ -74,6 +74,36 @@ impl PracticeStore {
             .ok_or_else(|| PracticeError::AttemptNotFound {
                 attempt_id: attempt_id.to_owned(),
             })
+    }
+
+    pub fn most_recent_candidate_family(
+        &self,
+        workspace_id: &str,
+        family_ids: &[String],
+    ) -> Result<Option<String>, PracticeError> {
+        if family_ids.is_empty() {
+            return Ok(None);
+        }
+
+        let placeholders = (2..family_ids.len() + 2)
+            .map(|index| format!("?{index}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sql = format!(
+            "SELECT family_id FROM practice_attempts
+             WHERE workspace_id = ?1 AND family_id IN ({placeholders})
+             ORDER BY created_at DESC, rowid DESC LIMIT 1"
+        );
+        self.connection()?
+            .query_row(
+                &sql,
+                params_from_iter(
+                    std::iter::once(workspace_id).chain(family_ids.iter().map(String::as_str)),
+                ),
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|error| PracticeError::Storage(error.to_string()))
     }
 
     pub fn increment_hints_revealed(&self, attempt_id: &str) -> Result<u32, PracticeError> {
@@ -314,6 +344,39 @@ mod tests {
         assert_eq!(
             store.load_attempt("attempt-1", "ws-1").unwrap().status,
             AttemptStatus::Solved
+        );
+    }
+
+    #[test]
+    fn most_recent_candidate_family_filters_by_workspace_and_candidate_list() {
+        let store = store();
+        seed_workspace(&store);
+        for (attempt_id, family_id) in [
+            ("attempt-1", "problem.family_a"),
+            ("attempt-2", "problem.family_b"),
+            ("attempt-3", "problem.outside_candidates"),
+        ] {
+            store
+                .insert_attempt(attempt_id, "ws-1", family_id, 7, &sample_instance())
+                .unwrap();
+        }
+
+        let candidates = vec!["problem.family_a".to_owned(), "problem.family_b".to_owned()];
+        assert_eq!(
+            store
+                .most_recent_candidate_family("ws-1", &candidates)
+                .unwrap(),
+            Some("problem.family_b".to_owned())
+        );
+        assert_eq!(
+            store
+                .most_recent_candidate_family("ws-other", &candidates)
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            store.most_recent_candidate_family("ws-1", &[]).unwrap(),
+            None
         );
     }
 

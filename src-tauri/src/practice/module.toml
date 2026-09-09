@@ -17,6 +17,14 @@ version = 1
 id = "practice.hint"
 version = 1
 
+[[provides]]
+id = "practice.start"
+version = 1
+
+[[provides]]
+id = "practice.describe"
+version = 1
+
 [[requires]]
 id = "math.verify"
 min_version = 1

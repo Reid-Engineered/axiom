@@ -33,6 +33,33 @@ pub struct GenerateResponse {
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct StartRequest {
+    pub workspace_id: String,
+    pub concept_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StartResponse {
+    pub attempt_id: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct DescribeRequest {
+    pub workspace_id: String,
+    pub attempt_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DescribeResponse {
+    pub prompt: String,
+    pub response_type: ResponseType,
+    pub hints_total: u32,
+    pub hints_revealed: u32,
+    pub status: AttemptStatus,
+    pub submission_count: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct EvaluateRequest {
     pub workspace_id: String,
     pub attempt_id: String,

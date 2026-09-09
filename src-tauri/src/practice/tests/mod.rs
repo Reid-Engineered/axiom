@@ -23,7 +23,19 @@ fn practice_manifest_parses_and_declares_math_verify_as_a_requirement() {
     assert!(manifest.requires.iter().any(|requirement| {
         requirement.id.as_str() == "math.verify" && requirement.min_version == 1
     }));
-    assert_eq!(manifest.provides.len(), 3);
+    assert_eq!(manifest.provides.len(), 5);
+    for capability_id in [
+        "practice.generate",
+        "practice.evaluate",
+        "practice.hint",
+        "practice.start",
+        "practice.describe",
+    ] {
+        assert!(manifest
+            .provides
+            .iter()
+            .any(|provided| provided.id.as_str() == capability_id && provided.version == 1));
+    }
 }
 
 #[test]
