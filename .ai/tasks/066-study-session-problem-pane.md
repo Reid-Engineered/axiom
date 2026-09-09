@@ -1,7 +1,7 @@
 ---
 id: 066
 title: Study session problem pane — types, useAttempt hook, and ProblemPane wiring
-status: proposed
+status: review
 owner: antigravity
 stage: 8
 depends_on: [063]
@@ -45,8 +45,40 @@ existing session tests that assert exact session objects.
   frontend halves have unambiguous single owners per `.ai/lifecycle.md`. Assigned to
   antigravity, which owns `StudySessionPage` from task 026 and every other page-layer task in
   the archive.
+- 2026-09-09 — Task 3 implemented: added `AttemptDescription` to `src/types/practice.ts`,
+  `currentAttemptId?: string` to `Session` in `src/types/session.ts` (re-exported in `src/types/index.ts`),
+  added `describeAttempt` to `practiceService.ts` and `nextProblem` to `sessionService.ts`, updated
+  `src/test/mockBackend.ts` with mapped concept attempt creation on `startSession` and handlers
+  for `describeAttempt` and `nextProblem`. Added unit test in `practiceService.test.ts`.
+- 2026-09-09 — Task 4 implemented: added `src/hooks/useAttempt.ts` with full attempt lifecycle
+  (load/describe, check with typed response, hint revelation on wrong answer, advance with next)
+  and 7 unit tests in `src/hooks/useAttempt.test.tsx`.
+- 2026-09-09 — Task 5 implemented: rewired `StudySessionPage.tsx` and `ProblemPane` to `useAttempt(session, setData)`,
+  removed hardcoded `shellExpression`, rendered four states (bound open, unbound, wrong answer with hint, solved with next problem),
+  added token-compliant styles in `StudySessionPage.module.css`, and verified with 4 new tests in `StudySessionPage.test.tsx`.
+- 2026-09-09 — Quality gates verified: `npm test` (60 test files, 161 tests passed), `npm run typecheck` (0 errors),
+  `npm run lint` (0 errors), `npm run build` (succeeded), and token regex check (0 hardcoded values). Marked for review.
 
 ## What was built / tested / left out
+
+- **Built:**
+  - `AttemptDescription` type interface and `Session.currentAttemptId?: string`
+  - `describeAttempt` and `nextProblem` service functions
+  - Mock IPC support for `describeAttempt` and `nextProblem`, plus attempt binding on `startSession` for mapped concepts
+  - `useAttempt` hook managing attempt state, answer, hints, evaluation, checking, and problem advancement
+  - `ProblemPane` rewiring supporting bound attempt prompt, numeric/symbolic answer input, feedback messages, hint list, solved state, and unbound empty state
+  - CSS module styling using tokens from `tokens.css`
+
+- **Tested:**
+  - `src/services/practiceService.test.ts` (describing generated attempts)
+  - `src/hooks/useAttempt.test.tsx` (describing on mount, unbound case, hint reveals on wrong answer, exhausted hints boundary, solved status, next problem advancement, error handling)
+  - `src/pages/StudySessionPage.test.tsx` (rendering bound attempt prompt, unbound state message, hint revelation on wrong answer, solved confirmation and next problem action)
+  - Full frontend suite: 60 test files / 161 tests passing
+
+- **Left out:**
+  - Rust Tauri commands (handled in parallel by task 065)
+  - Visualization and tutor pane backend integration (mock by design for Stage 8)
+  - Working area scratch persistence (deferred per spec §9)
 
 ## Review
 
