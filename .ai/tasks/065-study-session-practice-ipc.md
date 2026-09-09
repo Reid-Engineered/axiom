@@ -62,6 +62,20 @@ Design source: `docs/superpowers/specs/2026-09-09-study-session-ui-integration-d
   --locked -- -D warnings` all pass. Implementation complete; moved to `review`.
 - 2026-09-09 — Opened PR #11 for independent review and required CI.
 
+- 2026-09-09 — **Review findings applied by claude, not by the task owner.** This repo's
+  convention (`CLAUDE.md`) is that the reviewer records findings and the author applies them,
+  so this entry exists to keep the record honest about who did what. Marcus directed claude to
+  complete the fixes directly, because this PR is the sole remaining blocker on task `064`'s
+  beta gate and codex had not picked the review up. Changes: added the missing
+  `ensure_mutable_session` guard to `next_problem_handler` (finding 1); added
+  `next_problem_on_a_completed_session_is_rejected` and
+  `next_problem_keeps_the_existing_attempt_when_practice_fails` (findings 1 and 2); and
+  amended §3 of `2026-09-09-study-session-ui-integration-design.md` so the spec matches the
+  implementation's rebind-failure semantics rather than the reverse. The guard test was
+  confirmed to fail with the guard removed, so it is real coverage and not a tautology.
+  Everything codex built is unchanged — the review confirmed the DTO contract, the sibling
+  structure, and the counter behaviour were all correct.
+
 ## What was built / tested / left out
 
 Built the two additive Tauri commands required by the merged Study Session frontend:

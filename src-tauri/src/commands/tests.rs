@@ -739,6 +739,84 @@ fn next_problem_leaves_the_counter_alone_when_practice_is_unavailable() {
 }
 
 #[test]
+fn next_problem_keeps_the_existing_attempt_when_practice_fails() {
+    // The design spec said `current_attempt_id` becomes NULL when Practice fails. On a
+    // rebind that would destroy the problem the learner is part-way through, so the
+    // handler leaves the existing binding alone instead. The pre-existing
+    // "practice unavailable" test cannot show this, because there the session never had
+    // an attempt to keep -- None passes under either behaviour. This pins the difference.
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let bound = started.current_attempt_id.clone().unwrap();
+
+    // A registry with no Practice provider stands in for generation being unavailable.
+    let empty_registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let empty_installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &empty_registry,
+        &empty_installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_eq!(
+        advanced.current_attempt_id,
+        Some(bound),
+        "a failed rebind must not discard the attempt the learner is working on"
+    );
+    assert_eq!(advanced.problem_index, started.problem_index);
+}
+
+#[test]
+fn next_problem_on_a_completed_session_is_rejected() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    session::end_session_handler(&database, &started.id).unwrap();
+
+    let result = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ));
+
+    assert!(
+        result.is_err(),
+        "a completed session must not be advanced to a new problem"
+    );
+}
+
+#[test]
 fn material_handlers_reconstruct_book_and_exclude_out_of_syllabus_results() {
     let database = database();
     let workspace = create_workspace(&database);
