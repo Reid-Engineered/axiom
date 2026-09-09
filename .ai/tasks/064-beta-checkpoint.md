@@ -77,63 +77,66 @@ This task tracks the gate; the work is split across:
 This task's own file gets updated (not the sub-tasks') as each dependency lands, and moves
 `proposed → in-progress` once the session-selection design task is filed and claimed.
 
-## Current blocker (as of 2026-09-09)
+## Blocker cleared (2026-09-09)
 
-**`master`'s practice loop does not work in a real build.** Task `066` merged the frontend
-that calls `describeAttempt` and `nextProblem`; task `065` — which registers those two
-commands in `lib.rs` — has not merged. So `src/services/practiceService.ts:19` and
-`sessionService.ts:51` invoke commands the backend does not expose, and the problem pane
-cannot hydrate.
+**Resolved.** `065` merged as `23a6dad`, registering `describeAttempt` and `nextProblem` in
+`lib.rs`. `master` no longer ships a frontend calling commands the backend does not expose.
 
-Every required check is nonetheless green, because frontend tests run against
-`src/test/mockBackend.ts` (which implements both) and the Rust tests never cross the IPC
-boundary. This is precisely the seam that the two parallel tasks were split along, and no
-existing suite covers it.
-
-The failure is at least **honest** rather than silent: `StudySessionPage.tsx:207` renders the
-real error, and the "no practice content for this concept yet" empty state at `:212` only
-renders when there is *no* error — so a missing command cannot masquerade as the
-`knowledge_concept_id` crosswalk gap.
-
-Merging `065` clears criteria 1, 2 (its end-to-end half) and 6 together. Nothing else should
-be attempted against this gate until it lands.
+The gap that allowed it — frontend tests running against `mockBackend.ts` while Rust tests
+never cross IPC, so neither suite looked at the seam — is now covered by `069`
+(`src/test/commandRegistration.test.ts`, merged as `e054b7c`). It cross-references every
+`invoke(...)` in `src/services/` against the `#[tauri::command]` declarations and the
+`generate_handler!` list, and it runs in the frontend suite on every PR. It was verified in
+both directions: red while the commands were missing, green once they landed.
 
 ## Criterion status
 
-Verified against the tree at `a7f7b2d4` on 2026-09-09. "Verified" below means a command was
-actually run or a check actually observed — not inferred from code.
+Updated 2026-09-09 after `065` and `069` merged. **"Unblocked" is not "met"** — three criteria
+now have nothing standing in their way but have still never been observed working in a real
+build, and this table says so rather than inferring success from a green pipeline. That
+distinction is the whole reason this checkpoint exists.
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | End-to-end practice loop | **blocked** — `065` |
-| 2 | Survives restart | **half met** — persistence layer verified, loop blocked by `065` |
+| 1 | End-to-end practice loop | **unblocked, unverified** — needs a human to walk the loop in a real build |
+| 2 | Survives restart | **half met** — persistence layer verified by test; the app-level restart never observed |
 | 3 | Fully offline | **not started** — `068` builds it |
-| 4 | CI green on required checks | **met** — `061`/`062` archived `done`; all 7 green on `a7f7b2d4` |
-| 5 | Builds + launchable installer | **met** — see below |
-| 6 | No dead ends | **blocked** — `065` |
+| 4 | CI green on required checks | **met** — all 7 green on `master` |
+| 5 | Builds + launchable installer | **met** — three Linux installers produced |
+| 6 | No dead ends | **unblocked, unverified** — needs the loop walked against `AXIOM-HANDOFF.md` |
 
-**Criterion 5 — met.** `npm run build` passes; `cargo check --release` passes;
-`cargo build --release` produces a 19MB binary; `npm run tauri build` produces three Linux
-installers — `Axiom_0.1.0_amd64.deb` (5.8M), `Axiom-0.1.0-1.x86_64.rpm` (5.8M), and
-`Axiom_0.1.0_amd64.AppImage` (81M). Launchability rests on CI's `e2e` job, green on
-`a7f7b2d4`, which builds the release binary and drives it through WebDriver; it could not be
-run locally because `WebKitWebDriver` is absent from the dev environment (`tauri-driver` is
-present). Worth knowing before cutting the beta: **AppImage bundling downloads `linuxdeploy`,
-`AppRun` and plugins from GitHub at build time**, so the first build on a clean machine needs
-network. That is a build-time requirement and does not bear on criterion 3, which is about
-the running app — but `068` should keep the two distinct.
+**What is genuinely proven.** Criterion 5: `npm run build`, `cargo check --release` and
+`cargo build --release` all pass, and `npm run tauri build` produces `Axiom_0.1.0_amd64.deb`
+(5.8M), `Axiom-0.1.0-1.x86_64.rpm` (5.8M) and `Axiom_0.1.0_amd64.AppImage` (81M).
+Launchability rests on CI's `e2e` job, which builds the release binary and drives it through
+WebDriver. Criterion 2's storage half: `a_bound_practice_attempt_survives_reopening_the_database_file`
+opens a real file-backed database, binds an attempt, drops both connections, reopens, and
+asserts both the same `current_attempt_id` *and* the identical prompt — the learner resumes
+the same problem, not merely some problem. Criterion 4: green across all seven checks, with
+`061` and `062` fixed rather than tolerated as known flakes.
 
-**Criterion 2 — persistence layer verified, end-to-end blocked.** This had no coverage at all
-and was untestable by construction: `database()` and `practice_connection()` in
-`commands/tests.rs` both build in-memory databases that die with the connection, and
-`e2e/restart-persistence.test.mjs` (task `042`) covers workspace data only — it predates
-Practice and never touches sessions or attempts. A test now covers the layer that does exist:
-a real file-backed database, a session that binds an attempt, both connections dropped and
-reopened, asserting the session keeps the same `current_attempt_id` *and* that
-`practice.describe` returns the identical prompt — i.e. the learner resumes the same problem,
-not merely some problem. The remaining half needs `065`.
+**What is not proven, and cannot be from here.** Nobody has opened the built app, started a
+Study Session on the Shell method concept, been served a generated problem, submitted a wrong
+answer, seen a hint, submitted the right answer, and advanced to the next problem. Every
+individual piece is tested; the composition of them is not. The dev environment lacks
+`WebKitWebDriver`, so even the existing e2e harness cannot be driven locally, and the e2e
+suite covers first-launch and workspace persistence only — it never opens a Study Session.
+
+**Next action for the beta: walk the loop by hand on a real build**, and record what happens
+here. That single pass settles criteria 1, 2 and 6 together, and it is the last thing standing
+between the current tree and criterion 3's work in `068`.
+
+**Build-time note for whoever cuts it:** AppImage bundling downloads `linuxdeploy`, `AppRun`
+and plugins from GitHub, so the first build on a clean machine needs network. That is a
+build-time requirement and does not bear on criterion 3, which is about the running app.
 
 ## Worklog
+
+- 2026-09-09 — `065` and `069` merged, clearing the blocker recorded above. Criteria 1, 2 and
+  6 are now unblocked but remain **unverified**: the practice loop has never been walked in a
+  real build. Updated the status table to distinguish unblocked from met, and named the single
+  manual pass that would settle all three. Also archived `065` and `069` as `done` — both had
+  merged while their records still said `review`.
 
 - 2026-09-09 — Verified criteria 2 and 5 against the tree at `a7f7b2d4` at the human's
   request, rather than leaving them as inherited assumptions from Stages 0 and 7. Criterion 5
