@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { NavigationProvider } from '../hooks/NavigationProvider';
 import { useNavigation } from '../hooks/useNavigation';
+import * as practiceService from '../services/practiceService';
 import { getSession, startSession } from '../services/sessionService';
 import { StudySessionPage } from './StudySessionPage';
 
@@ -121,5 +122,24 @@ describe('StudySessionPage', () => {
     expect(await screen.findByText('Correct.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next problem' }));
     await waitFor(() => expect(screen.getByText('Problem 2')).toBeVisible());
+  });
+
+  it('surfaces an error message when checking an answer fails', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+    const answer = await screen.findByRole('textbox', { name: 'Answer' });
+
+    vi.spyOn(practiceService, 'evaluateAttempt').mockRejectedValueOnce(
+      new Error('Evaluation failed'),
+    );
+
+    fireEvent.change(answer, { target: { value: '42.7' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Evaluation failed');
   });
 });

@@ -50,4 +50,3 @@ export async function endSession(id: string): Promise<Session> {
 export async function nextProblem(sessionId: string): Promise<Session> {
   return invoke<Session>('nextProblem', { sessionId });
 }
-

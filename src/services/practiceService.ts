@@ -32,4 +32,3 @@ export async function evaluateAttempt(
 export async function requestHint(workspaceId: string, attemptId: string): Promise<Hint> {
   return invoke<Hint>('requestHint', { input: { workspaceId, attemptId } });
 }
-

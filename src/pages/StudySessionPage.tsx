@@ -66,6 +66,33 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     }
   };
 
+  const check = async () => {
+    setMutationError('');
+    try {
+      await attempt.check();
+    } catch (caught) {
+      setMutationError(caught instanceof Error ? caught.message : 'Could not check the answer.');
+    }
+  };
+
+  const hint = async () => {
+    setMutationError('');
+    try {
+      await attempt.hint();
+    } catch (caught) {
+      setMutationError(caught instanceof Error ? caught.message : 'Could not request a hint.');
+    }
+  };
+
+  const next = async () => {
+    setMutationError('');
+    try {
+      await attempt.next();
+    } catch (caught) {
+      setMutationError(caught instanceof Error ? caught.message : 'Could not advance to the next problem.');
+    }
+  };
+
   return (
     <>
       <SessionShell
@@ -91,6 +118,9 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
             attempt={attempt}
             working={working}
             onWorkingChange={setWorking}
+            onCheck={check}
+            onHint={hint}
+            onNext={next}
           />
         }
         tutor={
@@ -152,11 +182,17 @@ function ProblemPane({
   attempt,
   working,
   onWorkingChange,
+  onCheck,
+  onHint,
+  onNext,
 }: {
   session: Session;
   attempt: ReturnType<typeof useAttempt>;
   working: string;
   onWorkingChange: (value: string) => void;
+  onCheck: () => void | Promise<void>;
+  onHint: () => void | Promise<void>;
+  onNext: () => void | Promise<void>;
 }) {
   const solved = attempt.attempt?.status === 'solved';
   const counter = attempt.attempt
@@ -193,7 +229,7 @@ function ProblemPane({
               inputMode={attempt.attempt.responseType === 'numeric' ? 'decimal' : 'text'}
               onChange={(event) => attempt.setAnswer(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' && event.metaKey) void attempt.check();
+                if (event.key === 'Enter' && event.metaKey) void onCheck();
               }}
             />
           </label>
@@ -203,8 +239,8 @@ function ProblemPane({
           {solved ? <p className={styles.feedback}>Correct.</p> : null}
           {attempt.revealedHints.length ? (
             <ul className={styles.hintList}>
-              {attempt.revealedHints.map((text) => (
-                <li key={text} className={styles.hintItem}>
+              {attempt.revealedHints.map((text, index) => (
+                <li key={index} className={styles.hintItem}>
                   {text}
                 </li>
               ))}
@@ -217,11 +253,11 @@ function ProblemPane({
           ) : null}
           <div className={styles.problemActions}>
             {solved ? (
-              <Button onClick={() => void attempt.next()}>Next problem</Button>
+              <Button onClick={() => void onNext()}>Next problem</Button>
             ) : (
               <>
-                <Button onClick={() => void attempt.check()}>Check</Button>
-                <Button variant="secondary" onClick={() => void attempt.hint()}>
+                <Button onClick={() => void onCheck()}>Check</Button>
+                <Button variant="secondary" onClick={() => void onHint()}>
                   Hint
                 </Button>
                 <span className={styles.shortcutHint}>⌘↵ to check</span>

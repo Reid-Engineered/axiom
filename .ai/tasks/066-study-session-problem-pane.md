@@ -58,6 +58,7 @@ existing session tests that assert exact session objects.
   added token-compliant styles in `StudySessionPage.module.css`, and verified with 4 new tests in `StudySessionPage.test.tsx`.
 - 2026-09-09 — Quality gates verified: `npm test` (60 test files, 161 tests passed), `npm run typecheck` (0 errors),
   `npm run lint` (0 errors), `npm run build` (succeeded), and token regex check (0 hardcoded values). Marked for review.
+- 2026-09-09 — Review findings addressed: rebased cleanly on `origin/master`; wrapped check, hint, and next actions in `StudySessionPage.tsx` with `setMutationError` to surface failures to the user; switched `hintList` keys to array indices; added test asserting error alert on check failure; documented `vite.config.ts` test exclusion for `.claude/**` to isolate external Claude worktrees.
 
 ## What was built / tested / left out
 
@@ -67,13 +68,15 @@ existing session tests that assert exact session objects.
   - Mock IPC support for `describeAttempt` and `nextProblem`, plus attempt binding on `startSession` for mapped concepts
   - `useAttempt` hook managing attempt state, answer, hints, evaluation, checking, and problem advancement
   - `ProblemPane` rewiring supporting bound attempt prompt, numeric/symbolic answer input, feedback messages, hint list, solved state, and unbound empty state
+  - Error state handling in `StudySessionPage` wrapping check, hint, and next actions with `mutationError` alerts
   - CSS module styling using tokens from `tokens.css`
+  - Excluded `.claude/**` in `vite.config.ts` `test.exclude` to prevent test runner from picking up files in external Claude worktrees
 
 - **Tested:**
   - `src/services/practiceService.test.ts` (describing generated attempts)
   - `src/hooks/useAttempt.test.tsx` (describing on mount, unbound case, hint reveals on wrong answer, exhausted hints boundary, solved status, next problem advancement, error handling)
-  - `src/pages/StudySessionPage.test.tsx` (rendering bound attempt prompt, unbound state message, hint revelation on wrong answer, solved confirmation and next problem action)
-  - Full frontend suite: 60 test files / 161 tests passing
+  - `src/pages/StudySessionPage.test.tsx` (rendering bound attempt prompt, unbound state message, hint revelation on wrong answer, solved confirmation and next problem action, and error alert on check failure)
+  - Full frontend suite: 60 test files / 162 tests passing
 
 - **Left out:**
   - Rust Tauri commands (handled in parallel by task 065)
