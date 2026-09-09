@@ -24,3 +24,14 @@ export interface Hint {
   hintsRevealed: number;
   hintsTotal: number;
 }
+
+/** An attempt's current learner-facing state, the single hydration path for a session. */
+export interface AttemptDescription {
+  prompt: string;
+  responseType: ResponseType;
+  hintsTotal: number;
+  hintsRevealed: number;
+  status: AttemptStatus;
+  submissionCount: number;
+}
+

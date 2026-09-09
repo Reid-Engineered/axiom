@@ -54,6 +54,24 @@ const MOCK_PRACTICE_FAMILY = {
   hints: ['Set up the shell method integral.', 'Integrate from x = 0 to x = 4.'],
 };
 
+/** Mirrors the Rust seed's crosswalk: only the Shell method concept has practice content. */
+const MAPPED_CONCEPT_NAMES = new Set(['Shell method']);
+
+function createMockAttempt(): MockAttempt {
+  const attempt: MockAttempt = {
+    id: `attempt-${crypto.randomUUID()}`,
+    prompt: MOCK_PRACTICE_FAMILY.prompt,
+    responseType: MOCK_PRACTICE_FAMILY.responseType,
+    hintTexts: [...MOCK_PRACTICE_FAMILY.hints],
+    hintsRevealed: 0,
+    status: 'open',
+    submissionCount: 0,
+  };
+  mockAttempts.set(attempt.id, attempt);
+  return attempt;
+}
+
+
 export function resetMockBackend() {
   mockAttempts = new Map();
   concepts = structuredClone(mockConcepts);
@@ -75,7 +93,8 @@ function args(payload?: InvokeArgs): Record<string, unknown> {
 }
 
 function findWorkspace(id: string) {
-  const workspace = workspaces.find((candidate) => candidate.id === id);
+  const resolvedId = id === 'workspace-calculus' ? 'workspace-calculus-ii' : id;
+  const workspace = workspaces.find((candidate) => candidate.id === resolvedId);
   if (!workspace) throw new Error(`Workspace not found: ${id}`);
   return workspace;
 }
@@ -87,7 +106,8 @@ function findGoal(id: string) {
 }
 
 function findConcept(id: string) {
-  const concept = concepts.find((candidate) => candidate.id === id);
+  const resolvedId = id === 'concept-shells' ? 'calc-concept-22' : id;
+  const concept = concepts.find((candidate) => candidate.id === resolvedId);
   if (!concept) throw new Error(`Concept not found: ${id}`);
   return concept;
 }
@@ -268,19 +288,23 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
         conceptId: string;
         intent: Session['intent'];
       };
-      findWorkspace(input.workspaceId);
+      const workspace = findWorkspace(input.workspaceId);
       const concept = findConcept(input.conceptId);
-      if (concept.workspaceId !== input.workspaceId) {
+      if (concept.workspaceId !== workspace.id && concept.workspaceId !== input.workspaceId) {
         throw new Error(`Concept not found in workspace: ${input.conceptId}`);
       }
       const session: Session = {
         id: `session-${crypto.randomUUID()}`,
         workspaceId: input.workspaceId,
         conceptId: input.conceptId,
+        currentAttemptId: MAPPED_CONCEPT_NAMES.has(concept.name)
+          ? createMockAttempt().id
+          : undefined,
         status: 'active',
         intent: structuredClone(input.intent),
         resumeSummary: `Ready to continue with ${concept.name}.`,
         elapsedMinutes: 0,
+        problemIndex: MAPPED_CONCEPT_NAMES.has(concept.name) ? 1 : undefined,
         exchanges: [],
         settledConclusions: [],
         startedAt: new Date().toISOString(),
@@ -349,23 +373,35 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
     case 'generateAttempt': {
       const input = parameters.input as { workspaceId: string; familyId: string };
       findWorkspace(input.workspaceId);
-      const id = `attempt-${crypto.randomUUID()}`;
-      const attempt: MockAttempt = {
-        id,
-        prompt: MOCK_PRACTICE_FAMILY.prompt,
-        responseType: MOCK_PRACTICE_FAMILY.responseType,
-        hintTexts: [...MOCK_PRACTICE_FAMILY.hints],
-        hintsRevealed: 0,
-        status: 'open',
-        submissionCount: 0,
-      };
-      mockAttempts.set(id, attempt);
+      const attempt = createMockAttempt();
       return {
         attemptId: attempt.id,
         prompt: attempt.prompt,
         responseType: attempt.responseType,
         hintsTotal: attempt.hintTexts.length,
       };
+    }
+    case 'describeAttempt': {
+      const input = parameters.input as { workspaceId: string; attemptId: string };
+      const attempt = mockAttempts.get(input.attemptId);
+      if (!attempt) throw new Error(`Attempt not found: ${input.attemptId}`);
+      return {
+        prompt: attempt.prompt,
+        responseType: attempt.responseType,
+        hintsTotal: attempt.hintTexts.length,
+        hintsRevealed: attempt.hintsRevealed,
+        status: attempt.status,
+        submissionCount: attempt.submissionCount,
+      };
+    }
+    case 'nextProblem': {
+      const session = findSession(parameters.sessionId as string);
+      const concept = findConcept(session.conceptId);
+      if (MAPPED_CONCEPT_NAMES.has(concept.name)) {
+        session.currentAttemptId = createMockAttempt().id;
+        session.problemIndex = (session.problemIndex ?? 1) + 1;
+      }
+      return structuredClone(session);
     }
     case 'evaluateAttempt': {
       const input = parameters.input as {

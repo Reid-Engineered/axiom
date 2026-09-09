@@ -45,3 +45,9 @@ export async function addTutorExchange(sessionId: string, question: string): Pro
 export async function endSession(id: string): Promise<Session> {
   return invoke<Session>('endSession', { id });
 }
+
+/** Binds the session to a freshly generated problem and advances its counter. */
+export async function nextProblem(sessionId: string): Promise<Session> {
+  return invoke<Session>('nextProblem', { sessionId });
+}
+
