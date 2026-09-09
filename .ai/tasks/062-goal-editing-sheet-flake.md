@@ -1,8 +1,8 @@
 ---
 id: 062
 title: GoalEditingSheet.test.tsx flake — assert on facet chips before they render
-status: proposed
-owner: unassigned
+status: review
+owner: claude
 stage: 8
 depends_on: []
 ---
@@ -63,8 +63,34 @@ Files to be touched:
 ## Worklog
 
 - 2026-09-05 — created as a follow-up from task 060's review of PR #4.
+- 2026-09-09 — Claimed by claude and pulled forward: the flake stopped being a PR annoyance
+  and failed on `master` itself (run `34375033315`, `frontend-checks (macos-latest)`, same
+  test and same error), where there is no PR to re-run. Fixed and moved to `review`.
 
 ## What was built / tested / left out
+
+Awaited the assertion targets themselves instead of a different element that happens to
+render earlier:
+
+- `src/pages/GoalEditingSheet.test.tsx:41` — replaced the `findByRole('textbox')` await plus
+  a synchronous `getByText` with a single `await screen.findByText('Tools · Practice,
+  Visualizer, Tutor')`. The old await settled as soon as the goal textbox existed, which
+  never guaranteed the inferred facet chips had rendered.
+- `src/pages/GoalEditingSheet.test.tsx:23-24` — the same latent shape in the sibling test, as
+  this task's Plan section called for: both consequence assertions now use `findByText`. They
+  had not been observed failing, but they depended on the same "an earlier element implies a
+  later one" assumption.
+- `.ai/quality-gates.md:12-15` — the flaky-checks paragraph no longer cites this file as a
+  live precedent. It now records why the follow-up task matters: task 052 saw this flake and
+  filed nothing, so it recurred through tasks 060 and 066 and reached `master`.
+
+Tested: `npm test -- src/pages/GoalEditingSheet.test.tsx` passes (2 tests). Local passing
+proves little for a flake — it passed locally before this change too — so the argument is the
+mechanism, not the run: no assertion in this file now depends on a different element having
+rendered first. CI on the PR is the gate.
+
+Deliberately left out: the repo-wide audit of `getByText`-after-`findBy*` that this task's
+Scope explicitly excluded. If that audit still looks warranted, it is its own task.
 
 ## Review
 
