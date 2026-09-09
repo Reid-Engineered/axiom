@@ -18,6 +18,7 @@ Does **not** build: any production Rust, any frontend, any schema, dependency, o
 contract change. No test was added or modified.
 
 PR: https://github.com/Reid-Engineered/axiom/pull/4
+Closeout PR: https://github.com/Reid-Engineered/axiom/pull/12
 Branch: `agent/codex/060-stage8-docs-sync`
 
 ## Plan
