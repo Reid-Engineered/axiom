@@ -1014,7 +1014,11 @@ The spec deliberately widens a `ROADMAP.md` constraint and defers four things. B
 **Files:**
 - Modify: `ROADMAP.md` ("Remaining Stage 8 scope" paragraph)
 - Modify: `.ai/tasks/064-beta-checkpoint.md` (mark this sub-project done, per its Plan section)
-- Create: `.ai/tasks/065-evaluate-diagnostics.md`, `.ai/tasks/066-structured-problem-expressions.md`
+- Create: `.ai/tasks/067-evaluate-diagnostics.md`, `.ai/tasks/068-structured-problem-expressions.md`
+
+> **Ownership.** Tasks 1–2 are task record `065` (codex); Tasks 3–5 are task record `066`
+> (antigravity); this Task 6 is claude's, per CLAUDE.md's rule that `ROADMAP.md` and `.ai/`
+> are Claude's responsibility. `065` and `066` share no files and run in parallel.
 
 - [ ] **Step 1: Amend the roadmap constraint**
 
@@ -1022,10 +1026,10 @@ In `ROADMAP.md`'s "Remaining Stage 8 scope", replace "(Antigravity, presentation
 
 - [ ] **Step 2: File the two follow-up tasks**
 
-Copy `.ai/tasks/TEMPLATE.md` for each, `status: proposed`, `stage: 8`, `depends_on: [064]`:
+Copy `.ai/tasks/TEMPLATE.md` for each, `status: proposed`, `stage: 8`, `depends_on: [066]`:
 
-- **065 — diagnostic evidence in `practice.evaluate`.** `EvaluateResponse` carries no misconception text, so a wrong answer borrows a hint instead of naming what went wrong (spec §2). Changes a capability contract; needs its own brainstorm.
-- **066 — structured problem expressions.** `ProblemInstance.prompt` is a plain string, so the mockup's typeset integral well with the highlighted `x` and its "Ask about x" affordance has no data behind it (spec §9). Schema change.
+- **067 — diagnostic evidence in `practice.evaluate`.** `EvaluateResponse` carries no misconception text, so a wrong answer borrows a hint instead of naming what went wrong (spec §2). Changes a capability contract; needs its own brainstorm.
+- **068 — structured problem expressions.** `ProblemInstance.prompt` is a plain string, so the mockup's typeset integral well with the highlighted `x` and its "Ask about x" affordance has no data behind it (spec §9). Schema change.
 
 Also note in `064-beta-checkpoint.md`'s Plan section that the StudySessionPage sub-project is complete, leaving the regression corpus and the offline acceptance test.
 
