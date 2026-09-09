@@ -1,7 +1,7 @@
 ---
 id: 069
 title: Guard against unregistered IPC commands
-status: review
+status: done
 owner: claude
 stage: 8
 depends_on: [065]
@@ -82,6 +82,15 @@ Left out: cross-boundary validation of argument and return *shapes*. A command c
 registered and still disagree with its caller about payload structure — `065`'s review had to
 check the `describeAttempt` DTO by hand, field by field. Worth doing, much larger, and filed
 below rather than folded in.
+
+- 2026-09-09 — Merged as `e054b7c` (PR #15) once `065` landed. The guard went red → green
+  exactly as predicted: it failed on `master` while the two commands were missing, and passed
+  the moment they were registered. That transition is the evidence it works, and it is the
+  reason the PR was deliberately opened in a failing state rather than held back until it
+  could pass. `review` → `done`.
+
+  Review independence: claude authored, and the human directed the merge; no independent agent
+  review took place. Recorded plainly rather than implied.
 
 ## Review
 
