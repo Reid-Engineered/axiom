@@ -9,6 +9,8 @@ depends_on: [063]
 
 ## Scope
 
+PR: https://github.com/Reid-Engineered/axiom/pull/11
+
 Tasks 1 and 2 of `docs/superpowers/plans/2026-09-09-study-session-ui-integration.md`: the two
 Tauri commands the Study Session UI needs. `describeAttempt` exposes task 063's existing
 `practice.describe` capability, which today has no command wrapper and is therefore
@@ -58,6 +60,7 @@ Design source: `docs/superpowers/specs/2026-09-09-study-session-ui-integration-d
 - 2026-09-09 — Re-ran the final backend gates on the rebased source: 301 Rust tests,
   `cargo check --locked`, `cargo fmt --all -- --check`, and `cargo clippy --all-targets
   --locked -- -D warnings` all pass. Implementation complete; moved to `review`.
+- 2026-09-09 — Opened PR #11 for independent review and required CI.
 
 ## What was built / tested / left out
 
