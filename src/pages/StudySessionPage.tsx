@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 
-import { MathDisplay, type MathSegment } from '../components/math/MathDisplay';
 import { Button } from '../components/primitives/Button';
 import { SessionToolbar } from '../components/session/SessionToolbar';
 import { WorkingArea } from '../components/session/WorkingArea';
+import { useAttempt } from '../hooks/useAttempt';
 import { useConcept } from '../hooks/useConcepts';
 import { useNavigation } from '../hooks/useNavigation';
 import { useSession } from '../hooks/useSessions';
@@ -16,16 +16,11 @@ export interface StudySessionPageProps {
   sessionId: string;
 }
 
-const shellExpression: MathSegment[] = [
-  { text: 'V = 2π∫₁³ ' },
-  { text: 'x', selected: true },
-  { text: '(x² − 1) dx' },
-];
-
 /** Active study session scoped to one resumable session record. */
 export function StudySessionPage({ sessionId }: StudySessionPageProps) {
-  const { session, loading, error, pauseSession, resumeSession, addTutorExchange } =
+  const { session, loading, error, pauseSession, resumeSession, addTutorExchange, setData } =
     useSession(sessionId);
+  const attempt = useAttempt(session, setData);
   const { concept } = useConcept(session?.conceptId ?? '');
   const { workspace } = useWorkspaceDetails(session?.workspaceId ?? '');
   const { navigate } = useNavigation();
@@ -90,7 +85,14 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
         visualization={
           <VisualizationPane onExpand={() => navigate({ type: 'fullVisualization', sessionId })} />
         }
-        problem={<ProblemPane session={session} working={working} onWorkingChange={setWorking} />}
+        problem={
+          <ProblemPane
+            session={session}
+            attempt={attempt}
+            working={working}
+            onWorkingChange={setWorking}
+          />
+        }
         tutor={
           <TutorPane
             session={session}
@@ -147,34 +149,87 @@ function VisualizationPane({ onExpand }: { onExpand: () => void }) {
 
 function ProblemPane({
   session,
+  attempt,
   working,
   onWorkingChange,
 }: {
   session: Session;
+  attempt: ReturnType<typeof useAttempt>;
   working: string;
   onWorkingChange: (value: string) => void;
 }) {
+  const solved = attempt.attempt?.status === 'solved';
+  const counter = attempt.attempt
+    ? `Problem ${session.problemIndex ?? 1}`
+    : `Problem ${session.problemIndex ?? 1} of ${session.problemCount ?? 1}`;
+
   return (
     <section className={styles.problemPane} aria-labelledby="problem-heading">
       <p className={styles.eyebrow} id="problem-heading">
-        Problem {session.problemIndex ?? 1} of {session.problemCount ?? 1}
+        {counter}
       </p>
-      <p className={styles.problemText}>
-        The region bounded by y = x² − 1, y = 0, and x = 3 is revolved about the y-axis. Set up the
-        integral for the volume using shells.
-      </p>
-      <div className={styles.equation}>
-        <MathDisplay expression={shellExpression} />
-        <Button variant="tertiary" size="sm">
-          Ask about x
-        </Button>
-      </div>
-      <WorkingArea value={working} onChange={onWorkingChange} />
-      <div className={styles.problemActions}>
-        <Button>Check</Button>
-        <Button variant="secondary">Hint</Button>
-        <span className={styles.shortcutHint}>⌘↵ to check</span>
-      </div>
+      {attempt.error ? (
+        <p className={styles.state} role="status">
+          {attempt.error.message}
+        </p>
+      ) : null}
+      {!attempt.attempt && !attempt.loading && !attempt.error ? (
+        <>
+          <p className={styles.problemText}>
+            There is no practice content for this concept yet.
+          </p>
+          <WorkingArea value={working} onChange={onWorkingChange} />
+        </>
+      ) : null}
+      {attempt.attempt ? (
+        <>
+          <p className={styles.problemText}>{attempt.attempt.prompt}</p>
+          <WorkingArea value={working} onChange={onWorkingChange} />
+          <label className={styles.answerLabel}>
+            <span className={styles.answerLabelText}>Answer</span>
+            <input
+              className={styles.answerInput}
+              value={attempt.answer}
+              inputMode={attempt.attempt.responseType === 'numeric' ? 'decimal' : 'text'}
+              onChange={(event) => attempt.setAnswer(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && event.metaKey) void attempt.check();
+              }}
+            />
+          </label>
+          {attempt.evaluation && !attempt.evaluation.correct ? (
+            <p className={styles.feedback}>That does not match yet.</p>
+          ) : null}
+          {solved ? <p className={styles.feedback}>Correct.</p> : null}
+          {attempt.revealedHints.length ? (
+            <ul className={styles.hintList}>
+              {attempt.revealedHints.map((text) => (
+                <li key={text} className={styles.hintItem}>
+                  {text}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {attempt.evaluation &&
+          !attempt.evaluation.correct &&
+          attempt.attempt.hintsRevealed >= attempt.attempt.hintsTotal ? (
+            <p className={styles.feedback}>No further hints remain for this problem.</p>
+          ) : null}
+          <div className={styles.problemActions}>
+            {solved ? (
+              <Button onClick={() => void attempt.next()}>Next problem</Button>
+            ) : (
+              <>
+                <Button onClick={() => void attempt.check()}>Check</Button>
+                <Button variant="secondary" onClick={() => void attempt.hint()}>
+                  Hint
+                </Button>
+                <span className={styles.shortcutHint}>⌘↵ to check</span>
+              </>
+            )}
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
