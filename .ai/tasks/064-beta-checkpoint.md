@@ -68,9 +68,9 @@ This task tracks the gate; the work is split across:
 - **Study Session UI integration** — owned by Antigravity, presentation-only, no
   engine/contract changes, against `reference/UI/AXIOM-HANDOFF.md`. Not yet filed as a task.
   Blocks criteria 1 and 6.
-- **Practice regression corpus** — not yet filed. Supports criterion 1's "not a stub" bar
+- **067** (`proposed`) — Practice regression corpus. Supports criterion 1's "not a stub" bar
   with durable coverage, and criterion 4's CI-green bar going forward.
-- **Network-disabled native acceptance test** — not yet filed. Directly implements
+- **068** (`proposed`) — network-disabled native acceptance test. Directly implements
   criterion 3.
 
 This task's own file gets updated (not the sub-tasks') as each dependency lands, and moves
@@ -78,6 +78,12 @@ This task's own file gets updated (not the sub-tasks') as each dependency lands,
 
 ## Worklog
 
+- 2026-09-09 — Filed the two remaining unfiled dependencies as `067` (regression corpus) and
+  `068` (offline acceptance test), and updated this file's Plan and Follow-ups to point at
+  them instead of "not yet filed". Every dependency this checkpoint names now exists as a
+  task. Criterion status at time of writing: 4 met (`061`/`062` archived `done`); 1 and 6
+  pending `065` merging (`066` already landed the frontend half); 2, 3 and 5 still unverified
+  — 2 and 5 have never been checked against the current tree, and 3 is what `068` builds.
 - 2026-09-07 — Filed by claude at the human's request, to formalize the beta stopping-point
   discussed in conversation rather than leave it as a verbal agreement. No code changed.
 - 2026-09-09 — Renumbered `063` → `064`. The file was written while uncommitted and never
@@ -96,8 +102,8 @@ build.
 
 ## Follow-ups
 
-- File the session-selection/resume task once it has been through a brainstorm → spec →
-  plan cycle.
-- File the Study Session UI integration task (Antigravity).
-- File the Practice regression corpus task.
-- File the network-disabled native acceptance test task.
+- ~~File the session-selection/resume task~~ — filed and completed as `063`.
+- ~~File the Study Session UI integration task (Antigravity)~~ — filed as `065` (Rust IPC,
+  codex) and `066` (frontend, antigravity); `066` is `done`, `065` is in review on PR #11.
+- ~~File the Practice regression corpus task~~ — filed as `067`.
+- ~~File the network-disabled native acceptance test task~~ — filed as `068`.
