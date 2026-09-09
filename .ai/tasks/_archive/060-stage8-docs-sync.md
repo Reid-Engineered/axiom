@@ -1,7 +1,7 @@
 ---
 id: 060
 title: Stage 8 roadmap sync and task 059 independent review
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [059]
@@ -74,6 +74,11 @@ Files touched:
   documentation-only with no diff in archived task 059. CI remains expected to be green
   except `backend-checks (windows-latest)` for task 061's pre-existing failure; tasks 061
   and 062 were not touched. Work complete; `in-progress` → `review` for re-review.
+- 2026-09-09 — Closeout audit requested by the repository owner. Codex verified findings
+  4–7 against current `master` rather than relying on the earlier worklog, confirmed the
+  two split follow-ups are archived with passing reviews, and found no unresolved finding.
+  The owner explicitly authorized the documented finding-resolution audit as the closeout
+  decision; `review` → `done` and this record moved to `_archive/`.
 
 ## What was built / tested / left out
 
@@ -207,6 +212,79 @@ Findings 4–7 are prose edits to `ROADMAP.md` and belong in this PR. Finding 8 
 Findings 1–3 are process, and 1 is split into its own tasks rather than absorbed here.
 
 Verdict: changes-requested
+
+### Closure re-review
+
+Verifier: codex (task owner)
+Date: 2026-09-09
+Human authorization: the repository owner requested this finding-resolution audit and
+instructed Codex to close and archive the task if all recorded findings were settled.
+
+#### Correctness
+
+- [x] **Finding 1 follow-ups — pass.** The Windows SQLite failure and GoalEditingSheet
+      flake are both `status: done` with `Verdict: pass`
+      (`.ai/tasks/_archive/061-windows-sqlite-test-cleanup.md:4,107`;
+      `.ai/tasks/_archive/062-goal-editing-sheet-flake.md:4,164`). Their records also capture
+      the required seven-check evidence
+      (`.ai/tasks/_archive/061-windows-sqlite-test-cleanup.md:64`;
+      `.ai/tasks/_archive/062-goal-editing-sheet-flake.md:143`).
+- [x] **Finding 4 acceptance-criteria index — pass.** `ROADMAP.md:285-289` separately names
+      `docs/superpowers/specs/` and `.ai/tasks/_archive/`, identifies tasks 050–051 and
+      054–058 as having formal criteria, and explicitly records that 049 and 059 did not.
+      The indexed specifications contain normative conformance/testing criteria, including
+      Knowledge Package rejection cases
+      (`docs/superpowers/specs/2026-08-30-knowledge-package-v1-spec.md:832-860`)
+      and the task-specific testing sections for 054–058
+      (`docs/superpowers/specs/2026-09-01-canonical-problem-schema-design.md:255-263`,
+      `docs/superpowers/specs/2026-09-02-math-verify-design.md:166-180`,
+      `docs/superpowers/specs/2026-09-02-problem-generation-design.md:224-261`,
+      `docs/superpowers/specs/2026-09-04-practice-core-utility-design.md:280-301`, and
+      `docs/superpowers/specs/2026-09-04-practice-tauri-command-wiring-design.md:498-516`).
+      Focused inspection of
+      archived tasks 049 and 059 found Scope, Plan, and Review sections but no formal
+      acceptance-criteria section, matching the disclosed exception.
+- [x] **Finding 5 duplication/label — pass.** The runtime appears once as the full
+      `Sub-project 1 — Module & Capability runtime` section (`ROADMAP.md:244-273`); the
+      additional-completions list starts at task 049 (`ROADMAP.md:275-283`). A focused
+      search of current `ROADMAP.md` returns no `(locked)` label.
+- [x] **Finding 6 Study Session boundary — pass.** The critical path preserves
+      `Antigravity, presentation only — no engine/contract changes` verbatim
+      (`ROADMAP.md:293-295`).
+- [x] **Finding 7 authoritative reference — pass.** The learner-facing polish clause points
+      directly to `reference/UI/AXIOM-HANDOFF.md` (`ROADMAP.md:296-297`).
+- [x] **Findings 2, 3, and 8 disposition — pass.** This task record resolves finding 2;
+      finding 3 remains documented as a non-change-request process lesson; optional finding
+      8's synthesis-report citation half was applied while archived task 059 stayed frozen,
+      exactly as the revision worklog records.
+
+#### Architecture conformance (`ARCHITECTURE.md`)
+
+- [x] **Architecture conformance — N/A.** The closeout changes only task metadata and its
+      archive location; no production code, types, data flow, or repository structure rule
+      changed.
+
+#### UI rules (`AGENTS.md`)
+
+- [x] **UI rules — N/A.** No file under `src/`, stylesheet, markup, or learner-facing copy
+      changed.
+
+#### Process
+
+- [x] **Quality gates — pass.** PR #4 is present on `master` as squash commit `accc524`; its
+      two unrelated red-check causes were resolved by tasks 061 and 062, whose records show
+      all seven required checks passing. This closeout is documentation-only; `git diff
+      --check` passes and no npm or Cargo gate applies to its changed file.
+- [x] **Worklog — pass.** The original review, both revision rounds, exact finding
+      dispositions, closeout authority, and independent current-master evidence are all
+      retained in this record.
+- [x] **Scope — pass.** Only this task record is changed and archived. `ROADMAP.md`,
+      production code, task 059, and both completed follow-up records remain untouched.
+- [x] **Architecture documentation — N/A.** Moving an existing task record into the
+      established `_archive/` directory adds no structure and requires no
+      `ARCHITECTURE.md` change.
+
+Verdict: pass
 
 ## Follow-ups
 
