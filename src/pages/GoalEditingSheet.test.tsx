@@ -20,8 +20,8 @@ describe('GoalEditingSheet', () => {
         'Be ready to explain and solve every integration technique on the December final.',
       ),
     );
-    expect(screen.getByText(/Nothing is deleted/)).toBeVisible();
-    expect(screen.getByText('Deadline · December 12')).toBeVisible();
+    expect(await screen.findByText(/Nothing is deleted/)).toBeVisible();
+    expect(await screen.findByText('Deadline · December 12')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Revert' }));
     await waitFor(() => expect(field).toHaveValue('Pass the Calculus II final in December.'));
     fireEvent.change(field, { target: { value: 'Understand integration deeply.' } });
@@ -38,8 +38,7 @@ describe('GoalEditingSheet', () => {
         onClose={vi.fn()}
       />,
     );
-    await screen.findByRole('textbox', { name: 'Goal' });
-    expect(screen.getByText('Tools · Practice, Visualizer, Tutor')).toBeVisible();
+    expect(await screen.findByText('Tools · Practice, Visualizer, Tutor')).toBeVisible();
     fireEvent.click(
       screen.getByRole('button', { name: 'Remove Tools · Practice, Visualizer, Tutor' }),
     );

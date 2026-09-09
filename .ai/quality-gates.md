@@ -11,8 +11,10 @@ these mechanically.
 
 **Flaky checks:** if a required check fails once and then passes clean on an immediate
 re-run with no code change, treat it as a pass and file a follow-up task for the flake —
-don't block or re-litigate the PR over it. (Precedent: task 052's own validation hit exactly
-this with `GoalEditingSheet.test.tsx`, confirmed as a flake by an immediate green re-run.)
+don't block or re-litigate the PR over it. File the follow-up task — task 052 hit exactly this
+with `GoalEditingSheet.test.tsx` and did not file one, so the same test went on flaking
+through tasks 060 and 066 and eventually failed on `master` itself before task 062 fixed it.
+The re-run is the unblock; the follow-up task is what stops it recurring.
 
 A task cannot move from `in-progress` to `review` until every gate that applies to it
 passes. "Applies to it" matters — a docs-only task doesn't need `cargo check` run against
