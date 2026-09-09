@@ -89,10 +89,23 @@ can reuse the `start_practice_attempt` helper task 063 already added to that fil
    statement.
 4. Returns the updated `Session`, matching every other session mutation command.
 
-The degrade policy from 063 §6 applies unchanged: if Practice is unresolvable, disabled, or
-fails, `current_attempt_id` becomes `NULL` and the command still succeeds. `problem_index`
-increments only when an attempt was actually bound, so the counter never advances past
-content that does not exist.
+063 §6's degrade policy applies in spirit but **not literally**, and the difference matters.
+At session *start* there is no prior attempt, so "Practice unavailable" and
+`current_attempt_id = NULL` are the same state. A rebind is different: the session already
+has an attempt the learner may be part-way through. Setting it to `NULL` because generation
+hiccupped once would discard their in-progress problem to report a transient failure.
+
+So on a failed rebind — Practice unresolvable, disabled, or erroring — `nextProblem` changes
+**nothing**: the existing `current_attempt_id` is left in place, `problem_index` does not
+advance, and the command still succeeds. The learner keeps the problem they were on. On a
+successful rebind both fields update together, so the counter never advances past content
+that does not exist.
+
+(Amended after review: this section originally said `current_attempt_id` becomes `NULL`,
+carried over from 063 §6 without accounting for the prior-attempt case. The implementation
+was correct and this text was not; corrected here rather than changing working code to match
+a wrong spec. `next_problem_keeps_the_existing_attempt_when_practice_fails` in
+`commands/tests.rs` pins the behaviour.)
 
 ## 4. Types and services
 

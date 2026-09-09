@@ -54,6 +54,7 @@ pub fn run() {
             commands::session::get_active_session_by_workspace,
             commands::session::get_session,
             commands::session::start_session,
+            commands::session::next_problem,
             commands::session::pause_session,
             commands::session::resume_session,
             commands::session::add_tutor_exchange,
@@ -65,6 +66,7 @@ pub fn run() {
             commands::practice::generate_attempt,
             commands::practice::evaluate_attempt,
             commands::practice::request_hint,
+            commands::practice::describe_attempt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
