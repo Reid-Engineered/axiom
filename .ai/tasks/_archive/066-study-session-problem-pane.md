@@ -1,7 +1,7 @@
 ---
 id: 066
 title: Study session problem pane — types, useAttempt hook, and ProblemPane wiring
-status: review
+status: done
 owner: antigravity
 stage: 8
 depends_on: [063]
@@ -60,6 +60,10 @@ existing session tests that assert exact session objects.
   `npm run lint` (0 errors), `npm run build` (succeeded), and token regex check (0 hardcoded values). Marked for review.
 - 2026-09-09 — Review findings addressed: rebased cleanly on `origin/master`; wrapped check, hint, and next actions in `StudySessionPage.tsx` with `setMutationError` to surface failures to the user; switched `hintList` keys to array indices; added test asserting error alert on check failure; documented `vite.config.ts` test exclusion for `.claude/**` to isolate external Claude worktrees.
 
+- 2026-09-09 — Reviewed by claude: `changes-requested` on the first pass, `approve` on the
+  second after a clean rebase and fixes for all six findings. All seven required checks green.
+  `review` → `done` and archived as part of the merge of PR #9.
+
 ## What was built / tested / left out
 
 - **Built:**
@@ -85,4 +89,79 @@ existing session tests that assert exact session objects.
 
 ## Review
 
+Reviewer: claude
+Date: 2026-09-09
+
+Reviewed twice. The first pass returned `changes-requested` over two blocking process
+findings and one real defect; this section records both passes, since the first one's findings
+are part of this task's history rather than something to erase.
+
+Verified independently on each pass rather than from the PR body: the branch was checked out
+into a separate worktree and `npm test` run locally (161 tests on the first pass, 162 on the
+second, matching the claims exactly), the CSS token names were checked one by one against
+`src/styles/tokens.css`, and the check status was read from the API rather than taken on
+report.
+
+- [x] **Correctness — pass.** `useAttempt` is faithful to the plan; the four states render as
+      specified; `check` reads `hintsRevealed` from the pre-evaluate snapshot, which is what
+      makes the exhausted-hints boundary work. Three deliberate improvements on the plan, all
+      correct:
+      - Real token names substituted for the invented ones in the plan's Task 5 sketch
+        (`--color-hairline-strong`, `--radius-control`, `--space-md`, `--space-xl`,
+        `--text-secondary`, `--color-content`); all nine verified present in `tokens.css`.
+      - The unbound state renders `WorkingArea`, which the plan's sketch omitted. Spec §6 says
+        the working area and tutor stay usable in that state, so the deviation is *more*
+        faithful to the design than the plan was.
+      - `ProblemPane` takes `onCheck` / `onHint` / `onNext` callbacks rather than the hook
+        object, so the component no longer holds a hook at all — a cleaner boundary than the
+        plan specified.
+- [x] **Architecture conformance — pass.** `useAttempt` is called only from
+      `StudySessionPage` (§5 rule 1). `AttemptDescription` lives in `src/types/practice.ts`
+      and reaches consumers through `index.ts`'s existing `export * from './practice'` (§4).
+      No new global state (§5 rule 3). No `ARCHITECTURE.md` update needed: no structural
+      change, and the hook follows the existing `useSession` shape.
+- [x] **UI rules — pass.** No hardcoded color, radius, shadow, or spacing. Copy follows
+      `AXIOM-HANDOFF.md` line 92: "Correct." with no celebration, "That does not match yet."
+      rather than a bare "incorrect", no exclamation marks, no emoji.
+- [x] **Process — pass on re-review** (failed the first pass; see findings 1 and 2).
+
+### First-pass findings, all since addressed
+
+1. **CI never ran.** `statusCheckRollup` was empty — zero checks, not pending ones —
+   making the locally-run gate claims unverifiable by the process meant to verify them.
+2. **The branch conflicted with `master`, which is what suppressed CI.** Cut from `010e438`,
+   before the spec, plan, and task records landed at `9f5093a`, so it re-added all three as
+   new files; GitHub cannot compute a merge ref for a conflicted PR, so the `pull_request`
+   workflow never fired. Both resolved by one clean rebase; all seven checks now pass.
+3. **Check, hint, and next failures were silently swallowed — the plan's defect, not the
+   implementer's.** `void attempt.check()` discarded the rejection, so an IPC failure gave an
+   unhandled promise rejection and nothing visible to the learner, while spec §7 routes those
+   to the page's existing `mutationError` channel. The plan's Task 5 code block specified
+   exactly what was implemented and named no test for the path. Now fixed with three handlers
+   structurally identical to the existing `pause`, plus a test asserting the message reaches
+   `role="alert"`.
+4. **`vite.config.ts` was out of scope and undisclosed.** Adding `'.claude/**'` to the vitest
+   `exclude` list is correct and probably necessary — worktrees under `.claude/` carry test
+   files vitest would otherwise collect — but needed naming. Now disclosed in both the worklog
+   and the "what was built" section.
+5. **Nit — `key={text}` on the hint list**, which would collide on duplicate hint text. Now
+   keyed by index.
+6. **Nit — stray trailing blank lines** in `practiceService.ts` and `sessionService.ts`. Now
+   trimmed.
+
+### Note for whoever picks up task 065
+
+This merges the frontend half against `src/test/mockBackend.ts` only. The two Tauri commands
+it calls — `describeAttempt` and `nextProblem` — do not exist in Rust yet; they are task 065,
+still unstarted. Until 065 lands, this code is fully green in tests and inert in a real build:
+`describeAttempt` will reject at runtime, which the error handling added under finding 3
+surfaces as a message rather than a crash. That is the parallel-execution split working as
+designed, not a regression, but the beta gate's end-to-end criterion is not met until 065
+merges.
+
+Verdict: approve
+
 ## Follow-ups
+
+- **065** — the Rust half (`describeAttempt`, `nextProblem`). Unstarted; this task is inert
+  in a real build until it lands.
