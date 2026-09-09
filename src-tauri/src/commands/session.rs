@@ -148,6 +148,10 @@ pub async fn start_session_handler(
         None => None,
     };
 
+    // A bound attempt is problem 1. Left NULL when nothing was bound, so the counter never
+    // claims a problem that does not exist. `mockBackend.ts` already does this; the real
+    // backend did not, and only the UI's `?? 1` and `nextProblem`'s COALESCE hid the gap.
+    let problem_index = current_attempt_id.as_ref().map(|_| 1);
     let id = new_id("session");
     let connection = database.connection()?;
     connection
@@ -155,8 +159,8 @@ pub async fn start_session_handler(
             "INSERT INTO sessions (
                 id, workspace_id, concept_id, status, intent_activity, intent_detail,
                 intent_target_minutes, resume_summary, elapsed_minutes, started_at,
-                current_attempt_id
-            ) VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, 0, ?8, ?9)",
+                current_attempt_id, problem_index
+            ) VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7, 0, ?8, ?9, ?10)",
             params![
                 id,
                 input.workspace_id,
@@ -167,6 +171,7 @@ pub async fn start_session_handler(
                 format!("Ready to continue with {concept_name}."),
                 now(),
                 current_attempt_id,
+                problem_index,
             ],
         )
         .map_err(database_error)?;
@@ -210,6 +215,49 @@ async fn start_practice_attempt(
             None
         }
     }
+}
+
+pub async fn next_problem_handler(
+    database: &Database,
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    session_id: &str,
+) -> CommandResult<Session> {
+    let (workspace_id, knowledge_concept_id) = {
+        let connection = database.connection()?;
+        ensure_mutable_session(&connection, session_id)?;
+        connection
+            .query_row(
+                "SELECT sessions.workspace_id, concepts.knowledge_concept_id
+                 FROM sessions
+                 JOIN concepts ON concepts.id = sessions.concept_id
+                 WHERE sessions.id = ?1",
+                [session_id],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?)),
+            )
+            .optional()
+            .map_err(database_error)?
+            .ok_or_else(|| format!("Session not found: {session_id}"))?
+    };
+    let attempt_id = match knowledge_concept_id {
+        Some(concept_id) => {
+            start_practice_attempt(registry, installation, &workspace_id, concept_id).await
+        }
+        None => None,
+    };
+
+    let connection = database.connection()?;
+    if attempt_id.is_some() {
+        connection
+            .execute(
+                "UPDATE sessions
+                 SET current_attempt_id = ?2, problem_index = COALESCE(problem_index, 1) + 1
+                 WHERE id = ?1",
+                params![session_id, attempt_id],
+            )
+            .map_err(database_error)?;
+    }
+    load_session(&connection, session_id)?.ok_or_else(|| format!("Session not found: {session_id}"))
 }
 
 fn ensure_mutable_session(connection: &Connection, id: &str) -> CommandResult<()> {
@@ -321,6 +369,16 @@ pub async fn start_session(
     input: StartSessionInput,
 ) -> CommandResult<Session> {
     start_session_handler(&database, &registry, &installation, input).await
+}
+
+#[tauri::command(rename = "nextProblem")]
+pub async fn next_problem(
+    database: State<'_, Database>,
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    session_id: String,
+) -> CommandResult<Session> {
+    next_problem_handler(&database, &registry, &installation, &session_id).await
 }
 
 #[tauri::command(rename = "pauseSession")]

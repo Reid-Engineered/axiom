@@ -676,6 +676,147 @@ fn start_session_succeeds_without_an_attempt_when_practice_start_fails() {
 }
 
 #[test]
+fn next_problem_rebinds_the_session_and_advances_the_counter() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let first_attempt = started.current_attempt_id.clone().unwrap();
+
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_ne!(advanced.current_attempt_id, Some(first_attempt));
+    assert!(advanced.current_attempt_id.is_some());
+    assert_eq!(advanced.problem_index, Some(2));
+}
+
+#[test]
+fn next_problem_leaves_the_counter_alone_when_practice_is_unavailable() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_eq!(advanced.current_attempt_id, None);
+    assert_eq!(advanced.problem_index, started.problem_index);
+}
+
+#[test]
+fn next_problem_keeps_the_existing_attempt_when_practice_fails() {
+    // The design spec said `current_attempt_id` becomes NULL when Practice fails. On a
+    // rebind that would destroy the problem the learner is part-way through, so the
+    // handler leaves the existing binding alone instead. The pre-existing
+    // "practice unavailable" test cannot show this, because there the session never had
+    // an attempt to keep -- None passes under either behaviour. This pins the difference.
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let bound = started.current_attempt_id.clone().unwrap();
+
+    // A registry with no Practice provider stands in for generation being unavailable.
+    let empty_registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let empty_installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &empty_registry,
+        &empty_installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_eq!(
+        advanced.current_attempt_id,
+        Some(bound),
+        "a failed rebind must not discard the attempt the learner is working on"
+    );
+    assert_eq!(advanced.problem_index, started.problem_index);
+}
+
+#[test]
+fn next_problem_on_a_completed_session_is_rejected() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    session::end_session_handler(&database, &started.id).unwrap();
+
+    let result = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ));
+
+    assert!(
+        result.is_err(),
+        "a completed session must not be advanced to a new problem"
+    );
+}
+
+#[test]
 fn material_handlers_reconstruct_book_and_exclude_out_of_syllabus_results() {
     let database = database();
     let workspace = create_workspace(&database);
@@ -908,4 +1049,105 @@ fn command_dtos_use_frontend_camel_case_fields() {
     }))
     .unwrap();
     assert_eq!(input.goal_text, "Prepare for mechanics");
+}
+
+fn describe_via_capability(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    workspace_id: &str,
+    attempt_id: &str,
+) -> DescribeResponse {
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.describe").unwrap(),
+        min_version: 1,
+    };
+    tauri::async_runtime::block_on(async {
+        let registry = registry.read().await;
+        let handle = registry.resolve(installation, &requirement).unwrap();
+        registry
+            .invoke(
+                &handle,
+                installation,
+                CapabilityCall {
+                    envelope: CallEnvelope {
+                        workspace_id: workspace_id.to_owned(),
+                        capability_id: requirement.id,
+                        version: 1,
+                        calling_module_id: ModuleId::new("core.test_caller").unwrap(),
+                    },
+                    input: DescribeRequest {
+                        workspace_id: workspace_id.to_owned(),
+                        attempt_id: attempt_id.to_owned(),
+                    },
+                },
+            )
+            .await
+            .unwrap()
+    })
+}
+
+#[test]
+fn a_bound_practice_attempt_survives_reopening_the_database_file() {
+    // Mirrors production wiring (`lib.rs`): Core and Practice each open their own
+    // connection to the same `axiom.sqlite3`. The in-memory helpers used elsewhere in
+    // this file cannot cover a restart, so this uses a real file and reopens both
+    // connections to stand in for one.
+    let dir = std::env::temp_dir().join(format!("axiom-restart-test-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let db_path = dir.join("axiom.sqlite3");
+
+    let (session_id, workspace_id, attempt_id, first_prompt) = {
+        let database = Database::open(&db_path).unwrap();
+        let workspace = create_workspace(&database);
+        insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+        map_concept_to_knowledge_package(&database, "concept-shells");
+        let (registry, installation) = crate::commands::practice::build_practice_registry(
+            fixture_knowledge_package(),
+            crate::db::open(&db_path).unwrap(),
+        );
+
+        let started = tauri::async_runtime::block_on(session::start_session_handler(
+            &database,
+            &registry,
+            &installation,
+            session_input(&workspace.id),
+        ))
+        .unwrap();
+        let attempt_id = started.current_attempt_id.clone().unwrap();
+        let described =
+            describe_via_capability(&registry, &installation, &workspace.id, &attempt_id);
+        (started.id, workspace.id, attempt_id, described.prompt)
+    };
+
+    // Both connections are dropped above, as on application exit.
+    let reopened = Database::open(&db_path).unwrap();
+    let session = session::get_session_handler(&reopened, &session_id).unwrap();
+    assert_eq!(
+        session.current_attempt_id,
+        Some(attempt_id.clone()),
+        "the session lost its attempt binding across a restart"
+    );
+
+    // Scoped, and `reopened` dropped below, so every connection to the file is closed
+    // before the directory is removed -- the task 061 failure mode on Windows.
+    {
+        let (registry, installation) = crate::commands::practice::build_practice_registry(
+            fixture_knowledge_package(),
+            crate::db::open(&db_path).unwrap(),
+        );
+        let described =
+            describe_via_capability(&registry, &installation, &workspace_id, &attempt_id);
+        assert_eq!(
+            described.prompt, first_prompt,
+            "the resumed attempt is not the same problem the learner was working on"
+        );
+        assert_eq!(described.hints_revealed, 0);
+    }
+
+    drop(reopened);
+    // Best-effort, matching `knowledge/tests/mod.rs`, `loader.rs` and `discover.rs`:
+    // Windows can still hold a handle to the SQLite file here even with every
+    // connection scoped and dropped, and a leaked temp directory is not worth
+    // failing a persistence test over. The unique name means runs never collide.
+    let _ = std::fs::remove_dir_all(&dir);
 }
