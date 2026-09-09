@@ -91,19 +91,18 @@ both directions: red while the commands were missing, green once they landed.
 
 ## Criterion status
 
-Updated 2026-09-09 after `065` and `069` merged. **"Unblocked" is not "met"** — three criteria
-now have nothing standing in their way but have still never been observed working in a real
-build, and this table says so rather than inferring success from a green pipeline. That
-distinction is the whole reason this checkpoint exists.
+Updated 2026-09-09 after walking the practice loop in a Windows release build. Criterion 1
+is met. Criteria 2 and 6 failed on observed app behavior and now have filed follow-ups; this
+table does not infer success from the command-layer coverage.
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | End-to-end practice loop | **unblocked, unverified** — needs a human to walk the loop in a real build |
-| 2 | Survives restart | **half met** — persistence layer verified by test; the app-level restart never observed |
+| 1 | End-to-end practice loop | **met** — Windows release build served a real generated problem; wrong answer revealed an authored hint, correct answer solved it, and Next problem reset the attempt |
+| 2 | Survives restart | **failed** — the `[0, 3]`, `4x - x^2` attempt was replaced by a fresh `[0, 2]`, `3x - x^2` attempt after relaunch and reopening Practice; filed as `070` |
 | 3 | Fully offline | **not started** — `068` builds it |
 | 4 | CI green on required checks | **met** — all 7 green on `master` |
 | 5 | Builds + launchable installer | **met** — three Linux installers produced |
-| 6 | No dead ends | **unblocked, unverified** — needs the loop walked against `AXIOM-HANDOFF.md` |
+| 6 | No dead ends | **failed** — the sample Home page's prominent Resume session opens a Study Session that says "There is no practice content for this concept yet"; filed as `071`. The real generated loop's hint/evaluation/next states had a way forward and its copy passed the handoff rule. |
 
 **What is genuinely proven.** Criterion 5: `npm run build`, `cargo check --release` and
 `cargo build --release` all pass, and `npm run tauri build` produces `Axiom_0.1.0_amd64.deb`
@@ -131,6 +130,29 @@ and plugins from GitHub, so the first build on a clean machine needs network. Th
 build-time requirement and does not bear on criterion 3, which is about the running app.
 
 ## Worklog
+
+- 2026-09-09 — Walked the rendered practice loop by hand on Windows against release binary
+  `src-tauri/target/release/axiom.exe`, built from `0503f3e`. First launch's explicit
+  "Explore a sample workspace" action imported the seeded Calculus II workspace. Opening
+  the Shell method concept and choosing "Practice this" rendered: `f(x) = 4x - x^2` on
+  `[0, 3]`, with no surviving template placeholders. After closing the process completely
+  and relaunching, the app returned to the first-launch page despite showing the persisted
+  workspaces in the sidebar. Navigating back to Shell method and choosing "Practice this"
+  produced a different problem, `f(x) = 3x - x^2` on `[0, 2]`; criterion 2 therefore fails
+  and is filed as `070`.
+- 2026-09-09 — Completed the rest of the loop on the reopened `[0, 2]` problem. Submitting
+  `0` kept the attempt open and showed "That does not match yet" plus the authored hint
+  "Rotation is around the y-axis and the region is given as a function of x, so identify
+  the shell radius and the shell height as functions of x." This names the relevant setup
+  misconception rather than stopping at a bare rejection. Submitting `8*pi` produced the
+  restrained copy "Correct." and a Next problem action. Next problem rendered a different
+  `[0, 1]` problem with the answer blank and no hint revealed. The generated loop itself
+  had no dead end and its copy matched `reference/UI/AXIOM-HANDOFF.md:92`.
+- 2026-09-09 — Found a separate dead end before the real loop: the sample Home page's
+  prominent "Resume session" action opened a Study Session whose problem pane only said
+  "There is no practice content for this concept yet." The sidebar remained usable, but
+  the advertised continuation had no practice action or recovery in the pane. Criterion 6
+  therefore fails and the bug is filed as `071` rather than patched into this checkpoint.
 
 - 2026-09-09 — `065` and `069` merged, clearing the blocker recorded above. Criteria 1, 2 and
   6 are now unblocked but remain **unverified**: the practice loop has never been walked in a
@@ -167,6 +189,11 @@ build.
 ## Review
 
 ## Follow-ups
+
+- **070** — restore the same active Practice attempt when a Study Session is reopened after
+  an app restart.
+- **071** — bind or replace the seeded sample Home continuation so "Resume session" cannot
+  lead to a no-practice-content dead end.
 
 - ~~File the session-selection/resume task~~ — filed and completed as `063`.
 - ~~File the Study Session UI integration task (Antigravity)~~ — filed as `065` (Rust IPC,
