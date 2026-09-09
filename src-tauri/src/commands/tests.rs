@@ -987,16 +987,21 @@ fn a_bound_practice_attempt_survives_reopening_the_database_file() {
         "the session lost its attempt binding across a restart"
     );
 
-    let (registry, installation) = crate::commands::practice::build_practice_registry(
-        fixture_knowledge_package(),
-        crate::db::open(&db_path).unwrap(),
-    );
-    let described = describe_via_capability(&registry, &installation, &workspace_id, &attempt_id);
-    assert_eq!(
-        described.prompt, first_prompt,
-        "the resumed attempt is not the same problem the learner was working on"
-    );
-    assert_eq!(described.hints_revealed, 0);
+    // Scoped, and `reopened` dropped below, so every connection to the file is closed
+    // before the directory is removed -- the task 061 failure mode on Windows.
+    {
+        let (registry, installation) = crate::commands::practice::build_practice_registry(
+            fixture_knowledge_package(),
+            crate::db::open(&db_path).unwrap(),
+        );
+        let described =
+            describe_via_capability(&registry, &installation, &workspace_id, &attempt_id);
+        assert_eq!(
+            described.prompt, first_prompt,
+            "the resumed attempt is not the same problem the learner was working on"
+        );
+        assert_eq!(described.hints_revealed, 0);
+    }
 
     drop(reopened);
     std::fs::remove_dir_all(&dir).unwrap();
