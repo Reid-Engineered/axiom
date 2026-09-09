@@ -1,7 +1,7 @@
 ---
 id: 065
 title: Study session Practice IPC — describeAttempt and nextProblem commands
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: [063]
@@ -75,6 +75,16 @@ Design source: `docs/superpowers/specs/2026-09-09-study-session-ui-integration-d
   confirmed to fail with the guard removed, so it is real coverage and not a tautology.
   Everything codex built is unchanged — the review confirmed the DTO contract, the sibling
   structure, and the counter behaviour were all correct.
+
+- 2026-09-09 — Merged as `23a6dad` (PR #11) after the review findings were applied and all
+  seven required checks passed. `review` → `done`.
+
+  Closing note on review independence, since this task's history is unusual: codex authored
+  the implementation, claude reviewed it, and then claude also applied the fixes at the
+  human's direction (see the entry above). No third party reviewed the fixes themselves. That
+  is a real gap in this record, stated rather than papered over — it was accepted because the
+  changes were small, each new test was verified to fail without its fix, and this PR was the
+  sole blocker on the beta gate.
 
 ## What was built / tested / left out
 
