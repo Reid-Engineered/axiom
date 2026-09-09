@@ -676,6 +676,69 @@ fn start_session_succeeds_without_an_attempt_when_practice_start_fails() {
 }
 
 #[test]
+fn next_problem_rebinds_the_session_and_advances_the_counter() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let first_attempt = started.current_attempt_id.clone().unwrap();
+
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_ne!(advanced.current_attempt_id, Some(first_attempt));
+    assert!(advanced.current_attempt_id.is_some());
+    assert_eq!(advanced.problem_index, Some(2));
+}
+
+#[test]
+fn next_problem_leaves_the_counter_alone_when_practice_is_unavailable() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ))
+    .unwrap();
+
+    assert_eq!(advanced.current_attempt_id, None);
+    assert_eq!(advanced.problem_index, started.problem_index);
+}
+
+#[test]
 fn material_handlers_reconstruct_book_and_exclude_out_of_syllabus_results() {
     let database = database();
     let workspace = create_workspace(&database);

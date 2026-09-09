@@ -212,6 +212,48 @@ async fn start_practice_attempt(
     }
 }
 
+pub async fn next_problem_handler(
+    database: &Database,
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    session_id: &str,
+) -> CommandResult<Session> {
+    let (workspace_id, knowledge_concept_id) = {
+        let connection = database.connection()?;
+        connection
+            .query_row(
+                "SELECT sessions.workspace_id, concepts.knowledge_concept_id
+                 FROM sessions
+                 JOIN concepts ON concepts.id = sessions.concept_id
+                 WHERE sessions.id = ?1",
+                [session_id],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?)),
+            )
+            .optional()
+            .map_err(database_error)?
+            .ok_or_else(|| format!("Session not found: {session_id}"))?
+    };
+    let attempt_id = match knowledge_concept_id {
+        Some(concept_id) => {
+            start_practice_attempt(registry, installation, &workspace_id, concept_id).await
+        }
+        None => None,
+    };
+
+    let connection = database.connection()?;
+    if attempt_id.is_some() {
+        connection
+            .execute(
+                "UPDATE sessions
+                 SET current_attempt_id = ?2, problem_index = COALESCE(problem_index, 1) + 1
+                 WHERE id = ?1",
+                params![session_id, attempt_id],
+            )
+            .map_err(database_error)?;
+    }
+    load_session(&connection, session_id)?.ok_or_else(|| format!("Session not found: {session_id}"))
+}
+
 fn ensure_mutable_session(connection: &Connection, id: &str) -> CommandResult<()> {
     let status = connection
         .query_row("SELECT status FROM sessions WHERE id = ?1", [id], |row| {
@@ -321,6 +363,16 @@ pub async fn start_session(
     input: StartSessionInput,
 ) -> CommandResult<Session> {
     start_session_handler(&database, &registry, &installation, input).await
+}
+
+#[tauri::command(rename = "nextProblem")]
+pub async fn next_problem(
+    database: State<'_, Database>,
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    session_id: String,
+) -> CommandResult<Session> {
+    next_problem_handler(&database, &registry, &installation, &session_id).await
 }
 
 #[tauri::command(rename = "pauseSession")]
