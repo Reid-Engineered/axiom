@@ -1,7 +1,7 @@
 ---
 id: 062
 title: GoalEditingSheet.test.tsx flake — assert on facet chips before they render
-status: review
+status: done
 owner: claude
 stage: 8
 depends_on: []
@@ -66,6 +66,11 @@ Files to be touched:
 - 2026-09-09 — Claimed by claude and pulled forward: the flake stopped being a PR annoyance
   and failed on `master` itself (run `34375033315`, `frontend-checks (macos-latest)`, same
   test and same error), where there is no PR to re-run. Fixed and moved to `review`.
+
+- 2026-09-09 — Independently reviewed by codex: verdict `pass`, no findings. It verified
+  against `GoalEditingSheet.tsx` that the component renders its textarea before the async goal
+  loads, confirming the old await was invalid synchronization rather than a masked
+  render-ordering defect. `review` → `done` and archived as part of the merge of PR #10.
 
 ## What was built / tested / left out
 
