@@ -1151,3 +1151,174 @@ fn a_bound_practice_attempt_survives_reopening_the_database_file() {
     // failing a persistence test over. The unique name means runs never collide.
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+fn bundled_knowledge_package() -> crate::knowledge::KnowledgePackage {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge-package");
+    crate::knowledge::load_knowledge_package(&root).unwrap()
+}
+
+/// Pulls `coeff` and `b` out of the rendered prompt, the way a learner reads them off the
+/// page, so the test can compute the answer for whichever instance the seed produced.
+fn parameters_from_prompt(prompt: &str) -> (i64, i64) {
+    let after_fx = prompt.split("f(x) = ").nth(1).expect("prompt states f(x)");
+    let coeff: i64 = after_fx
+        .split('x')
+        .next()
+        .expect("coefficient precedes x")
+        .trim()
+        .parse()
+        .expect("coefficient is an integer");
+
+    let interval = prompt
+        .split("interval [")
+        .nth(1)
+        .expect("prompt states the interval");
+    let upper = interval
+        .split(']')
+        .next()
+        .expect("interval closes")
+        .split(',')
+        .nth(1)
+        .expect("interval has an upper bound");
+    let b: i64 = upper.trim().parse().expect("upper bound is an integer");
+
+    (coeff, b)
+}
+
+/// The whole learner loop across the real command layer: start a session, read the bound
+/// problem, get a wrong answer rejected, take a hint, submit the right answer, advance.
+///
+/// Every step here already had its own test. Nothing exercised them *in sequence* against
+/// the bundled knowledge package, which is exactly the composition task 064's criterion 1
+/// asks about -- and it is the gap that let `master` ship a practice loop whose commands
+/// were not registered while every check stayed green.
+#[test]
+fn the_full_practice_loop_runs_through_the_command_layer() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        bundled_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+
+    // 1. Starting a session binds a generated problem.
+    let session = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let attempt_id = session
+        .current_attempt_id
+        .clone()
+        .expect("a mapped concept with Practice enabled must bind an attempt");
+
+    // 2. The problem pane hydrates from the bound attempt.
+    let described =
+        tauri::async_runtime::block_on(crate::commands::practice::describe_attempt_handler(
+            &registry,
+            &installation,
+            crate::commands::practice::DescribeAttemptInput {
+                workspace_id: workspace.id.clone(),
+                attempt_id: attempt_id.clone(),
+            },
+        ))
+        .unwrap();
+    assert!(!described.prompt.is_empty());
+    assert!(described.hints_total > 0, "the family authors four hints");
+    assert_eq!(described.hints_revealed, 0);
+    assert_eq!(described.submission_count, 0);
+
+    // 3. A wrong answer is rejected and counted, and the attempt stays open.
+    let wrong =
+        tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+            &registry,
+            &installation,
+            crate::commands::practice::EvaluateAttemptInput {
+                workspace_id: workspace.id.clone(),
+                attempt_id: attempt_id.clone(),
+                response: crate::commands::practice::ResponseValueInput::SymbolicExpression {
+                    value: "0".to_owned(),
+                },
+            },
+        ))
+        .unwrap();
+    assert!(!wrong.correct);
+    assert_eq!(wrong.submission_count, 1);
+
+    // 4. A hint is available and reveals authored text, not a placeholder.
+    let hint = tauri::async_runtime::block_on(crate::commands::practice::request_hint_handler(
+        &registry,
+        &installation,
+        crate::commands::practice::RequestHintInput {
+            workspace_id: workspace.id.clone(),
+            attempt_id: attempt_id.clone(),
+        },
+    ))
+    .unwrap();
+    assert!(!hint.hint_text.trim().is_empty());
+    assert!(
+        !hint.hint_text.contains('{'),
+        "a surviving placeholder means substitution did not run: {}",
+        hint.hint_text
+    );
+    assert_eq!(hint.hints_revealed, 1);
+
+    // 5. The canonical answer, computed from the prompt the learner was shown, is accepted.
+    let (coeff, b) = parameters_from_prompt(&described.prompt);
+    let answer = format!("2*pi*({coeff}*{b}^3/3 - {b}^4/4)");
+    let right =
+        tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+            &registry,
+            &installation,
+            crate::commands::practice::EvaluateAttemptInput {
+                workspace_id: workspace.id.clone(),
+                attempt_id: attempt_id.clone(),
+                response: crate::commands::practice::ResponseValueInput::SymbolicExpression {
+                    value: answer.clone(),
+                },
+            },
+        ))
+        .unwrap();
+    assert!(
+        right.correct,
+        "answer {answer} derived from prompt {:?} was rejected",
+        described.prompt
+    );
+    assert_eq!(right.submission_count, 2);
+
+    // 6. Advancing binds a different problem, open and ready.
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &session.id,
+    ))
+    .unwrap();
+    let next_attempt_id = advanced
+        .current_attempt_id
+        .clone()
+        .expect("advancing must bind a new attempt");
+    assert_ne!(
+        next_attempt_id, attempt_id,
+        "next problem must be a new attempt"
+    );
+    assert_eq!(advanced.problem_index, Some(2));
+
+    let next_described =
+        tauri::async_runtime::block_on(crate::commands::practice::describe_attempt_handler(
+            &registry,
+            &installation,
+            crate::commands::practice::DescribeAttemptInput {
+                workspace_id: workspace.id.clone(),
+                attempt_id: next_attempt_id,
+            },
+        ))
+        .unwrap();
+    assert!(!next_described.prompt.is_empty());
+    assert_eq!(next_described.submission_count, 0);
+    assert_eq!(next_described.hints_revealed, 0);
+}
