@@ -1004,5 +1004,9 @@ fn a_bound_practice_attempt_survives_reopening_the_database_file() {
     }
 
     drop(reopened);
-    std::fs::remove_dir_all(&dir).unwrap();
+    // Best-effort, matching `knowledge/tests/mod.rs`, `loader.rs` and `discover.rs`:
+    // Windows can still hold a handle to the SQLite file here even with every
+    // connection scoped and dropped, and a leaked temp directory is not worth
+    // failing a persistence test over. The unique name means runs never collide.
+    let _ = std::fs::remove_dir_all(&dir);
 }
