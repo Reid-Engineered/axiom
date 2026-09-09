@@ -909,3 +909,95 @@ fn command_dtos_use_frontend_camel_case_fields() {
     .unwrap();
     assert_eq!(input.goal_text, "Prepare for mechanics");
 }
+
+fn describe_via_capability(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    workspace_id: &str,
+    attempt_id: &str,
+) -> DescribeResponse {
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.describe").unwrap(),
+        min_version: 1,
+    };
+    tauri::async_runtime::block_on(async {
+        let registry = registry.read().await;
+        let handle = registry.resolve(installation, &requirement).unwrap();
+        registry
+            .invoke(
+                &handle,
+                installation,
+                CapabilityCall {
+                    envelope: CallEnvelope {
+                        workspace_id: workspace_id.to_owned(),
+                        capability_id: requirement.id,
+                        version: 1,
+                        calling_module_id: ModuleId::new("core.test_caller").unwrap(),
+                    },
+                    input: DescribeRequest {
+                        workspace_id: workspace_id.to_owned(),
+                        attempt_id: attempt_id.to_owned(),
+                    },
+                },
+            )
+            .await
+            .unwrap()
+    })
+}
+
+#[test]
+fn a_bound_practice_attempt_survives_reopening_the_database_file() {
+    // Mirrors production wiring (`lib.rs`): Core and Practice each open their own
+    // connection to the same `axiom.sqlite3`. The in-memory helpers used elsewhere in
+    // this file cannot cover a restart, so this uses a real file and reopens both
+    // connections to stand in for one.
+    let dir = std::env::temp_dir().join(format!("axiom-restart-test-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let db_path = dir.join("axiom.sqlite3");
+
+    let (session_id, workspace_id, attempt_id, first_prompt) = {
+        let database = Database::open(&db_path).unwrap();
+        let workspace = create_workspace(&database);
+        insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+        map_concept_to_knowledge_package(&database, "concept-shells");
+        let (registry, installation) = crate::commands::practice::build_practice_registry(
+            fixture_knowledge_package(),
+            crate::db::open(&db_path).unwrap(),
+        );
+
+        let started = tauri::async_runtime::block_on(session::start_session_handler(
+            &database,
+            &registry,
+            &installation,
+            session_input(&workspace.id),
+        ))
+        .unwrap();
+        let attempt_id = started.current_attempt_id.clone().unwrap();
+        let described =
+            describe_via_capability(&registry, &installation, &workspace.id, &attempt_id);
+        (started.id, workspace.id, attempt_id, described.prompt)
+    };
+
+    // Both connections are dropped above, as on application exit.
+    let reopened = Database::open(&db_path).unwrap();
+    let session = session::get_session_handler(&reopened, &session_id).unwrap();
+    assert_eq!(
+        session.current_attempt_id,
+        Some(attempt_id.clone()),
+        "the session lost its attempt binding across a restart"
+    );
+
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        crate::db::open(&db_path).unwrap(),
+    );
+    let described = describe_via_capability(&registry, &installation, &workspace_id, &attempt_id);
+    assert_eq!(
+        described.prompt, first_prompt,
+        "the resumed attempt is not the same problem the learner was working on"
+    );
+    assert_eq!(described.hints_revealed, 0);
+
+    drop(reopened);
+    std::fs::remove_dir_all(&dir).unwrap();
+}
