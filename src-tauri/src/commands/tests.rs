@@ -1,10 +1,18 @@
 use rusqlite::params;
+use std::sync::Arc;
+use tauri::async_runtime::RwLock;
 
 use super::{concept, goal, material, module, note, seed, session, workspace};
 use super::{
     CreateWorkspaceInput, Database, SampleWorkspaceSeed, SessionIntent, StartSessionInput,
     Workspace,
 };
+use crate::modules::{
+    CallEnvelope, CapabilityCall, CapabilityId, CapabilityProvider, CapabilityRequirement,
+    InvocationError, ModuleId,
+};
+use crate::modules::{ModuleInstallation, ModuleRegistry};
+use crate::practice::{DescribeRequest, DescribeResponse};
 
 fn database() -> Database {
     Database::open_in_memory().unwrap()
@@ -32,6 +40,73 @@ fn insert_concept(database: &Database, workspace_id: &str, id: &str, name: &str)
             params![id, workspace_id, name],
         )
         .unwrap();
+}
+
+fn map_concept_to_knowledge_package(database: &Database, concept_id: &str) {
+    database
+        .connection()
+        .unwrap()
+        .execute(
+            "UPDATE concepts SET knowledge_concept_id = 'shell.method_vertical_axis'
+             WHERE id = ?1",
+            [concept_id],
+        )
+        .unwrap();
+}
+
+fn session_input(workspace_id: &str) -> StartSessionInput {
+    StartSessionInput {
+        workspace_id: workspace_id.to_owned(),
+        concept_id: "concept-shells".to_owned(),
+        intent: SessionIntent {
+            activity: "Practising".to_owned(),
+            detail: None,
+            target_minutes: Some(8),
+        },
+    }
+}
+
+fn practice_connection(workspace_id: &str) -> rusqlite::Connection {
+    let mut connection = crate::db::open_in_memory().unwrap();
+    let transaction = connection.transaction().unwrap();
+    transaction
+        .execute(
+            "INSERT INTO workspaces (id, name, guiding_goal_id, progress, paused)
+             VALUES (?1, 'Test', 'goal-practice', 0.0, 0)",
+            [workspace_id],
+        )
+        .unwrap();
+    transaction
+        .execute(
+            "INSERT INTO goals (id, workspace_id, text, state, created_at, updated_at)
+             VALUES ('goal-practice', ?1, 'Test goal', 'Guiding', ?2, ?2)",
+            params![workspace_id, "2026-09-08T12:00:00Z"],
+        )
+        .unwrap();
+    transaction.commit().unwrap();
+    connection
+}
+
+fn fixture_knowledge_package() -> crate::knowledge::KnowledgePackage {
+    let fixture_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("src/knowledge/tests/fixtures/canonical");
+    crate::knowledge::load_knowledge_package(&fixture_root).unwrap()
+}
+
+struct FailingStartProvider;
+
+#[async_trait::async_trait]
+impl CapabilityProvider for FailingStartProvider {
+    async fn invoke(
+        &self,
+        _capability_id: &CapabilityId,
+        _version: u32,
+        _input: serde_json::Value,
+    ) -> Result<serde_json::Value, InvocationError> {
+        Err(InvocationError::Failed {
+            message: "forced practice.start failure".to_owned(),
+        })
+    }
 }
 
 fn sample_seed() -> SampleWorkspaceSeed {
@@ -399,8 +474,15 @@ fn session_handlers_cover_the_full_lifecycle() {
             .unwrap()
             .is_none()
     );
-    let started = session::start_session_handler(
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
         &database,
+        &registry,
+        &installation,
         StartSessionInput {
             workspace_id: workspace.id.clone(),
             concept_id: "concept-shells".to_owned(),
@@ -410,7 +492,7 @@ fn session_handlers_cover_the_full_lifecycle() {
                 target_minutes: Some(8),
             },
         },
-    )
+    ))
     .unwrap();
     assert_eq!(
         started.resume_summary,
@@ -450,6 +532,147 @@ fn session_handlers_cover_the_full_lifecycle() {
     let completed = session::end_session_handler(&database, &started.id).unwrap();
     assert_eq!(completed.status, "completed");
     assert!(session::resume_session_handler(&database, &started.id).is_err());
+}
+
+#[test]
+fn start_session_binds_an_attempt_for_a_mapped_concept_when_practice_is_enabled() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let attempt_id = started.current_attempt_id.unwrap();
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.describe").unwrap(),
+        min_version: 1,
+    };
+    let described: DescribeResponse = tauri::async_runtime::block_on(async {
+        let registry = registry.read().await;
+        let handle = registry.resolve(&installation, &requirement).unwrap();
+        registry
+            .invoke(
+                &handle,
+                &installation,
+                CapabilityCall {
+                    envelope: CallEnvelope {
+                        workspace_id: workspace.id.clone(),
+                        capability_id: requirement.id,
+                        version: 1,
+                        calling_module_id: ModuleId::new("core.test_caller").unwrap(),
+                    },
+                    input: DescribeRequest {
+                        workspace_id: workspace.id.clone(),
+                        attempt_id,
+                    },
+                },
+            )
+            .await
+    })
+    .unwrap();
+    assert!(!described.prompt.is_empty());
+    assert_eq!(described.status, crate::practice::AttemptStatus::Open);
+}
+
+#[test]
+fn start_session_leaves_attempt_unbound_for_an_unmapped_concept() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    assert_eq!(started.current_attempt_id, None);
+}
+
+#[test]
+fn start_session_succeeds_without_an_attempt_when_practice_is_disabled() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, mut installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    installation
+        .enabled_module_ids
+        .retain(|module_id| module_id.as_str() != "org.axiom.practice");
+
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    assert_eq!(started.current_attempt_id, None);
+}
+
+#[test]
+fn start_session_succeeds_without_an_attempt_when_practice_start_fails() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let mut registry = ModuleRegistry::new();
+    registry
+        .register(
+            crate::modules::parse(
+                r#"
+                    manifest_version = 1
+                    id = "test.failing_practice"
+                    name = "Failing Practice"
+                    version = "1.0.0"
+                    minimum_axiom_version = "0.1.0"
+                    offline = "full"
+
+                    [[provides]]
+                    id = "practice.start"
+                    version = 1
+                "#,
+            )
+            .unwrap(),
+            Box::new(FailingStartProvider),
+        )
+        .unwrap();
+    let registry = Arc::new(RwLock::new(registry));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: vec![ModuleId::new("test.failing_practice").unwrap()],
+    };
+
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    assert_eq!(started.current_attempt_id, None);
 }
 
 #[test]
@@ -601,6 +824,29 @@ fn sample_import_normalizes_the_seed_and_preserves_owned_counts() {
             .len(),
         1
     );
+}
+
+#[test]
+fn sample_seed_crosswalk_resolves_to_a_bundled_knowledge_concept() {
+    let database = database();
+    seed::import_sample_workspace_handler(&database, &sample_seed()).unwrap();
+
+    let knowledge_concept_id: String = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT knowledge_concept_id FROM concepts WHERE name = 'Shell method'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let package_root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge-package");
+    let package = crate::knowledge::load_knowledge_package(&package_root).unwrap();
+    assert!(package
+        .concepts
+        .iter()
+        .any(|concept| concept.id.as_str() == knowledge_concept_id));
 }
 
 #[test]

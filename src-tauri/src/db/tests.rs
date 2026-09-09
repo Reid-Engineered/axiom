@@ -161,3 +161,81 @@ fn practice_tables_exist_after_migration() {
         .unwrap();
     assert_eq!(submissions_columns, 5);
 }
+
+#[test]
+fn session_practice_binding_columns_are_nullable_and_preserve_existing_rows() {
+    let mut connection = Connection::open_in_memory().unwrap();
+    super::configure(&connection).unwrap();
+    connection
+        .execute_batch(
+            "CREATE TABLE schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );",
+        )
+        .unwrap();
+    for migration in super::schema::MIGRATIONS
+        .iter()
+        .filter(|migration| migration.version <= 2)
+    {
+        connection.execute_batch(migration.sql).unwrap();
+        connection
+            .execute(
+                "INSERT INTO schema_migrations (version, name) VALUES (?1, ?2)",
+                params![migration.version, migration.name],
+            )
+            .unwrap();
+    }
+    insert_workspace_and_guiding_goal(&mut connection);
+    insert_concept(&connection, "concept-shells", "Shell method");
+    connection
+        .execute(
+            "INSERT INTO sessions (
+                id, workspace_id, concept_id, status, intent_activity, resume_summary,
+                elapsed_minutes, started_at
+             ) VALUES (
+                'session-existing', ?1, 'concept-shells', 'active', 'Practising',
+                'Ready to continue.', 0, '2026-09-08T12:00:00Z'
+             )",
+            [WORKSPACE_ID],
+        )
+        .unwrap();
+
+    migrate(&mut connection).unwrap();
+
+    let concept_mapping: Option<String> = connection
+        .query_row(
+            "SELECT knowledge_concept_id FROM concepts WHERE id = 'concept-shells'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let current_attempt: Option<String> = connection
+        .query_row(
+            "SELECT current_attempt_id FROM sessions WHERE id = 'session-existing'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(concept_mapping, None);
+    assert_eq!(current_attempt, None);
+
+    for (table, column) in [
+        ("concepts", "knowledge_concept_id"),
+        ("sessions", "current_attempt_id"),
+    ] {
+        let (not_null, default_value): (bool, Option<String>) = connection
+            .query_row(
+                &format!(
+                    "SELECT \"notnull\", dflt_value FROM pragma_table_info('{table}')
+                     WHERE name = ?1"
+                ),
+                [column],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+        assert!(!not_null);
+        assert_eq!(default_value, None);
+    }
+}

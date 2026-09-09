@@ -4,7 +4,7 @@ use serde_json::Value;
 use tauri::async_runtime::RwLock;
 
 use crate::capabilities::math_verify::{VerifyRequest, VerifyResult};
-use crate::knowledge::{KnowledgePackage, ResolvedSolution};
+use crate::knowledge::{KnowledgePackage, ProblemFamily, ResolvedSolution, ResponseType};
 use crate::modules::{
     CallEnvelope, CapabilityCall, CapabilityId, CapabilityProvider, CapabilityRequirement,
     InvocationError, ModuleId, ModuleInstallation, ModuleRegistry,
@@ -13,8 +13,8 @@ use crate::modules::{
 use super::error::PracticeError;
 use super::store::PracticeStore;
 use super::types::{
-    EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse, HintRequest,
-    HintResponse, ResponseValue,
+    DescribeRequest, DescribeResponse, EvaluateRequest, EvaluateResponse, GenerateRequest,
+    GenerateResponse, HintRequest, HintResponse, ResponseValue, StartRequest, StartResponse,
 };
 
 pub struct PracticeProvider {
@@ -87,6 +87,89 @@ impl PracticeProvider {
             prompt: instance.prompt,
             response_type: family.response_type,
             hints_total: instance.hints.len() as u32,
+        })
+    }
+
+    async fn handle_start(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: StartRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.start"),
+                message: error.to_string(),
+            })?;
+        let response = self
+            .start(request)
+            .await
+            .map_err(|error| to_invocation_error("practice.start", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    async fn start(&self, request: StartRequest) -> Result<StartResponse, PracticeError> {
+        let candidates = self
+            .knowledge_package
+            .problem_families
+            .iter()
+            .filter(|family| family.concept_id.as_str() == request.concept_id)
+            .collect::<Vec<_>>();
+        if candidates.is_empty() {
+            return Ok(StartResponse { attempt_id: None });
+        }
+
+        let candidate_ids = candidates
+            .iter()
+            .map(|family| family.id.as_str().to_owned())
+            .collect::<Vec<_>>();
+        let most_recent_family = if candidates.len() > 1 {
+            self.store
+                .most_recent_candidate_family(&request.workspace_id, &candidate_ids)?
+        } else {
+            None
+        };
+        let family = select_family(&candidates, most_recent_family.as_deref(), random_seed());
+        let response = self
+            .generate(GenerateRequest {
+                workspace_id: request.workspace_id,
+                family_id: family.id.as_str().to_owned(),
+                seed: None,
+            })
+            .await?;
+        Ok(StartResponse {
+            attempt_id: Some(response.attempt_id),
+        })
+    }
+
+    async fn handle_describe(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: DescribeRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.describe"),
+                message: error.to_string(),
+            })?;
+        let response = self
+            .describe(request)
+            .map_err(|error| to_invocation_error("practice.describe", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    fn describe(&self, request: DescribeRequest) -> Result<DescribeResponse, PracticeError> {
+        let attempt = self
+            .store
+            .load_attempt(&request.attempt_id, &request.workspace_id)?;
+        let submission_count = self.store.count_submissions(&request.attempt_id)?;
+        let response_type = match attempt.instance.canonical_solution {
+            ResolvedSolution::Symbolic(_) => ResponseType::SymbolicExpression,
+            ResolvedSolution::Numeric(_) => ResponseType::Numeric,
+        };
+
+        Ok(DescribeResponse {
+            prompt: attempt.instance.prompt,
+            response_type,
+            hints_total: attempt.instance.hints.len() as u32,
+            hints_revealed: attempt.hints_revealed,
+            status: attempt.status,
+            submission_count,
         })
     }
 
@@ -232,12 +315,27 @@ impl CapabilityProvider for PracticeProvider {
             ("practice.generate", 1) => self.handle_generate(input).await,
             ("practice.evaluate", 1) => self.handle_evaluate(input).await,
             ("practice.hint", 1) => self.handle_hint(input).await,
+            ("practice.start", 1) => self.handle_start(input).await,
+            ("practice.describe", 1) => self.handle_describe(input).await,
             _ => Err(InvocationError::UnknownCapability {
                 capability_id: capability_id.clone(),
                 version,
             }),
         }
     }
+}
+
+fn select_family<'a>(
+    candidates: &[&'a ProblemFamily],
+    excluded_family_id: Option<&str>,
+    seed: u64,
+) -> &'a ProblemFamily {
+    let eligible = candidates
+        .iter()
+        .copied()
+        .filter(|family| candidates.len() == 1 || Some(family.id.as_str()) != excluded_family_id)
+        .collect::<Vec<_>>();
+    eligible[(seed % eligible.len() as u64) as usize]
 }
 
 fn capability_id(value: &str) -> CapabilityId {
@@ -280,7 +378,9 @@ mod tests {
     use crate::capabilities::math_verify::MathVerifyProvider;
     use crate::knowledge::ResolvedSolution;
     use crate::modules::ModuleId;
-    use crate::practice::{AttemptStatus, EvaluateRequest, HintRequest, ResponseValue};
+    use crate::practice::{
+        AttemptStatus, DescribeRequest, EvaluateRequest, HintRequest, ResponseValue, StartRequest,
+    };
 
     fn fixture_package() -> KnowledgePackage {
         let fixture_root =
@@ -289,6 +389,10 @@ mod tests {
     }
 
     fn provider() -> PracticeProvider {
+        provider_with_package(fixture_package())
+    }
+
+    fn provider_with_package(knowledge_package: KnowledgePackage) -> PracticeProvider {
         let store = PracticeStore::new(crate::db::open_in_memory().unwrap());
         {
             let mut connection = store.connection_for_test();
@@ -314,7 +418,16 @@ mod tests {
             workspace_id: "ws-1".to_owned(),
             enabled_module_ids: vec![ModuleId::new("org.axiom.practice").unwrap()],
         };
-        PracticeProvider::new(store, fixture_package(), registry, installation)
+        PracticeProvider::new(store, knowledge_package, registry, installation)
+    }
+
+    fn multi_family_package() -> KnowledgePackage {
+        let mut package = fixture_package();
+        let mut second_family = package.problem_families[0].clone();
+        second_family.id =
+            crate::knowledge::ProblemFamilyId::new("problem.shell_y_poly_variant").unwrap();
+        package.problem_families.push(second_family);
+        package
     }
 
     fn registry_with_math_verify_and_practice() -> (
@@ -434,6 +547,145 @@ mod tests {
 
         let attempt_id = output["attempt_id"].as_str().unwrap();
         assert!(provider.store.load_attempt(attempt_id, "ws-1").is_ok());
+    }
+
+    #[test]
+    fn start_with_zero_families_returns_no_attempt() {
+        let mut package = fixture_package();
+        package.problem_families.clear();
+        let provider = provider_with_package(package);
+
+        let response = tauri::async_runtime::block_on(provider.start(StartRequest {
+            workspace_id: "ws-1".to_owned(),
+            concept_id: "shell.method_vertical_axis".to_owned(),
+        }))
+        .unwrap();
+
+        assert_eq!(response.attempt_id, None);
+    }
+
+    #[test]
+    fn start_with_one_family_generates_and_persists_an_attempt() {
+        let provider = provider();
+
+        let response = tauri::async_runtime::block_on(provider.start(StartRequest {
+            workspace_id: "ws-1".to_owned(),
+            concept_id: "shell.method_vertical_axis".to_owned(),
+        }))
+        .unwrap();
+        let attempt_id = response.attempt_id.unwrap();
+
+        assert!(provider.store.load_attempt(&attempt_id, "ws-1").is_ok());
+    }
+
+    #[test]
+    fn start_never_immediately_repeats_a_candidate_family() {
+        let provider = provider_with_package(multi_family_package());
+        let first = tauri::async_runtime::block_on(provider.start(StartRequest {
+            workspace_id: "ws-1".to_owned(),
+            concept_id: "shell.method_vertical_axis".to_owned(),
+        }))
+        .unwrap()
+        .attempt_id
+        .unwrap();
+        let first_family = provider
+            .store
+            .load_attempt(&first, "ws-1")
+            .unwrap()
+            .family_id;
+        let second = tauri::async_runtime::block_on(provider.start(StartRequest {
+            workspace_id: "ws-1".to_owned(),
+            concept_id: "shell.method_vertical_axis".to_owned(),
+        }))
+        .unwrap()
+        .attempt_id
+        .unwrap();
+        let second_family = provider
+            .store
+            .load_attempt(&second, "ws-1")
+            .unwrap()
+            .family_id;
+        assert_ne!(second_family, first_family);
+
+        let families = provider
+            .knowledge_package
+            .problem_families
+            .iter()
+            .collect::<Vec<_>>();
+        for seed in 0..10_000 {
+            assert_ne!(
+                select_family(&families, Some(&first_family), seed)
+                    .id
+                    .as_str(),
+                first_family
+            );
+        }
+    }
+
+    #[test]
+    fn describe_returns_the_current_open_attempt_without_private_solution_data() {
+        let provider = provider();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+
+        let described = provider
+            .describe(DescribeRequest {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: generated.attempt_id,
+            })
+            .unwrap();
+
+        assert_eq!(described.prompt, generated.prompt);
+        assert_eq!(described.response_type, generated.response_type);
+        assert_eq!(described.hints_total, generated.hints_total);
+        assert_eq!(described.hints_revealed, 0);
+        assert_eq!(described.status, AttemptStatus::Open);
+        assert_eq!(described.submission_count, 0);
+        let value = serde_json::to_value(described).unwrap();
+        assert!(value.get("canonical_solution").is_none());
+        assert!(value.get("hints").is_none());
+    }
+
+    #[test]
+    fn describe_returns_solved_status_and_submission_count() {
+        let provider = provider();
+        let generated = tauri::async_runtime::block_on(provider.generate(GenerateRequest {
+            workspace_id: "ws-1".to_owned(),
+            family_id: "problem.shell_y_poly".to_owned(),
+            seed: Some(42),
+        }))
+        .unwrap();
+        provider
+            .store
+            .record_submission(&generated.attempt_id, "{}", true)
+            .unwrap();
+        provider.store.mark_solved(&generated.attempt_id).unwrap();
+
+        let described = provider
+            .describe(DescribeRequest {
+                workspace_id: "ws-1".to_owned(),
+                attempt_id: generated.attempt_id,
+            })
+            .unwrap();
+
+        assert_eq!(described.status, AttemptStatus::Solved);
+        assert_eq!(described.submission_count, 1);
+    }
+
+    #[test]
+    fn describe_an_unknown_attempt_returns_attempt_not_found() {
+        let provider = provider();
+
+        let result = provider.describe(DescribeRequest {
+            workspace_id: "ws-1".to_owned(),
+            attempt_id: "attempt-missing".to_owned(),
+        });
+
+        assert!(matches!(result, Err(PracticeError::AttemptNotFound { .. })));
     }
 
     #[test]
