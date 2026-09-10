@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { NavigationProvider } from '../hooks/NavigationProvider';
 import { useNavigation } from '../hooks/useNavigation';
+import { loadMockSessionsForTest } from '../test/mockBackend';
 import { FullVisualizationPage } from './FullVisualizationPage';
 import { shellMethodScene } from './fullVisualizationScene';
 
@@ -23,6 +24,8 @@ function renderPage() {
 }
 
 describe('FullVisualizationPage', () => {
+  beforeEach(() => loadMockSessionsForTest());
+
   it('defines and renders the complete verified-primitive scene shape', async () => {
     expect(shellMethodScene.coordinateSystem.kind).toBe('coordinate-system');
     expect(shellMethodScene.functions[0].kind).toBe('function');

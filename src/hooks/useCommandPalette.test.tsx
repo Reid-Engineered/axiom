@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { mockWorkspaces } from '../services/mockData/workspaces';
+import { loadMockSessionsForTest } from '../test/mockBackend';
 import { NavigationProvider } from './NavigationProvider';
 import { useCommandPalette } from './useCommandPalette';
 
@@ -17,6 +18,8 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('useCommandPalette', () => {
+  beforeEach(() => loadMockSessionsForTest());
+
   it('opens, tracks a query, returns real grouped data, and clears on close', async () => {
     const { result } = renderHook(() => useCommandPalette(), { wrapper });
 

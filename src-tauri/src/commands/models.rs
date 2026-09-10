@@ -289,7 +289,6 @@ pub struct SampleWorkspaceSeed {
     pub concepts: Vec<Concept>,
     pub modules: Vec<Module>,
     pub workspace_templates: Vec<WorkspaceTemplate>,
-    pub sessions: Vec<Session>,
     pub materials: Vec<Material>,
     pub material_results: Vec<MaterialResult>,
     pub notes: Vec<Note>,

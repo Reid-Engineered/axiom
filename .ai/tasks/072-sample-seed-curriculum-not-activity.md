@@ -1,7 +1,7 @@
 ---
 id: 072
 title: Sample seed carries curriculum, not activity
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: []
@@ -54,10 +54,37 @@ still construct sessions; the file simply stops being shipped as seed.
 ## Worklog
 
 - 2026-09-09 — Filed by claude from the approved design, `proposed` for codex.
+- 2026-09-09 — Claimed by codex on `agent/codex/072-sample-seed-curriculum-not-activity`; beginning TDD removal of seeded activity while retaining sample curriculum.
+- 2026-09-09 — Added acceptance assertions before implementation. Initial execution was blocked by the worktree's missing Node dependencies and unusable native Rust linkers; after installing the locked dependencies and switching Rust gates to WSL, the targeted tests passed against the minimal implementation.
+- 2026-09-09 — Removed sessions from the Rust and TypeScript seed contracts and made the test IPC baseline session-free. Tests that genuinely exercise prior learner activity now load session fixtures explicitly rather than inheriting fabricated seed state.
+- 2026-09-09 — Local gates green; moved to `review`. PR creation and the required CI/e2e result are pending the coordinating agent.
+- 2026-09-09 — Gates independently re-run by claude on a Linux toolchain rather than taken
+  from the report: `cargo test` 305 passed / 0 failed, `cargo clippy --all-targets -- -D
+  warnings` clean, `cargo fmt --check` clean, `npm run typecheck`, `npm run lint`, `npm run
+  build`, `npx vitest run` (61 files / 165 tests), design-token grep empty. Every number
+  codex recorded above matched. claude made no code change to this branch.
 
 ## What was built / tested / left out
 
-Not started.
+- Removed `sessions` from `SampleWorkspaceSeed`, the frontend import payload, and the Rust
+  import transaction. The importer can no longer write seeded sessions, tutor exchanges, or
+  settled conclusions.
+- Set all three retained sample workspaces to `progress: 0` with no `lastActivityAt` and made
+  `resetMockBackend` start with no sessions. `mockData/sessions.ts` remains available only for
+  tests that explicitly load learner activity.
+- Expanded the Rust sample-import test fixture to all three workspaces and asserted zero
+  progress, null activity, no active session for each, zero rows in all three session tables,
+  and the retained Shell-method crosswalk/curriculum coverage.
+- Updated direct consumer tests. `sampleWorkspaceService.test.ts` was not named in the Plan,
+  but changing it was required because it verifies the complete seed payload contract.
+- Tested locally: `npm run typecheck`; `npm run lint`; `npm run build`; `npm test` (61 files,
+  165 tests); `cargo check`; `cargo test` (305 tests); `cargo clippy --all-targets -- -D
+  warnings`; `cargo fmt --check`; design-value grep over the `src/` diff (no matches).
+- Native Rust gates ran under WSL with a task-scoped target directory because the Windows MSVC
+  linker was unavailable and the GNU linker cannot link this Tauri cdylib. The required CI
+  e2e job was not run locally and remains pending on the PR.
+- Left out as scoped: active-session ordering/reuse, startup restoration, study-screen cleanup,
+  workspace provisioning, native restart coverage, and the wider fixture/affordance purge.
 
 ## Review
 

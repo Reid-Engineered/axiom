@@ -5,7 +5,7 @@ use tauri::State;
 
 use super::{
     database_error, workspace, CommandResult, Concept, Database, Goal, Material, MaterialResult,
-    Module, SampleWorkspaceSeed, Session, Workspace,
+    Module, SampleWorkspaceSeed, Workspace,
 };
 
 fn insert_modules(transaction: &Transaction<'_>, modules: &[Module]) -> CommandResult<()> {
@@ -279,74 +279,6 @@ fn insert_concepts(transaction: &Transaction<'_>, concepts: &[Concept]) -> Comma
     Ok(())
 }
 
-fn insert_sessions(transaction: &Transaction<'_>, sessions: &[Session]) -> CommandResult<()> {
-    for session in sessions {
-        transaction
-            .execute(
-                "INSERT INTO sessions (
-                    id, workspace_id, concept_id, status, intent_activity, intent_detail,
-                    intent_target_minutes, resume_summary, thumbnail_url, elapsed_minutes,
-                    problem_index, problem_count, open_question, started_at, paused_at,
-                    current_attempt_id
-                ) VALUES (
-                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
-                    ?16
-                )",
-                params![
-                    session.id,
-                    session.workspace_id,
-                    session.concept_id,
-                    session.status,
-                    session.intent.activity,
-                    session.intent.detail,
-                    session.intent.target_minutes,
-                    session.resume_summary,
-                    session.thumbnail_url,
-                    session.elapsed_minutes,
-                    session.problem_index,
-                    session.problem_count,
-                    session.open_question,
-                    session.started_at,
-                    session.paused_at,
-                    session.current_attempt_id,
-                ],
-            )
-            .map_err(database_error)?;
-
-        for (position, exchange) in session.exchanges.iter().enumerate() {
-            transaction
-                .execute(
-                    "INSERT INTO tutor_exchanges (
-                        id, session_id, position, question, answer, occurred_at,
-                        pinned_to_visualization
-                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                    params![
-                        exchange.id,
-                        session.id,
-                        position as i64,
-                        exchange.question,
-                        exchange.answer,
-                        exchange.occurred_at,
-                        exchange.pinned_to_visualization,
-                    ],
-                )
-                .map_err(database_error)?;
-        }
-        for (position, conclusion) in session.settled_conclusions.iter().enumerate() {
-            transaction
-                .execute(
-                    "INSERT INTO session_settled_conclusions (
-                        session_id, position, conclusion
-                    ) VALUES (?1, ?2, ?3)",
-                    params![session.id, position as i64, conclusion],
-                )
-                .map_err(database_error)?;
-        }
-    }
-
-    Ok(())
-}
-
 fn insert_material(transaction: &Transaction<'_>, material: &Material) -> CommandResult<()> {
     transaction
         .execute(
@@ -525,7 +457,6 @@ fn import_seed(transaction: &Transaction<'_>, seed: &SampleWorkspaceSeed) -> Com
     }
 
     insert_concepts(transaction, &seed.concepts)?;
-    insert_sessions(transaction, &seed.sessions)?;
 
     let concept_workspaces: HashMap<&str, &str> = seed
         .concepts
