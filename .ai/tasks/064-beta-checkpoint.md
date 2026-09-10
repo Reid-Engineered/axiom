@@ -106,12 +106,12 @@ distinction is the whole reason this checkpoint exists.
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | End-to-end practice loop | **not met** — walked 2026-09-09; works in the imported sample only. A learner-created workspace has no concepts, so Practice is unreachable in one. `075` |
-| 2 | Survives restart | **not met** — walked 2026-09-09; the app reopens on First Launch and restores nothing. Storage layer still sound. `070`, `071` |
+| 1 | End-to-end practice loop | **not met, unblocked** — `075` landed, so a learner-created workspace is now provisioned with the bundled curriculum and can reach Practice. Never yet walked end to end in a real build; `074` is what would prove it |
+| 2 | Survives restart | **not met** — `071` landed, so the correct session is now selectable and reusable, but the app still reopens on First Launch and restores nothing. Waiting on `070`, then `074` |
 | 3 | Fully offline | **not started** — `068` builds it |
 | 4 | CI green on required checks | **met** — all 7 green on `master` |
 | 5 | Builds + launchable installer | **met** — three Linux installers produced |
-| 6 | No dead ends | **not met** — walked 2026-09-09; Home's advertised "Resume session" opens a session with no practice content. `071`, `072`, `073` |
+| 6 | No dead ends | **not met** — `071` and `072` landed, so the Home dead end's two causes are both fixed. The Study Session screen still carries contradictory hardcoded content. Waiting on `073`, then `074` |
 
 **What is genuinely proven.** Criterion 5: `npm run build`, `cargo check --release` and
 `cargo build --release` all pass, and `npm run tauri build` produces `Axiom_0.1.0_amd64.deb`
@@ -143,6 +143,15 @@ and plugins from GitHub, so the first build on a clean machine needs network. Th
 build-time requirement and does not bear on criterion 3, which is about the running app.
 
 ## Worklog
+
+- 2026-09-10 — **Wave 1 of the containment path is merged**: `071` (#19, `88d8a0b`), `072`
+  (#20, `16043a5`) and `075` (#21, `8096d09`). All three reviewed by claude and archived
+  `done`. The two causes of the Home dead end are fixed and a learner-created workspace now
+  reaches real Practice content. **No criterion moves to met on the strength of this** — 1, 2
+  and 6 all still wait on `074`'s native regression, and 2 additionally on `070`. Two things
+  worth carrying forward: `071`'s Windows CI caught a test that had been passing on Linux by
+  timing luck, and `079` was filed for a separate flake in `HomePage.test.tsx` that surfaced
+  during `075`'s run.
 
 - 2026-09-09 — **Walked the loop on a Windows release build.** Criterion 1's mechanism passed:
   a real `shell_y_poly` problem generated with every placeholder substituted, a wrong answer
