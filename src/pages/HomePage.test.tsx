@@ -84,14 +84,17 @@ describe('HomePage', () => {
     });
     expect(resumeButton).toBeVisible();
 
-    const recoveryLines = within(recovery!)
-      .getByText(/held up while you were away/)
-      .closest('ul');
-    expect(within(recoveryLines!).getAllByRole('listitem')).toHaveLength(3);
-    expect(screen.getByText('Angular momentum · was Strong')).toBeVisible();
+    // The recovery lines and the away-events list come from useConcepts and
+    // useRecentWorkspaceActivity, which resolve after the workspace that renders the heading
+    // above. Awaiting each one is what keeps this test off the runner's timing.
+    const recoveryLines = (
+      await within(recovery!).findByText(/held up while you were away/)
+    ).closest('ul');
+    await waitFor(() => expect(within(recoveryLines!).getAllByRole('listitem')).toHaveLength(3));
+    expect(await screen.findByText('Angular momentum · was Strong')).toBeVisible();
 
     const away = screen.getByRole('heading', { name: 'While you were away' }).closest('section');
-    expect(within(away!).getAllByRole('listitem')).toHaveLength(3);
+    await waitFor(() => expect(within(away!).getAllByRole('listitem')).toHaveLength(3));
 
     fireEvent.click(resumeButton);
     await waitFor(() =>
