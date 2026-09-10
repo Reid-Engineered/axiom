@@ -29,7 +29,7 @@ pub(crate) fn load_workspace(
     let base = connection
         .query_row(
             "SELECT id, name, guiding_goal_id, progress, last_concept_name,
-                    last_activity_at, paused
+                    last_activity_at, created_at, paused
              FROM workspaces WHERE id = ?1",
             [id],
             |row| {
@@ -40,15 +40,24 @@ pub(crate) fn load_workspace(
                     row.get::<_, f64>(3)?,
                     row.get::<_, Option<String>>(4)?,
                     row.get::<_, Option<String>>(5)?,
-                    row.get::<_, bool>(6)?,
+                    row.get::<_, Option<String>>(6)?,
+                    row.get::<_, bool>(7)?,
                 ))
             },
         )
         .optional()
         .map_err(database_error)?;
 
-    let Some((id, name, guiding_goal_id, progress, last_concept_name, last_activity_at, paused)) =
-        base
+    let Some((
+        id,
+        name,
+        guiding_goal_id,
+        progress,
+        last_concept_name,
+        last_activity_at,
+        created_at,
+        paused,
+    )) = base
     else {
         return Ok(None);
     };
@@ -113,6 +122,7 @@ pub(crate) fn load_workspace(
         progress,
         last_concept_name,
         last_activity_at,
+        created_at,
         paused,
         offline_availability,
         enabled_module_ids,
@@ -186,9 +196,9 @@ pub async fn create_workspace_handler(
         transaction
             .execute(
                 "INSERT INTO workspaces (
-                id, name, guiding_goal_id, progress, paused
-            ) VALUES (?1, ?2, ?3, 0, 0)",
-                params![workspace_id, subject, goal_id],
+                id, name, guiding_goal_id, progress, paused, created_at
+            ) VALUES (?1, ?2, ?3, 0, 0, ?4)",
+                params![workspace_id, subject, goal_id, created_at],
             )
             .map_err(database_error)?;
         transaction

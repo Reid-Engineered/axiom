@@ -272,6 +272,7 @@ pub async fn generate_attempt(
 }
 
 pub async fn evaluate_attempt_handler(
+    database: &super::Database,
     registry: &Arc<RwLock<ModuleRegistry>>,
     installation: &ModuleInstallation,
     input: EvaluateAttemptInput,
@@ -283,22 +284,24 @@ pub async fn evaluate_attempt_handler(
         input.workspace_id.clone(),
         EvaluateRequest {
             workspace_id: input.workspace_id,
-            attempt_id: input.attempt_id,
+            attempt_id: input.attempt_id.clone(),
             response: input.response.into(),
         },
     )
     .await
     .map_err(practice_error)?;
+    super::session::touch_session_for_attempt(database, &input.attempt_id)?;
     Ok(response.into())
 }
 
 #[tauri::command(rename = "evaluateAttempt", rename_all = "camelCase")]
 pub async fn evaluate_attempt(
+    database: State<'_, super::Database>,
     registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
     installation: State<'_, ModuleInstallation>,
     input: EvaluateAttemptInput,
 ) -> CommandResult<EvaluationResult> {
-    evaluate_attempt_handler(&registry, &installation, input).await
+    evaluate_attempt_handler(&database, &registry, &installation, input).await
 }
 
 pub async fn request_hint_handler(
@@ -630,6 +633,7 @@ mod tests {
         assert_eq!(hint.hints_revealed, 1);
 
         let evaluation = tauri::async_runtime::block_on(evaluate_attempt_handler(
+            &crate::commands::Database::open_in_memory().unwrap(),
             &registry,
             &installation,
             EvaluateAttemptInput {
@@ -707,6 +711,7 @@ mod tests {
         response: String,
     ) -> EvaluationResult {
         tauri::async_runtime::block_on(evaluate_attempt_handler(
+            &crate::commands::Database::open_in_memory().unwrap(),
             registry,
             installation,
             EvaluateAttemptInput {

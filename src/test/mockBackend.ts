@@ -129,6 +129,12 @@ function findSession(id: string) {
   return session;
 }
 
+function touchSession(session: Session) {
+  const activityAt = new Date().toISOString();
+  session.lastActivityAt = activityAt;
+  findWorkspace(session.workspaceId).lastActivityAt = activityAt;
+}
+
 function modulesForWorkspace(workspaceId: string) {
   const workspace = findWorkspace(workspaceId);
   return modules.map((module) => ({
@@ -178,6 +184,7 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
         name: input.subject.trim(),
         guidingGoalId: goalId,
         progress: 0,
+        createdAt: new Date().toISOString(),
         paused: false,
         offlineAvailability: [
           { kind: 'textbookAndLectureNotes', enabled: false, sizeBytes: 0 },
@@ -279,10 +286,19 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
       return updateModuleEnabled(parameters.workspaceId as string, module.id, visibility !== 'off');
     }
     case 'getActiveSessionByWorkspace': {
-      const session = sessions.find(
-        (candidate) =>
-          candidate.workspaceId === parameters.workspaceId && candidate.status !== 'completed',
-      );
+      const session = sessions
+        .filter(
+          (candidate) =>
+            candidate.workspaceId === parameters.workspaceId && candidate.status !== 'completed',
+        )
+        .sort((left, right) => {
+          if (left.lastActivityAt && right.lastActivityAt) {
+            return right.lastActivityAt.localeCompare(left.lastActivityAt);
+          }
+          if (left.lastActivityAt) return -1;
+          if (right.lastActivityAt) return 1;
+          return sessions.indexOf(right) - sessions.indexOf(left);
+        })[0];
       return session ? structuredClone(session) : null;
     }
     case 'getSession':
@@ -298,6 +314,38 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
       if (concept.workspaceId !== workspace.id && concept.workspaceId !== input.workspaceId) {
         throw new Error(`Concept not found in workspace: ${input.conceptId}`);
       }
+      const existing = sessions
+        .filter(
+          (candidate) =>
+            candidate.workspaceId === input.workspaceId &&
+            candidate.conceptId === input.conceptId &&
+            candidate.status !== 'completed',
+        )
+        .sort((left, right) => {
+          if (left.lastActivityAt && right.lastActivityAt) {
+            return right.lastActivityAt.localeCompare(left.lastActivityAt);
+          }
+          if (left.lastActivityAt) return -1;
+          if (right.lastActivityAt) return 1;
+          return sessions.indexOf(right) - sessions.indexOf(left);
+        })[0];
+      if (existing) {
+        const attempt = existing.currentAttemptId
+          ? mockAttempts.get(existing.currentAttemptId)
+          : undefined;
+        if (
+          MAPPED_CONCEPT_NAMES.has(concept.name) &&
+          (!existing.currentAttemptId || attempt?.status === 'solved')
+        ) {
+          existing.currentAttemptId = createMockAttempt().id;
+          existing.problemIndex = (existing.problemIndex ?? 0) + 1;
+        }
+        existing.status = 'active';
+        delete existing.pausedAt;
+        touchSession(existing);
+        return structuredClone(existing);
+      }
+      const activityAt = new Date().toISOString();
       const session: Session = {
         id: `session-${crypto.randomUUID()}`,
         workspaceId: input.workspaceId,
@@ -313,8 +361,10 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
         exchanges: [],
         settledConclusions: [],
         startedAt: new Date().toISOString(),
+        lastActivityAt: activityAt,
       };
       sessions.push(session);
+      workspace.lastActivityAt = activityAt;
       return structuredClone(session);
     }
     case 'pauseSession': {
@@ -322,6 +372,7 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
       if (session.status === 'completed') throw new Error(`Session is completed: ${session.id}`);
       session.status = 'paused';
       session.pausedAt = new Date().toISOString();
+      touchSession(session);
       return structuredClone(session);
     }
     case 'resumeSession': {
@@ -329,6 +380,7 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
       if (session.status === 'completed') throw new Error(`Session is completed: ${session.id}`);
       session.status = 'active';
       delete session.pausedAt;
+      touchSession(session);
       return structuredClone(session);
     }
     case 'addTutorExchange': {
@@ -406,6 +458,7 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
         session.currentAttemptId = createMockAttempt().id;
         session.problemIndex = (session.problemIndex ?? 1) + 1;
       }
+      touchSession(session);
       return structuredClone(session);
     }
     case 'evaluateAttempt': {
@@ -421,6 +474,8 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
       const correct = Math.abs(submitted - MOCK_PRACTICE_FAMILY.correctValue) <= 1e-6;
       attempt.submissionCount += 1;
       if (correct) attempt.status = 'solved';
+      const session = sessions.find((candidate) => candidate.currentAttemptId === input.attemptId);
+      if (session) touchSession(session);
       return {
         correct,
         status: attempt.status,

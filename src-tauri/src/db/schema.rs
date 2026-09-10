@@ -1,4 +1,4 @@
-pub const LATEST_SCHEMA_VERSION: i64 = 3;
+pub const LATEST_SCHEMA_VERSION: i64 = 4;
 
 pub struct Migration {
     pub version: i64,
@@ -21,5 +21,10 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 3,
         name: "session_practice_binding",
         sql: include_str!("migrations/0003_session_practice_binding.sql"),
+    },
+    Migration {
+        version: 4,
+        name: "session_activity",
+        sql: include_str!("migrations/0004_session_activity.sql"),
     },
 ];

@@ -45,5 +45,6 @@ export interface Session {
   settledConclusions: string[];
   openQuestion?: string;
   startedAt: string;
+  lastActivityAt?: string;
   pausedAt?: string;
 }

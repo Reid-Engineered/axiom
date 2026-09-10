@@ -37,6 +37,7 @@ export interface Workspace {
   progress: number;
   lastConceptName?: string;
   lastActivityAt?: string;
+  createdAt?: string;
   paused: boolean;
   /**
    * Per-kind offline toggle state. The toolbar's single "Available offline" chip and
