@@ -73,6 +73,14 @@ This task tracks the gate; the work is split across:
   with durable coverage, and criterion 4's CI-green bar going forward.
 - **068** (`proposed`) — network-disabled native acceptance test. Directly implements
   criterion 3.
+- **070–075** (`proposed`, owner codex) — mock and dead-end containment, from the 2026-09-09
+  walk. `071` active-session selection and reuse; `072` sample seed carries curriculum, not
+  activity; `075` workspace curriculum provisioning; `070` startup restoration from domain
+  state; `073` Study Session contradictory-state removal; `074` the native regression that
+  verifies criteria 1, 2 and 6 together. Claude reviews all six.
+- **076**, **077**, **078** (`proposed`) — deferred follow-ups from the same design, held
+  outside the beta path by explicit decision: real elapsed-time tracking, the application-wide
+  affordance purge, and a conditional visual pass after `073`.
 
 This task's own file gets updated (not the sub-tasks') as each dependency lands, and moves
 `proposed → in-progress` once the session-selection design task is filed and claimed.
@@ -98,12 +106,12 @@ distinction is the whole reason this checkpoint exists.
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | End-to-end practice loop | **unblocked, unverified** — needs a human to walk the loop in a real build |
-| 2 | Survives restart | **half met** — persistence layer verified by test; the app-level restart never observed |
+| 1 | End-to-end practice loop | **not met** — walked 2026-09-09; works in the imported sample only. A learner-created workspace has no concepts, so Practice is unreachable in one. `075` |
+| 2 | Survives restart | **not met** — walked 2026-09-09; the app reopens on First Launch and restores nothing. Storage layer still sound. `070`, `071` |
 | 3 | Fully offline | **not started** — `068` builds it |
 | 4 | CI green on required checks | **met** — all 7 green on `master` |
 | 5 | Builds + launchable installer | **met** — three Linux installers produced |
-| 6 | No dead ends | **unblocked, unverified** — needs the loop walked against `AXIOM-HANDOFF.md` |
+| 6 | No dead ends | **not met** — walked 2026-09-09; Home's advertised "Resume session" opens a session with no practice content. `071`, `072`, `073` |
 
 **What is genuinely proven.** Criterion 5: `npm run build`, `cargo check --release` and
 `cargo build --release` all pass, and `npm run tauri build` produces `Axiom_0.1.0_amd64.deb`
@@ -122,15 +130,30 @@ individual piece is tested; the composition of them is not. The dev environment 
 `WebKitWebDriver`, so even the existing e2e harness cannot be driven locally, and the e2e
 suite covers first-launch and workspace persistence only — it never opens a Study Session.
 
-**Next action for the beta: walk the loop by hand on a real build**, and record what happens
-here. That single pass settles criteria 1, 2 and 6 together, and it is the last thing standing
-between the current tree and criterion 3's work in `068`.
+**The walk happened on 2026-09-09**, on a Windows release build, and is recorded in the
+worklog below. It settled criteria 1, 2 and 6 in the negative: the Practice loop itself works
+end to end, and the application around it presents mock fixtures as live domain state.
+Containment is designed in
+`docs/superpowers/specs/2026-09-09-mock-and-dead-end-containment-design.md` and split across
+`070`–`075`. **Criteria 1, 2 and 6 stay unmet until all six land and `074`'s native regression
+passes on CI** — no subset settles a criterion, and none is claimed on a green unit suite.
 
 **Build-time note for whoever cuts it:** AppImage bundling downloads `linuxdeploy`, `AppRun`
 and plugins from GitHub, so the first build on a clean machine needs network. That is a
 build-time requirement and does not bear on criterion 3, which is about the running app.
 
 ## Worklog
+
+- 2026-09-09 — **Walked the loop on a Windows release build.** Criterion 1's mechanism passed:
+  a real `shell_y_poly` problem generated with every placeholder substituted, a wrong answer
+  stayed open and revealed a relevant authored hint, `8*pi` produced restrained "Correct."
+  copy, and Next problem regenerated and reset cleanly. Criteria 2 and 6 failed. Restart
+  reopened on First Launch despite persisted workspaces in the sidebar, and returning to Shell
+  method produced a fresh problem rather than the one left open. Home's seeded "Problem 6 of
+  12 · Resume session" opened a Study Session reading "There is no practice content for this
+  concept yet." Root-caused by claude to one defect — the app has no representation of the
+  session the learner is in — plus a sample import that seeds activity records. Design and six
+  tasks filed; criteria 1, 2 and 6 moved from "unblocked, unverified" to **not met**.
 
 - 2026-09-09 — `065` and `069` merged, clearing the blocker recorded above. Criteria 1, 2 and
   6 are now unblocked but remain **unverified**: the practice loop has never been walked in a
