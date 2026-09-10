@@ -151,7 +151,8 @@ build-time requirement and does not bear on criterion 3, which is about the runn
   and 6 all still wait on `074`'s native regression, and 2 additionally on `070`. Two things
   worth carrying forward: `071`'s Windows CI caught a test that had been passing on Linux by
   timing luck, and `079` was filed for a separate flake in `HomePage.test.tsx` that surfaced
-  during `075`'s run.
+  during `075`'s run — which then recurred on all three platforms and was fixed the same day
+  (#24) rather than left deferred, because it had started blocking unrelated PRs.
 
 - 2026-09-09 — **Walked the loop on a Windows release build.** Criterion 1's mechanism passed:
   a real `shell_y_poly` problem generated with every placeholder substituted, a wrong answer
