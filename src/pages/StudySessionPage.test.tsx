@@ -5,6 +5,7 @@ import { NavigationProvider } from '../hooks/NavigationProvider';
 import { useNavigation } from '../hooks/useNavigation';
 import * as practiceService from '../services/practiceService';
 import { getSession, startSession } from '../services/sessionService';
+import { loadMockSessionsForTest } from '../test/mockBackend';
 import { StudySessionPage } from './StudySessionPage';
 
 function RouteObserver() {
@@ -23,6 +24,7 @@ function renderSession(sessionId = 'session-shell-method') {
 
 describe('StudySessionPage', () => {
   it('renders the real long session as a settled summary with only the current exchange expanded', async () => {
+    loadMockSessionsForTest();
     renderSession();
 
     expect(await screen.findByText('Shell method')).toBeVisible();
@@ -44,6 +46,7 @@ describe('StudySessionPage', () => {
   });
 
   it('submits a tutor question, pauses, edits working, and opens the visualization detour', async () => {
+    loadMockSessionsForTest();
     renderSession();
     const working = await screen.findByRole('textbox', { name: 'Your working' });
 

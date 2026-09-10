@@ -8,7 +8,6 @@ import type {
   MaterialResult,
   Module,
   Note,
-  Session,
   Workspace,
 } from '../types';
 import { importSampleWorkspace } from './sampleWorkspaceService';
@@ -27,7 +26,6 @@ describe('sampleWorkspaceService', () => {
     const goals = capturedSeed?.goals as Goal[];
     const concepts = capturedSeed?.concepts as Concept[];
     const modules = capturedSeed?.modules as Module[];
-    const sessions = capturedSeed?.sessions as Session[];
     const materials = capturedSeed?.materials as Material[];
     const materialResults = capturedSeed?.materialResults as MaterialResult[];
     const notes = capturedSeed?.notes as Note[];
@@ -35,9 +33,6 @@ describe('sampleWorkspaceService', () => {
     const goalIds = new Set(goals.map((goal) => goal.id));
     const conceptIds = new Set(concepts.map((concept) => concept.id));
     const moduleIds = new Set(modules.map((module) => module.id));
-    const exchangeIds = sessions.flatMap((session) =>
-      session.exchanges.map((exchange) => exchange.id),
-    );
 
     expect(workspace.id).toBe('workspace-calculus-ii');
     expect(concepts).toHaveLength(92);
@@ -74,12 +69,7 @@ describe('sampleWorkspaceService', () => {
         (module.worksWithModuleIds ?? []).every((moduleId) => moduleIds.has(moduleId)),
       ),
     ).toBe(true);
-    expect(
-      sessions.every(
-        (session) => workspaceIds.has(session.workspaceId) && conceptIds.has(session.conceptId),
-      ),
-    ).toBe(true);
-    expect(new Set(exchangeIds).size).toBe(exchangeIds.length);
+    expect(capturedSeed).not.toHaveProperty('sessions');
     expect(materials.every((material) => material.segments.length === 4)).toBe(true);
     expect(
       materialResults.every((result) => {

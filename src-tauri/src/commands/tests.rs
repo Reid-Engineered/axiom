@@ -112,39 +112,80 @@ impl CapabilityProvider for FailingStartProvider {
 fn sample_seed() -> SampleWorkspaceSeed {
     serde_json::from_value(serde_json::json!({
         "sampleWorkspaceId": "sample-workspace",
-        "workspaces": [{
-            "id": "sample-workspace",
-            "name": "Calculus II",
-            "guidingGoalId": "sample-goal",
-            "progress": 0.58,
-            "lastConceptName": "Shell method",
-            "lastActivityAt": "2026-08-27T19:20:00.000Z",
-            "paused": false,
-            "offlineAvailability": [{
-                "kind": "textbookAndLectureNotes",
-                "enabled": true,
-                "sizeBytes": 880803840
-            }],
-            "enabledModuleIds": ["sample-module"]
-        }],
+        "workspaces": [
+            {
+                "id": "sample-workspace",
+                "name": "Calculus II",
+                "guidingGoalId": "sample-goal",
+                "progress": 0,
+                "lastConceptName": "Shell method",
+                "paused": false,
+                "offlineAvailability": [{
+                    "kind": "textbookAndLectureNotes",
+                    "enabled": true,
+                    "sizeBytes": 880803840
+                }],
+                "enabledModuleIds": ["sample-module"]
+            },
+            {
+                "id": "sample-linear-workspace",
+                "name": "Linear Algebra",
+                "guidingGoalId": "sample-linear-goal",
+                "progress": 0,
+                "lastConceptName": "Eigenvectors",
+                "paused": false,
+                "offlineAvailability": [],
+                "enabledModuleIds": []
+            },
+            {
+                "id": "sample-physics-workspace",
+                "name": "Mechanics",
+                "guidingGoalId": "sample-physics-goal",
+                "progress": 0,
+                "lastConceptName": "Angular momentum",
+                "paused": true,
+                "offlineAvailability": [],
+                "enabledModuleIds": []
+            }
+        ],
         "workspaceActivity": [{
             "id": "sample-activity",
             "workspaceId": "sample-workspace",
             "occurredAt": "2026-08-28T12:00:00.000Z",
             "summary": "A worked example was linked to Shell method."
         }],
-        "goals": [{
-            "id": "sample-goal",
-            "workspaceId": "sample-workspace",
-            "text": "Explain and solve every integration technique.",
-            "state": "Guiding",
-            "inferred": {
-                "conceptScope": 87,
-                "tools": ["Practice", "Visualizer"]
+        "goals": [
+            {
+                "id": "sample-goal",
+                "workspaceId": "sample-workspace",
+                "text": "Explain and solve every integration technique.",
+                "state": "Guiding",
+                "inferred": {
+                    "conceptScope": 87,
+                    "tools": ["Practice", "Visualizer"]
+                },
+                "createdAt": "2026-08-18T13:00:00.000Z",
+                "updatedAt": "2026-08-26T17:30:00.000Z"
             },
-            "createdAt": "2026-08-18T13:00:00.000Z",
-            "updatedAt": "2026-08-26T17:30:00.000Z"
-        }],
+            {
+                "id": "sample-linear-goal",
+                "workspaceId": "sample-linear-workspace",
+                "text": "Write clear proofs about vector spaces.",
+                "state": "Guiding",
+                "inferred": {},
+                "createdAt": "2026-08-18T13:00:00.000Z",
+                "updatedAt": "2026-08-26T17:30:00.000Z"
+            },
+            {
+                "id": "sample-physics-goal",
+                "workspaceId": "sample-physics-workspace",
+                "text": "Retain the mechanics needed for electromagnetism.",
+                "state": "Guiding",
+                "inferred": {},
+                "createdAt": "2026-08-18T13:00:00.000Z",
+                "updatedAt": "2026-08-26T17:30:00.000Z"
+            }
+        ],
         "concepts": [{
             "id": "sample-concept",
             "workspaceId": "sample-workspace",
@@ -188,28 +229,6 @@ fn sample_seed() -> SampleWorkspaceSeed {
             "name": "Visual Learner",
             "description": "A visual starting point.",
             "toolCount": 7
-        }],
-        "sessions": [{
-            "id": "sample-session",
-            "workspaceId": "sample-workspace",
-            "conceptId": "sample-concept",
-            "status": "paused",
-            "intent": {
-                "activity": "Practising",
-                "targetMinutes": 35
-            },
-            "resumeSummary": "You were checking where the shell height changes.",
-            "elapsedMinutes": 47,
-            "exchanges": [{
-                "id": "sample-exchange",
-                "question": "How should I identify the radius?",
-                "answer": "Measure from the axis of rotation.",
-                "occurredAt": "2026-08-27T19:00:00.000Z",
-                "pinnedToVisualization": true
-            }],
-            "settledConclusions": ["The radius is measured from the axis."],
-            "startedAt": "2026-08-27T17:00:00.000Z",
-            "pausedAt": "2026-08-27T20:27:00.000Z"
         }],
         "materials": [{
             "id": "sample-material",
@@ -937,13 +956,27 @@ fn sample_import_normalizes_the_seed_and_preserves_owned_counts() {
             .unwrap()
             .enabled
     );
-    assert_eq!(
-        session::get_session_handler(&database, "sample-session")
-            .unwrap()
-            .exchanges
-            .len(),
-        1
-    );
+    let workspaces = workspace::get_workspaces_handler(&database).unwrap();
+    assert_eq!(workspaces.len(), 3);
+    for workspace in workspaces {
+        assert_eq!(workspace.progress, 0.0);
+        assert_eq!(workspace.last_activity_at, None);
+        assert_eq!(
+            session::get_active_session_by_workspace_handler(&database, &workspace.id).unwrap(),
+            None
+        );
+    }
+    {
+        let connection = database.connection().unwrap();
+        for table in ["sessions", "tutor_exchanges", "session_settled_conclusions"] {
+            let row_count: i64 = connection
+                .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+                    row.get(0)
+                })
+                .unwrap();
+            assert_eq!(row_count, 0, "sample import wrote activity rows to {table}");
+        }
+    }
     let material = material::get_material_handler(&database, &imported.id).unwrap();
     assert_eq!(material.highlights_count, 41);
     assert_eq!(material.notes_count, 18);
@@ -1009,7 +1042,7 @@ fn sample_import_is_idempotent_and_does_not_reset_existing_sample_work() {
     assert_eq!(imported_again.name, "My Calculus II");
     assert_eq!(
         workspace::get_workspaces_handler(&database).unwrap().len(),
-        1
+        3
     );
 }
 

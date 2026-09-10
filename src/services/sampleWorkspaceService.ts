@@ -6,7 +6,6 @@ import { mockGoals } from './mockData/goals';
 import { mockMaterialResults, mockMaterials } from './mockData/material';
 import { mockModules, mockWorkspaceTemplates } from './mockData/modules';
 import { mockNotes } from './mockData/notes';
-import { mockSessions } from './mockData/sessions';
 import { mockWorkspaceActivity } from './mockData/workspaceActivity';
 import { mockWorkspaces } from './mockData/workspaces';
 
@@ -23,7 +22,6 @@ export async function importSampleWorkspace(): Promise<Workspace> {
       concepts: mockConcepts,
       modules: mockModules,
       workspaceTemplates: mockWorkspaceTemplates,
-      sessions: mockSessions,
       materials: mockMaterials,
       materialResults: mockMaterialResults,
       notes: mockNotes,

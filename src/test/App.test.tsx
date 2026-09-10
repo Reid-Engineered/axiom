@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
+import { loadMockSessionsForTest } from './mockBackend';
 
 /**
  * "Explore a sample workspace" appears twice once the empty sidebar is visible alongside
@@ -67,6 +68,7 @@ describe('Stage 3 navigation', () => {
   });
 
   it('opens real command palette results from the advertised shortcut', async () => {
+    loadMockSessionsForTest();
     render(<App />);
 
     fireEvent.keyDown(window, { key: 'k', metaKey: true });
