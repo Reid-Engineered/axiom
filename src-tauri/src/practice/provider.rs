@@ -13,8 +13,9 @@ use crate::modules::{
 use super::error::PracticeError;
 use super::store::PracticeStore;
 use super::types::{
-    DescribeRequest, DescribeResponse, EvaluateRequest, EvaluateResponse, GenerateRequest,
-    GenerateResponse, HintRequest, HintResponse, ResponseValue, StartRequest, StartResponse,
+    ConceptDescriptor, ConceptsRequest, ConceptsResponse, DescribeRequest, DescribeResponse,
+    EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse, HintRequest,
+    HintResponse, ResponseValue, StartRequest, StartResponse,
 };
 
 pub struct PracticeProvider {
@@ -103,6 +104,35 @@ impl PracticeProvider {
         serde_json::to_value(response).map_err(|error| InvocationError::Failed {
             message: error.to_string(),
         })
+    }
+
+    fn handle_concepts(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: ConceptsRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.concepts"),
+                message: error.to_string(),
+            })?;
+        let response = self.concepts(request);
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    fn concepts(&self, request: ConceptsRequest) -> ConceptsResponse {
+        let _workspace_id = request.workspace_id;
+        ConceptsResponse {
+            concepts: self
+                .knowledge_package
+                .concepts
+                .iter()
+                .map(|concept| ConceptDescriptor {
+                    concept_id: concept.id.as_str().to_owned(),
+                    name: concept.name.clone(),
+                    topic: concept.topic.clone().unwrap_or_default(),
+                    summary: concept.description.clone(),
+                })
+                .collect(),
+        }
     }
 
     async fn start(&self, request: StartRequest) -> Result<StartResponse, PracticeError> {
@@ -317,6 +347,7 @@ impl CapabilityProvider for PracticeProvider {
             ("practice.hint", 1) => self.handle_hint(input).await,
             ("practice.start", 1) => self.handle_start(input).await,
             ("practice.describe", 1) => self.handle_describe(input).await,
+            ("practice.concepts", 1) => self.handle_concepts(input),
             _ => Err(InvocationError::UnknownCapability {
                 capability_id: capability_id.clone(),
                 version,

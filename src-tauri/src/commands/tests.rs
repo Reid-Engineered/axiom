@@ -19,13 +19,37 @@ fn database() -> Database {
 }
 
 fn create_workspace(database: &Database) -> Workspace {
-    workspace::create_workspace_handler(
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: String::new(),
+        enabled_module_ids: Vec::new(),
+    };
+    tauri::async_runtime::block_on(workspace::create_workspace_handler(
         database,
+        &registry,
+        &installation,
         CreateWorkspaceInput {
             subject: "  Calculus II  ".to_owned(),
             goal_text: "  Prepare for the final  ".to_owned(),
         },
-    )
+    ))
+    .unwrap()
+}
+
+fn create_workspace_with_registry(
+    database: &Database,
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+) -> Workspace {
+    tauri::async_runtime::block_on(workspace::create_workspace_handler(
+        database,
+        registry,
+        installation,
+        CreateWorkspaceInput {
+            subject: "Calculus II".to_owned(),
+            goal_text: "Prepare for the final".to_owned(),
+        },
+    ))
     .unwrap()
 }
 
@@ -105,6 +129,22 @@ impl CapabilityProvider for FailingStartProvider {
     ) -> Result<serde_json::Value, InvocationError> {
         Err(InvocationError::Failed {
             message: "forced practice.start failure".to_owned(),
+        })
+    }
+}
+
+struct FailingConceptsProvider;
+
+#[async_trait::async_trait]
+impl CapabilityProvider for FailingConceptsProvider {
+    async fn invoke(
+        &self,
+        _capability_id: &CapabilityId,
+        _version: u32,
+        _input: serde_json::Value,
+    ) -> Result<serde_json::Value, InvocationError> {
+        Err(InvocationError::Failed {
+            message: "forced practice.concepts failure".to_owned(),
         })
     }
 }
@@ -304,6 +344,178 @@ fn workspace_handlers_create_read_toggle_and_bound_activity() {
     assert_eq!(activity.len(), 3);
     assert_eq!(activity[0].id, "event-1");
     assert_eq!(activity[2].id, "event-3");
+}
+
+#[test]
+fn workspace_creation_provisions_bundled_concepts_with_opaque_crosswalks() {
+    let database = database();
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        bundled_knowledge_package(),
+        crate::db::open_in_memory().unwrap(),
+    );
+
+    let workspace = create_workspace_with_registry(&database, &registry, &installation);
+    let connection = database.connection().unwrap();
+    let mut statement = connection
+        .prepare(
+            "SELECT name, chapter, meaning, mastery_state, on_exam, knowledge_concept_id
+             FROM concepts WHERE workspace_id = ?1 ORDER BY knowledge_concept_id",
+        )
+        .unwrap();
+    let concepts = statement
+        .query_map([&workspace.id], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, bool>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .unwrap()
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .unwrap();
+
+    assert_eq!(concepts.len(), 3);
+    assert!(concepts.iter().all(|concept| concept.3 == "New"));
+    assert!(concepts.iter().all(|concept| !concept.4));
+    assert!(concepts
+        .iter()
+        .all(|concept| !concept.0.is_empty() && !concept.1.is_empty() && !concept.2.is_empty()));
+    assert!(concepts
+        .iter()
+        .any(|concept| concept.5 == "shell.method_vertical_axis"));
+}
+
+#[test]
+fn workspace_creation_succeeds_with_zero_concepts_when_capability_is_absent() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT COUNT(*) FROM concepts WHERE workspace_id = ?1",
+            [&workspace.id],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn workspace_creation_succeeds_with_zero_concepts_when_practice_is_disabled() {
+    let database = database();
+    let (registry, mut installation) = crate::commands::practice::build_practice_registry(
+        bundled_knowledge_package(),
+        crate::db::open_in_memory().unwrap(),
+    );
+    installation
+        .enabled_module_ids
+        .retain(|module_id| module_id.as_str() != "org.axiom.practice");
+
+    let workspace = create_workspace_with_registry(&database, &registry, &installation);
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT COUNT(*) FROM concepts WHERE workspace_id = ?1",
+            [&workspace.id],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn workspace_creation_succeeds_with_zero_concepts_when_capability_invocation_fails() {
+    let database = database();
+    let mut registry = ModuleRegistry::new();
+    registry
+        .register(
+            crate::modules::parse(
+                r#"
+                    manifest_version = 1
+                    id = "test.failing_concepts"
+                    name = "Failing Concepts"
+                    version = "1.0.0"
+                    minimum_axiom_version = "0.1.0"
+                    offline = "full"
+
+                    [[provides]]
+                    id = "practice.concepts"
+                    version = 1
+                "#,
+            )
+            .unwrap(),
+            Box::new(FailingConceptsProvider),
+        )
+        .unwrap();
+    let registry = Arc::new(RwLock::new(registry));
+    let installation = ModuleInstallation {
+        workspace_id: String::new(),
+        enabled_module_ids: vec![ModuleId::new("test.failing_concepts").unwrap()],
+    };
+
+    let workspace = create_workspace_with_registry(&database, &registry, &installation);
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT COUNT(*) FROM concepts WHERE workspace_id = ?1",
+            [&workspace.id],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn a_created_workspace_shell_concept_starts_a_real_attempt() {
+    let database = database();
+    let (provisioning_registry, provisioning_installation) =
+        crate::commands::practice::build_practice_registry(
+            bundled_knowledge_package(),
+            crate::db::open_in_memory().unwrap(),
+        );
+    let workspace = create_workspace_with_registry(
+        &database,
+        &provisioning_registry,
+        &provisioning_installation,
+    );
+    let shell_concept_id: String = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT id FROM concepts
+             WHERE workspace_id = ?1 AND knowledge_concept_id = 'shell.method_vertical_axis'",
+            [&workspace.id],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        bundled_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        StartSessionInput {
+            workspace_id: workspace.id,
+            concept_id: shell_concept_id,
+            intent: SessionIntent {
+                activity: "Practising".to_owned(),
+                detail: None,
+                target_minutes: Some(8),
+            },
+        },
+    ))
+    .unwrap();
+
+    assert!(started.current_attempt_id.is_some());
 }
 
 #[test]

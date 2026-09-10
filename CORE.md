@@ -308,6 +308,16 @@ pub enum RegistryError {
 }
 ```
 
+Workspace creation may request curriculum through `practice.concepts@1`. Its request carries
+the workspace id and its response is a list of opaque descriptors: `{ concept_id, name,
+topic, summary }`. Core stores `concept_id` only as the knowledge-concept crosswalk and stores
+the other strings without interpreting subject knowledge. Practice supplies `topic` and
+`summary` because the corresponding Core columns are required; Core supplies only its own
+record defaults (`mastery_state = 'New'`, `on_exam = 0`, and no learner history). Resolution
+still runs through `ModuleRegistry`, with `core.workspace` as the caller. Core never reads a
+Knowledge Package directly, and workspace creation degrades to a usable zero-concept
+workspace when the capability is absent, disabled, or fails.
+
 ## 5. Resolving multiple providers
 
 If more than one enabled module in a workspace provides a matching capability at a

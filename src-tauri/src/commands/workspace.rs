@@ -1,5 +1,14 @@
+use std::sync::Arc;
+
 use rusqlite::{params, Connection, OptionalExtension};
+use tauri::async_runtime::RwLock;
 use tauri::State;
+
+use crate::modules::{
+    CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement, ModuleId,
+    ModuleInstallation, ModuleRegistry,
+};
+use crate::practice::{ConceptsRequest, ConceptsResponse};
 
 use super::{
     database_error, new_id, now, CommandResult, CreateWorkspaceInput, Database,
@@ -159,8 +168,10 @@ pub fn get_recent_activity_handler(
     Ok(events)
 }
 
-pub fn create_workspace_handler(
+pub async fn create_workspace_handler(
     database: &Database,
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
     input: CreateWorkspaceInput,
 ) -> CommandResult<Workspace> {
     let workspace_id = new_id("workspace");
@@ -168,39 +179,106 @@ pub fn create_workspace_handler(
     let created_at = now();
     let subject = input.subject.trim();
     let goal_text = input.goal_text.trim();
-    let mut connection = database.connection()?;
-    let transaction = connection.transaction().map_err(database_error)?;
+    {
+        let mut connection = database.connection()?;
+        let transaction = connection.transaction().map_err(database_error)?;
 
-    transaction
-        .execute(
-            "INSERT INTO workspaces (
-                id, name, guiding_goal_id, progress, paused
-            ) VALUES (?1, ?2, ?3, 0, 0)",
-            params![workspace_id, subject, goal_id],
-        )
-        .map_err(database_error)?;
-    transaction
-        .execute(
-            "INSERT INTO goals (
-                id, workspace_id, text, state, created_at, updated_at
-            ) VALUES (?1, ?2, ?3, 'Guiding', ?4, ?4)",
-            params![goal_id, workspace_id, goal_text, created_at],
-        )
-        .map_err(database_error)?;
-    for kind in OFFLINE_KINDS {
         transaction
             .execute(
-                "INSERT INTO workspace_offline_availability (
-                    workspace_id, kind, enabled, size_bytes
-                ) VALUES (?1, ?2, 0, 0)",
-                params![workspace_id, kind],
+                "INSERT INTO workspaces (
+                id, name, guiding_goal_id, progress, paused
+            ) VALUES (?1, ?2, ?3, 0, 0)",
+                params![workspace_id, subject, goal_id],
             )
             .map_err(database_error)?;
+        transaction
+            .execute(
+                "INSERT INTO goals (
+                id, workspace_id, text, state, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, 'Guiding', ?4, ?4)",
+                params![goal_id, workspace_id, goal_text, created_at],
+            )
+            .map_err(database_error)?;
+        for kind in OFFLINE_KINDS {
+            transaction
+                .execute(
+                    "INSERT INTO workspace_offline_availability (
+                    workspace_id, kind, enabled, size_bytes
+                ) VALUES (?1, ?2, 0, 0)",
+                    params![workspace_id, kind],
+                )
+                .map_err(database_error)?;
+        }
+        transaction.commit().map_err(database_error)?;
     }
-    transaction.commit().map_err(database_error)?;
 
+    if let Some(response) = provisioned_concepts(registry, installation, &workspace_id).await {
+        let mut connection = database.connection()?;
+        let transaction = connection.transaction().map_err(database_error)?;
+        for concept in response.concepts {
+            transaction
+                .execute(
+                    "INSERT INTO concepts (
+                        id, workspace_id, name, chapter, mastery_state, meaning, on_exam,
+                        knowledge_concept_id
+                    ) VALUES (?1, ?2, ?3, ?4, 'New', ?5, 0, ?6)",
+                    params![
+                        new_id("concept"),
+                        workspace_id,
+                        concept.name,
+                        concept.topic,
+                        concept.summary,
+                        concept.concept_id,
+                    ],
+                )
+                .map_err(database_error)?;
+        }
+        transaction.commit().map_err(database_error)?;
+    }
+
+    let connection = database.connection()?;
     load_workspace(&connection, &workspace_id)?
         .ok_or_else(|| format!("Workspace not found: {workspace_id}"))
+}
+
+async fn provisioned_concepts(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    workspace_id: &str,
+) -> Option<ConceptsResponse> {
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.concepts").expect("static capability id is valid"),
+        min_version: 1,
+    };
+    let handle = {
+        let registry = registry.read().await;
+        match registry.resolve(installation, &requirement) {
+            Ok(handle) => handle,
+            Err(error) => {
+                eprintln!("practice.concepts unavailable during workspace creation: {error}");
+                return None;
+            }
+        }
+    };
+    let call = CapabilityCall {
+        envelope: CallEnvelope {
+            workspace_id: workspace_id.to_owned(),
+            capability_id: requirement.id,
+            version: 1,
+            calling_module_id: ModuleId::new("core.workspace").expect("static module id is valid"),
+        },
+        input: ConceptsRequest {
+            workspace_id: workspace_id.to_owned(),
+        },
+    };
+    let registry = registry.read().await;
+    match registry.invoke(&handle, installation, call).await {
+        Ok(response) => Some(response),
+        Err(error) => {
+            eprintln!("practice.concepts failed during workspace creation: {error}");
+            None
+        }
+    }
 }
 
 pub fn set_workspace_offline_availability_handler(
@@ -245,11 +323,13 @@ pub fn get_recent_activity(
 }
 
 #[tauri::command(rename = "createWorkspace")]
-pub fn create_workspace(
+pub async fn create_workspace(
     database: State<'_, Database>,
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
     input: CreateWorkspaceInput,
 ) -> CommandResult<Workspace> {
-    create_workspace_handler(&database, input)
+    create_workspace_handler(&database, &registry, &installation, input).await
 }
 
 #[tauri::command(rename = "setWorkspaceOfflineAvailability", rename_all = "camelCase")]
