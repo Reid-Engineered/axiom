@@ -29,6 +29,8 @@ pub struct Workspace {
     pub last_concept_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_activity_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
     pub paused: bool,
     pub offline_availability: Vec<OfflineKindAvailability>,
     pub enabled_module_ids: Vec<String>,
@@ -215,6 +217,8 @@ pub struct Session {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub open_question: Option<String>,
     pub started_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_activity_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub paused_at: Option<String>,
 }

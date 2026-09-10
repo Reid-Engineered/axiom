@@ -239,3 +239,63 @@ fn session_practice_binding_columns_are_nullable_and_preserve_existing_rows() {
         assert_eq!(default_value, None);
     }
 }
+
+#[test]
+fn session_activity_columns_are_nullable_and_preserve_existing_rows() {
+    let mut connection = Connection::open_in_memory().unwrap();
+    super::configure(&connection).unwrap();
+    connection
+        .execute_batch(
+            "CREATE TABLE schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );",
+        )
+        .unwrap();
+    for migration in super::schema::MIGRATIONS
+        .iter()
+        .filter(|migration| migration.version <= 3)
+    {
+        connection.execute_batch(migration.sql).unwrap();
+        connection
+            .execute(
+                "INSERT INTO schema_migrations (version, name) VALUES (?1, ?2)",
+                params![migration.version, migration.name],
+            )
+            .unwrap();
+    }
+    insert_workspace_and_guiding_goal(&mut connection);
+    insert_concept(&connection, "concept-shells", "Shell method");
+    connection
+        .execute(
+            "INSERT INTO sessions (
+                id, workspace_id, concept_id, status, intent_activity, resume_summary,
+                elapsed_minutes, started_at
+             ) VALUES (
+                'session-existing', ?1, 'concept-shells', 'active', 'Practising',
+                'Ready to continue.', 0, '2026-09-08T12:00:00Z'
+             )",
+            [WORKSPACE_ID],
+        )
+        .unwrap();
+
+    migrate(&mut connection).unwrap();
+
+    let session_activity: Option<String> = connection
+        .query_row(
+            "SELECT last_activity_at FROM sessions WHERE id = 'session-existing'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let workspace_created: Option<String> = connection
+        .query_row(
+            "SELECT created_at FROM workspaces WHERE id = ?1",
+            [WORKSPACE_ID],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(session_activity, None);
+    assert_eq!(workspace_created, None);
+}

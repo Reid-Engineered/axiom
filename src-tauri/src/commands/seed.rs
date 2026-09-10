@@ -4,8 +4,8 @@ use rusqlite::{params, Transaction};
 use tauri::State;
 
 use super::{
-    database_error, workspace, CommandResult, Concept, Database, Goal, Material, MaterialResult,
-    Module, SampleWorkspaceSeed, Workspace,
+    database_error, now, workspace, CommandResult, Concept, Database, Goal, Material,
+    MaterialResult, Module, SampleWorkspaceSeed, Workspace,
 };
 
 fn insert_modules(transaction: &Transaction<'_>, modules: &[Module]) -> CommandResult<()> {
@@ -378,8 +378,8 @@ fn import_seed(transaction: &Transaction<'_>, seed: &SampleWorkspaceSeed) -> Com
             .execute(
                 "INSERT INTO workspaces (
                     id, name, guiding_goal_id, progress, last_concept_name,
-                    last_activity_at, paused
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    last_activity_at, paused, created_at
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     workspace.id,
                     workspace.name,
@@ -388,6 +388,7 @@ fn import_seed(transaction: &Transaction<'_>, seed: &SampleWorkspaceSeed) -> Com
                     workspace.last_concept_name,
                     workspace.last_activity_at,
                     workspace.paused,
+                    now(),
                 ],
             )
             .map_err(database_error)?;

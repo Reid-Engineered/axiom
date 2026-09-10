@@ -37,6 +37,7 @@ export const mockSessions: Session[] = [
     ],
     openQuestion: 'How can the intersection be found without solving both curves explicitly?',
     startedAt: '2026-08-27T17:00:00.000Z',
+    lastActivityAt: '2026-08-27T20:27:00.000Z',
     pausedAt: '2026-08-27T20:27:00.000Z',
   },
   {
@@ -55,6 +56,7 @@ export const mockSessions: Session[] = [
     })),
     settledConclusions: ['Choose u so its derivative simplifies the product.'],
     startedAt: '2026-08-24T14:00:00.000Z',
+    lastActivityAt: '2026-08-24T14:24:00.000Z',
   },
   {
     id: 'session-eigenvectors',
@@ -71,6 +73,7 @@ export const mockSessions: Session[] = [
     settledConclusions: ['Eigenvectors keep their direction under the transformation.'],
     openQuestion: 'What does a repeated eigenvalue imply geometrically?',
     startedAt: '2026-08-28T13:00:00.000Z',
+    lastActivityAt: '2026-08-28T13:18:00.000Z',
   },
   {
     id: 'session-angular-momentum',
@@ -86,6 +89,7 @@ export const mockSessions: Session[] = [
     settledConclusions: ['Internal forces do not change the system’s total angular momentum.'],
     openQuestion: 'Does the support force create an external torque about the chosen origin?',
     startedAt: '2026-05-12T16:00:00.000Z',
+    lastActivityAt: '2026-05-12T16:45:00.000Z',
     pausedAt: '2026-05-12T16:45:00.000Z',
   },
 ];
