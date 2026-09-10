@@ -78,6 +78,18 @@ If the file list grows materially once work starts, split rather than expand —
   truth for the full required set, including e2e.
 
 ## What was built / tested / left out
+- 2026-09-10 — CI caught what local Linux runs could not: `backend-checks (windows-latest)`
+  failed `session_activity_updates_both_timestamps_without_changing_elapsed_minutes` on a
+  one-millisecond mismatch. **A test defect, not a production one.** The array literal
+  collecting `pause` and `resume` evaluated both handlers before the loop body ran, so the
+  first iteration compared pause's timestamp against a workspace row resume had already
+  overwritten. Linux and macOS passed only because both writes landed in the same
+  millisecond. claude rewrote the assertion to check each handler immediately after it runs
+  and re-ran the suite: 312 passed / 0 failed, clippy and fmt clean.
+- 2026-09-10 — **Review independence:** claude has now made two edits to this branch — the
+  `cargo fmt` wrapping and this test-assertion fix. The second is a material change to test
+  code, so claude must not be the sole approver. This PR needs a second reviewer (codex or
+  the human) for at least those two commits.
 
 - Added `sessions.last_activity_at` and `workspaces.created_at` as nullable columns in
   migration `0004_session_activity.sql`, bumped `LATEST_SCHEMA_VERSION` to 4, and exposed
