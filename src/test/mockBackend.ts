@@ -80,13 +80,18 @@ export function resetMockBackend() {
   materials = structuredClone(mockMaterials);
   modules = structuredClone(mockModules);
   notes = structuredClone(mockNotes);
-  sessions = structuredClone(mockSessions);
+  sessions = [];
   templates = structuredClone(mockWorkspaceTemplates);
   workspaceActivity = structuredClone(mockWorkspaceActivity);
   workspaces = structuredClone(mockWorkspaces);
 }
 
 resetMockBackend();
+
+/** Loads explicit learner activity for tests whose scenario requires an existing session. */
+export function loadMockSessionsForTest(nextSessions: Session[] = mockSessions) {
+  sessions = structuredClone(nextSessions);
+}
 
 function args(payload?: InvokeArgs): Record<string, unknown> {
   return (payload ?? {}) as Record<string, unknown>;

@@ -1,10 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { mockSessions } from '../services/mockData/sessions';
+import { loadMockSessionsForTest } from '../test/mockBackend';
 import { useActiveSession, useSession } from './useSessions';
 
 describe('session domain hooks', () => {
+  beforeEach(() => loadMockSessionsForTest());
+
   it('loads the real long session and preserves its collapsed-summary inputs', async () => {
     const fixture = mockSessions[0];
     const { result } = renderHook(() => useSession(fixture.id));

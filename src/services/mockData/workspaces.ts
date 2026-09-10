@@ -5,9 +5,8 @@ export const mockWorkspaces: Workspace[] = [
     id: 'workspace-calculus-ii',
     name: 'Calculus II',
     guidingGoalId: 'goal-calculus-exam',
-    progress: 0.58,
+    progress: 0,
     lastConceptName: 'Shell method',
-    lastActivityAt: '2026-08-27T19:20:00.000Z',
     paused: false,
     offlineAvailability: [
       { kind: 'textbookAndLectureNotes', enabled: true, sizeBytes: 880803840 },
@@ -30,9 +29,8 @@ export const mockWorkspaces: Workspace[] = [
     id: 'workspace-linear-algebra',
     name: 'Linear Algebra',
     guidingGoalId: 'goal-linear-algebra-proof',
-    progress: 0.34,
+    progress: 0,
     lastConceptName: 'Eigenvectors',
-    lastActivityAt: '2026-08-23T14:10:00.000Z',
     paused: false,
     offlineAvailability: [
       { kind: 'textbookAndLectureNotes', enabled: false, sizeBytes: 524288000 },
@@ -46,9 +44,8 @@ export const mockWorkspaces: Workspace[] = [
     id: 'workspace-physics',
     name: 'Mechanics',
     guidingGoalId: 'goal-physics-review',
-    progress: 0.76,
+    progress: 0,
     lastConceptName: 'Angular momentum',
-    lastActivityAt: '2026-05-12T16:45:00.000Z',
     paused: true,
     offlineAvailability: [
       { kind: 'textbookAndLectureNotes', enabled: true, sizeBytes: 734003200 },
