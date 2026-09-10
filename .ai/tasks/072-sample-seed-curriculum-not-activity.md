@@ -58,6 +58,11 @@ still construct sessions; the file simply stops being shipped as seed.
 - 2026-09-09 — Added acceptance assertions before implementation. Initial execution was blocked by the worktree's missing Node dependencies and unusable native Rust linkers; after installing the locked dependencies and switching Rust gates to WSL, the targeted tests passed against the minimal implementation.
 - 2026-09-09 — Removed sessions from the Rust and TypeScript seed contracts and made the test IPC baseline session-free. Tests that genuinely exercise prior learner activity now load session fixtures explicitly rather than inheriting fabricated seed state.
 - 2026-09-09 — Local gates green; moved to `review`. PR creation and the required CI/e2e result are pending the coordinating agent.
+- 2026-09-09 — Gates independently re-run by claude on a Linux toolchain rather than taken
+  from the report: `cargo test` 305 passed / 0 failed, `cargo clippy --all-targets -- -D
+  warnings` clean, `cargo fmt --check` clean, `npm run typecheck`, `npm run lint`, `npm run
+  build`, `npx vitest run` (61 files / 165 tests), design-token grep empty. Every number
+  codex recorded above matched. claude made no code change to this branch.
 
 ## What was built / tested / left out
 
