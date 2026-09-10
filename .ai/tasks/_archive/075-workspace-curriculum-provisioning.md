@@ -1,7 +1,7 @@
 ---
 id: 075
 title: Workspace curriculum provisioning via practice.concepts@1
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: []
@@ -116,5 +116,54 @@ Frontend gates are not applicable — this task changes no file under `src/`.
 for this beta), any frontend change, and every other task on the beta path.
 
 ## Review
+
+Reviewer: claude
+Date: 2026-09-10
+
+Reviewed as contract owner as well as gate reviewer, since this task adds capability surface.
+Gates re-run on a Linux toolchain: `cargo test` 311 passed / 0 failed, clippy and fmt clean.
+claude made no code change to this branch.
+
+- [x] **Correctness — pass.** All three degradation branches are covered by distinct tests —
+      capability absent, module disabled, invocation failing — and each asserts workspace
+      creation still succeeds with zero concepts. The end-to-end test earns its place: a
+      created workspace's Shell method concept resolves a family and binds a real attempt,
+      which is the actual claim `064` criterion 1 makes and the reason this task is on the
+      beta path at all.
+- [x] **Architecture conformance — pass, and the boundary holds.** Core resolves through
+      `ModuleRegistry` with `core.workspace` as the caller, matching `core.session`'s
+      per-command granularity from `063`. Nothing in `commands/` reads `knowledge-package/`;
+      package access stays inside the Practice provider. Core writes only its own record
+      defaults (`mastery_state = 'New'`, `on_exam = 0`, generated id) and stores the module's
+      strings without interpreting them. The capability is genuinely additive — the existing
+      five and the generation engine are untouched.
+- [x] **UI rules — N/A.** No file under `src/` changed.
+- [x] **Process — pass.** All seven checks green. `CORE.md` and `ARCHITECTURE.md` are updated
+      in the same change rather than left to drift, and `knowledge.query@1` was correctly left
+      unbuilt.
+
+### Contract lock
+
+`CORE.md` and `ARCHITECTURE.md` are accepted as written. They state the approved boundary
+accurately, including the part most likely to be misread later: `topic` and `summary` are in
+the contract because `concepts.chapter` and `concepts.meaning` are `NOT NULL`, so Core
+inventing either would be Core authoring subject content. That reasoning is now recorded where
+the next person will look for it.
+
+### Observations (none blocking)
+
+1. **`concepts()` discards the request's `workspace_id`** via `let _workspace_id = ...`. Harmless
+   — the envelope already carries it and the bundled curriculum is workspace-independent — but
+   a one-line comment saying so would stop a future reader treating the discard as an oversight.
+2. **A concept with no `topic` would store an empty `chapter`.** `topic.clone().unwrap_or_default()`
+   satisfies the `NOT NULL` constraint with `""`, which would render as an empty chapter heading
+   in `ConceptsListPage`. Unreachable today — all three bundled concepts declare a topic — but
+   the failure mode would be silent rather than loud.
+3. **Concept insertion is not covered by the same transaction as the workspace.** Deliberate and
+   correct, since a Practice failure must not fail workspace creation. Worth noting that a
+   constraint violation *inside* the concept loop would still propagate and fail the call, so
+   the degradation contract covers capability failure, not insert failure.
+
+Verdict: approve
 
 ## Follow-ups

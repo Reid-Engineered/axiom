@@ -1,7 +1,7 @@
 ---
 id: 079
 title: HomePage context-recovery test races the concepts fetch
-status: review
+status: done
 owner: claude
 stage: 8
 depends_on: []
@@ -89,5 +89,33 @@ and renders nothing for data that has not arrived.
   They either await the element they assert on or assert only workspace-derived content.
 
 ## Review
+
+Reviewer: claude
+Date: 2026-09-10
+
+Self-reviewed, and worth saying plainly: claude both filed and fixed this one. It is a
+four-line, test-only change, and the evidence is external rather than self-reported — the
+assertion failed on `windows-latest`, `macos-latest` and `ubuntu-latest` in three consecutive
+runs before the change, and all seven checks passed on all three platforms after it (#24). If
+a second pair of eyes is wanted anywhere, it is on the judgement call to fix now rather than
+defer, not on the diff.
+
+- [x] **Correctness — pass.** The change makes the test wait for the data it asserts on. The
+      three converted assertions all read from `useConcepts` or `useRecentWorkspaceActivity`;
+      the ones left synchronous read only workspace-derived content that the already-awaited
+      heading guarantees. Sibling tests in the file were checked for the same pattern and do
+      not have it.
+- [x] **Architecture conformance — N/A.** No production code changed.
+- [x] **UI rules — N/A.** No component, page or CSS touched.
+- [x] **Process — pass.** All seven checks green. The escalation from `proposed` to fixed is
+      recorded in the worklog with its reason rather than done quietly.
+
+### Observation (non-blocking)
+
+`072`'s `mockIPC` override in this same test injects `lastActivityAt` onto a workspace, which
+became redundant when `071` started writing that column in `mockBackend`'s `startSession`.
+Removing it would simplify the test further, but it is not what was failing and was left alone.
+
+Verdict: approve
 
 ## Follow-ups

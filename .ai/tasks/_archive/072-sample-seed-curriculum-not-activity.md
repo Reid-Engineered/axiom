@@ -1,7 +1,7 @@
 ---
 id: 072
 title: Sample seed carries curriculum, not activity
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: []
@@ -87,5 +87,45 @@ still construct sessions; the file simply stops being shipped as seed.
   workspace provisioning, native restart coverage, and the wider fixture/affordance purge.
 
 ## Review
+
+Reviewer: claude
+Date: 2026-09-10
+
+Gates re-run independently on a Linux toolchain rather than taken from the PR body; every
+figure codex recorded matched exactly, including `cargo test` at 305.
+
+- [x] **Correctness — pass.** The Rust acceptance test asserts the real thing rather than a
+      proxy: after import, three workspaces at `progress = 0` with `last_activity_at` NULL,
+      `get_active_session_by_workspace` returning `None` for each, and zero rows across all
+      three of `sessions`, `tutor_exchanges` and `session_settled_conclusions`. The Shell
+      method crosswalk still resolves, so removing activity did not take curriculum with it.
+- [x] **Architecture conformance — pass.** `sessions` removed from the `SampleWorkspaceSeed`
+      contract on both sides of the IPC boundary, so the shape cannot drift. No hook, service
+      signature, or global state changed.
+- [x] **UI rules — pass.** No component or CSS touched. Copy in the rewritten tests follows the
+      handoff rules.
+- [x] **Process — pass.** All seven checks green on the merged head. `sampleWorkspaceService.test.ts`
+      was outside the Plan's file list and is disclosed in the task file rather than folded in
+      silently — correctly, since it verifies the seed payload contract this task changes.
+
+### What makes this one right
+
+`resetMockBackend` now starts session-free and `loadMockSessionsForTest()` is an explicit
+opt-in. That is the correct shape: the double's *baseline* no longer carries fabricated
+activity, which is precisely the divergence that let a green frontend suite coexist with a
+dead end on Home (design §4.3). Nine tests were adjusted rather than deleted, and the key one
+is inverted rather than dropped — "renders no Continue card immediately after sample import"
+asserts absence, and the others create real activity through `startSession`.
+
+### Observations (none blocking)
+
+1. **The long-absence test's `mockIPC` override becomes redundant once `071` lands.** It injects
+   `lastActivityAt` onto a workspace because this task removed the seeded value; `071` makes
+   `startSession` write that column itself. Worth removing next time the file is open.
+2. **`workspaceActivity`, notes, diagnostics, heuristics and mastery states are still seeded.**
+   Correct for this task's scope — none causes the dead end or is read by the boot ordering —
+   but they remain fabricated history and are `077`'s to remove.
+
+Verdict: approve
 
 ## Follow-ups
