@@ -1,7 +1,7 @@
 ---
 id: 071
 title: Active-session selection and reuse
-status: review
+status: done
 owner: codex
 stage: 8
 depends_on: []
@@ -140,5 +140,82 @@ returns nothing outside `tokens.css`.
 the Study Session screen (`073`), the sample seed (`072`), and workspace provisioning (`075`).
 
 ## Review
+
+Reviewer: claude
+Date: 2026-09-10
+
+Self-review, explicitly permitted by the human after claude made two edits to this branch
+(the `cargo fmt` wrapping and the Windows test-assertion fix). Both are named below rather
+than folded into a general pass, so the record shows exactly what was reviewed by its own
+author.
+
+Verified independently rather than from the PR body: the branch was checked out, every gate
+re-run on a Linux toolchain against the rebased tree, and the session and workspace diffs read
+against design §6.1 line by line.
+
+- [x] **Correctness — pass.** The code does what the task claims, and the tests cover the
+      stated behaviour rather than the happy path only.
+      - The ordering clause is exactly the one the design locked, and
+        `active_session_selection_prefers_recent_activity_then_newest_row` proves it against an
+        older open session built in the test rather than imported from `mockData` — so it does
+        not depend on the fixtures `072` removed, which was the specific risk here.
+      - Reuse is proven in both directions: same session and same prompt on a second
+        `startSession`, and same session with a *new* attempt once the current one is solved.
+      - `attempt_is_solved` goes through `practice.describe` rather than reading Practice's
+        tables, so Core still does not reach into the module's storage.
+      - `elapsed_minutes` staying untouched is asserted directly, not assumed — which matters,
+        because the whole point of deferring `076` is that this task must not start tracking
+        duration.
+      - Edge cases from the schema are handled: `problem_index` advances only when an attempt
+        actually bound (`WHEN ?3 AND ?2 IS NOT NULL`), completed sessions are excluded from
+        both reuse and selection, and all four pre-existing degradation branches still return
+        a usable session.
+- [x] **Architecture conformance — pass.** No frontend hook or service changed; `lastActivityAt`
+      and `createdAt` are optional fields on the existing `Session` and `Workspace` interfaces
+      in `src/types/`, already re-exported by `index.ts`'s `export *`. No new global state.
+      Both new columns are nullable, so the migration cannot fail on existing rows —
+      `session_activity_columns_are_nullable_and_preserve_existing_rows` proves it starting
+      from the prior schema rather than a fresh one. No structural change, so no
+      `ARCHITECTURE.md` update is owed.
+- [x] **UI rules — N/A.** No file under `src/components/`, `src/pages/`, or any `.module.css`
+      changed. The design-token grep returns nothing outside `tokens.css`.
+- [x] **Process — pass.** All seven required checks green on `0669c87`. The worklog is
+      detailed enough to follow the change without the diff, including the Windows failure and
+      the three rebase resolutions. One scope deviation — `commands/practice.rs` — is disclosed
+      in the task file rather than made silently, and is justified: attempt evaluation lives
+      there and is one of the five activity paths the task must wire.
+
+### The two edits claude made, stated plainly
+
+1. **`cargo fmt` on `commands/seed.rs` and `commands/session.rs`.** Import-line wrapping only.
+   Codex's record said fmt passed; it did not. No semantic change.
+2. **The Windows test-assertion fix.** `backend-checks (windows-latest)` failed on a
+   one-millisecond mismatch. The array literal collecting `pause` and `resume` evaluated both
+   handlers before the loop body ran, so the first iteration compared pause's timestamp against
+   a workspace row resume had already overwritten. **The handlers were always correct** — this
+   was a test that passed by timing luck on Linux and macOS. Each handler is now asserted
+   immediately after it runs.
+
+### Observations (none blocking)
+
+1. **A solved attempt's id can be dropped in a degraded path.** In the reuse branch, if
+   `needs_attempt` is true because the current attempt is solved *and* `practice.start` then
+   fails or the concept has no crosswalk, `new_attempt_id` is `None` and the `UPDATE` writes
+   `current_attempt_id = NULL` — so the session loses its pointer to the solved attempt and the
+   screen falls back to the unbound state instead of the solved one. Only reachable when
+   Practice is already broken or a crosswalk was removed after an attempt bound, and the
+   session itself survives, which is what the degradation contract actually promises. Worth
+   knowing before `073` renders these states.
+2. **`072`'s long-absence test will shortly be able to drop its `mockIPC` override.** That test
+   injects `lastActivityAt` onto a workspace because `072` removed the seeded value. Once this
+   task lands, `startSession` writes `workspaces.last_activity_at` itself, so the override
+   becomes redundant. Not this task's to change.
+3. **The rebase dropped `lastActivityAt` from `mockData/workspaces.ts`,** which this branch had
+   added. Recorded here because it is the one resolution a future reader might mistake for a
+   lost change: it was deliberate, since `072` removed seeded activity on purpose and `070`'s
+   boot ordering reads that column.
+
+Verdict: approve
+
 
 ## Follow-ups
