@@ -1,8 +1,8 @@
 ---
 id: 079
 title: HomePage context-recovery test races the concepts fetch
-status: proposed
-owner: unassigned
+status: review
+owner: claude
 stage: 8
 depends_on: []
 ---
@@ -62,10 +62,31 @@ and renders nothing for data that has not arrived.
 ## Worklog
 
 - 2026-09-10 — Filed by claude after the flake surfaced on PR #21 and cleared on re-run.
+- 2026-09-10 — **Escalated and fixed immediately rather than left proposed.** It recurred twice
+  more within the hour, on PR #23 — a docs-only change that touches nothing but `.ai/tasks/`.
+  Three consecutive runs, once each on `windows-latest`, `macos-latest` and `ubuntu-latest`,
+  every one the same assertion. That is not an occasional flake the quality-gates re-run rule
+  covers; it was blocking unrelated work on every platform, so claude claimed and fixed it.
+- 2026-09-10 — Likely why it got worse: `071` merged between the first sighting and the rest.
+  `mockBackend`'s `startSession` now also writes `workspaces.lastActivityAt`, which shifts the
+  ordering of the async work this test races against. The race was always present; `071` made
+  it the likely outcome rather than the unlikely one.
 
 ## What was built / tested / left out
 
-Not started.
+- `src/pages/HomePage.test.tsx` only. Replaced the synchronous `getByText(/held up while you
+  were away/)` with `await findByText`, wrapped the two `getAllByRole('listitem')` length
+  assertions in `waitFor`, and made the decayed-concept assertion a `findByText`. A comment
+  records *why* — those three assertions read from `useConcepts` and
+  `useRecentWorkspaceActivity`, which resolve after the workspace that renders the heading the
+  test already awaited.
+- No production code changed. `ContextRecovery` was always correct: it renders nothing for data
+  that has not arrived, which is exactly what the test was failing to wait for.
+- Tested: the file run five times consecutively, 4/4 passing each time, then the full suite —
+  `npx vitest run` 61 files / 165 tests — plus `npm run typecheck`, `npm run lint` and
+  `npm run build`. Rust gates are not applicable; no file under `src-tauri/` changed.
+- Left out: the sibling tests in the file were checked for the same pattern and do not have it.
+  They either await the element they assert on or assert only workspace-derived content.
 
 ## Review
 
