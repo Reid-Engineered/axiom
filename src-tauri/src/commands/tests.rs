@@ -988,19 +988,27 @@ fn session_activity_updates_both_timestamps_without_changing_elapsed_minutes() {
         started.last_activity_at
     );
 
-    for changed in [
-        session::pause_session_handler(&database, &started.id).unwrap(),
-        session::resume_session_handler(&database, &started.id).unwrap(),
-    ] {
-        assert!(changed.last_activity_at.is_some());
-        assert_eq!(changed.elapsed_minutes, 0);
-        assert_eq!(
-            workspace::get_workspace_handler(&database, &workspace.id)
-                .unwrap()
-                .last_activity_at,
-            changed.last_activity_at
-        );
-    }
+    // Each handler is asserted immediately after it runs. Collecting both into an array
+    // first would evaluate pause and resume before either assertion, leaving the workspace
+    // holding resume's timestamp while the loop still compared it against pause's.
+    let paused = session::pause_session_handler(&database, &started.id).unwrap();
+    assert!(paused.last_activity_at.is_some());
+    assert_eq!(paused.elapsed_minutes, 0);
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        paused.last_activity_at
+    );
+    let resumed = session::resume_session_handler(&database, &started.id).unwrap();
+    assert!(resumed.last_activity_at.is_some());
+    assert_eq!(resumed.elapsed_minutes, 0);
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        resumed.last_activity_at
+    );
     let attempt_id = started.current_attempt_id.clone().unwrap();
     tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
         &database,
