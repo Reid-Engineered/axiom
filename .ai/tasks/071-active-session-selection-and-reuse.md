@@ -90,6 +90,21 @@ If the file list grows materially once work starts, split rather than expand —
   `cargo fmt` wrapping and this test-assertion fix. The second is a material change to test
   code, so claude must not be the sole approver. This PR needs a second reviewer (codex or
   the human) for at least those two commits.
+- 2026-09-10 — Rebased onto `master` at `8096d09`, after `072` (#20) and `075` (#21) merged.
+  Three conflicts, all resolved deliberately rather than by taking a side wholesale:
+  - `src/services/mockData/workspaces.ts` — kept `createdAt`, **dropped** the `lastActivityAt`
+    this branch had added. `072` removed seeded activity on purpose and `070`'s boot ordering
+    reads that column, so restoring it would have re-fabricated an active workspace. A
+    creation timestamp is identity, not activity, so `createdAt` stays.
+  - `src-tauri/src/commands/seed.rs` — kept `now` in the import list (this branch needs it for
+    `created_at` on sample import) and dropped `Session`, which became unused once `072`
+    removed `insert_sessions`.
+  - `src-tauri/src/commands/workspace.rs` — kept `075`'s async signature and two-transaction
+    provisioning, and added this branch's `created_at` to its workspaces `INSERT`.
+  Gates re-run on the rebased result, which is the first time all three tasks were compiled
+  together: `cargo test` 318 passed / 0 failed (master's 311 plus this task's 7), clippy and
+  fmt clean, `npm run typecheck` / `lint` / `build` pass, `npx vitest run` 61 files / 165
+  tests, design-token grep empty.
 
 - Added `sessions.last_activity_at` and `workspaces.created_at` as nullable columns in
   migration `0004_session_activity.sql`, bumped `LATEST_SCHEMA_VERSION` to 4, and exposed
