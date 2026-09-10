@@ -1,7 +1,7 @@
 ---
 id: 071
 title: Active-session selection and reuse
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: []
@@ -66,10 +66,51 @@ If the file list grows materially once work starts, split rather than expand —
 ## Worklog
 
 - 2026-09-09 — Filed by claude from the approved design, `proposed` for codex.
+- 2026-09-09 — Claimed by codex on `agent/codex/071-active-session-selection-and-reuse`; beginning TDD implementation of the locked activity-ordering and session-reuse contract.
+- 2026-09-09 — Implementation complete. Gates run by claude on a Linux (WSL) toolchain,
+  because the Windows MSVC linker is unavailable here and the GNU toolchain fails to link
+  the Tauri cdylib with `export ordinal too large`. Those are toolchain failures, not test
+  results, and were not counted as passes.
+- 2026-09-09 — `cargo fmt --check` failed on two files (`commands/seed.rs`,
+  `commands/session.rs`, both import-line wrapping). claude ran `cargo fmt`; no semantic
+  change. This is the only edit claude made to this branch.
+- 2026-09-09 — All applicable gates green; moved to `review`. CI on the PR is the source of
+  truth for the full required set, including e2e.
 
 ## What was built / tested / left out
 
-Not started.
+- Added `sessions.last_activity_at` and `workspaces.created_at` as nullable columns in
+  migration `0004_session_activity.sql`, bumped `LATEST_SCHEMA_VERSION` to 4, and exposed
+  `lastActivityAt` / `createdAt` on the `Session` and `Workspace` wire models.
+- Changed `get_active_session_by_workspace_handler` to
+  `ORDER BY last_activity_at IS NULL, last_activity_at DESC, rowid DESC`, so the most
+  recently touched session wins instead of the lowest `rowid`.
+- Added reuse to `start_session_handler`: an existing non-completed session for the same
+  `(workspace, concept)` is returned rather than a new row inserted. A fresh attempt binds
+  only when the session has no attempt or `practice.describe` reports the current one
+  solved; `problem_index` advances only in that case.
+- Both `sessions.last_activity_at` and the owning `workspaces.last_activity_at` are written
+  on start, resume, pause, `nextProblem`, and attempt evaluation, each inside a transaction.
+- `commands/practice.rs` gained a call to `touch_session_for_attempt`. That file was not in
+  the Plan's list: attempt evaluation lives there, and the task requires evaluation to
+  advance session and workspace activity, so the alternative was leaving one of the five
+  named activity paths unwired. Disclosed here rather than made silently.
+- `mockBackend.ts` mirrors all of it — selection ordering, reuse, and the activity touches —
+  so the double does not stay richer or poorer than the backend it stands in for.
+- `elapsed_minutes` is untouched on every path, asserted directly by
+  `session_activity_updates_both_timestamps_without_changing_elapsed_minutes`.
+
+**Tested** (all run by claude on Linux; exact commands and results in the Review section):
+seven new Rust tests covering reuse, solved-attempt rebinding, selection ordering against an
+older open session created by test setup, both-timestamp updates without elapsed change,
+non-session mutations not advancing workspace activity, missing-workspace rejection, and
+migration nullability. `cargo test` 312 passed / 0 failed; `cargo clippy --all-targets -- -D
+warnings` clean; `cargo fmt --check` clean after the fmt fix; `npm run typecheck`, `npm run
+lint`, `npm run build`, `npx vitest run` (61 files / 165 tests) all pass; design-token grep
+returns nothing outside `tokens.css`.
+
+**Left out as scoped:** `elapsed_minutes` duration tracking (`076`), the boot rule (`070`),
+the Study Session screen (`073`), the sample seed (`072`), and workspace provisioning (`075`).
 
 ## Review
 

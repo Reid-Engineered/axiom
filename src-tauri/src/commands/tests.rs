@@ -816,6 +816,274 @@ fn start_session_binds_an_attempt_for_a_mapped_concept_when_practice_is_enabled(
 }
 
 #[test]
+fn start_session_reuses_an_open_session_and_its_attempt() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+
+    let first = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let second = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let third = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    assert_eq!(second.id, first.id);
+    assert_eq!(third.id, first.id);
+    assert_eq!(second.current_attempt_id, first.current_attempt_id);
+    assert_eq!(third.current_attempt_id, first.current_attempt_id);
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row(
+            "SELECT COUNT(*) FROM sessions WHERE workspace_id = ?1 AND concept_id = ?2",
+            params![workspace.id, "concept-shells"],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 1);
+}
+
+#[test]
+fn active_session_selection_prefers_recent_activity_then_newest_row() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    let connection = database.connection().unwrap();
+    for (id, activity) in [
+        ("session-older", Some("2026-09-08T10:00:00.000Z")),
+        ("session-null", None),
+        ("session-recent", Some("2026-09-08T12:00:00.000Z")),
+    ] {
+        connection
+            .execute(
+                "INSERT INTO sessions (
+                    id, workspace_id, concept_id, status, intent_activity, resume_summary,
+                    elapsed_minutes, started_at, last_activity_at
+                 ) VALUES (?1, ?2, 'concept-shells', 'active', 'Practising',
+                    'Ready.', 0, '2026-09-08T09:00:00.000Z', ?3)",
+                params![id, workspace.id, activity],
+            )
+            .unwrap();
+    }
+    drop(connection);
+
+    let selected = session::get_active_session_by_workspace_handler(&database, &workspace.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!(selected.id, "session-recent");
+
+    let connection = database.connection().unwrap();
+    connection
+        .execute("UPDATE sessions SET last_activity_at = NULL", [])
+        .unwrap();
+    drop(connection);
+    let selected = session::get_active_session_by_workspace_handler(&database, &workspace.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        selected.id, "session-recent",
+        "all-null activity falls back to rowid DESC"
+    );
+}
+
+#[test]
+fn start_session_rebinds_a_solved_attempt_on_the_same_session() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let first = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    let first_attempt = first.current_attempt_id.clone().unwrap();
+    let described =
+        tauri::async_runtime::block_on(crate::commands::practice::describe_attempt_handler(
+            &registry,
+            &installation,
+            crate::commands::practice::DescribeAttemptInput {
+                workspace_id: workspace.id.clone(),
+                attempt_id: first_attempt.clone(),
+            },
+        ))
+        .unwrap();
+    let (coeff, b) = parameters_from_prompt(&described.prompt);
+    tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+        &database,
+        &registry,
+        &installation,
+        crate::commands::practice::EvaluateAttemptInput {
+            workspace_id: workspace.id.clone(),
+            attempt_id: first_attempt.clone(),
+            response: crate::commands::practice::ResponseValueInput::SymbolicExpression {
+                value: format!("2*pi*({coeff}*{b}^3/3 - {b}^4/4)"),
+            },
+        },
+    ))
+    .unwrap();
+
+    let restarted = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    assert_eq!(restarted.id, first.id);
+    assert_ne!(restarted.current_attempt_id, Some(first_attempt));
+    assert_eq!(restarted.problem_index, Some(2));
+}
+
+#[test]
+fn session_activity_updates_both_timestamps_without_changing_elapsed_minutes() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    map_concept_to_knowledge_package(&database, "concept-shells");
+    let (registry, installation) = crate::commands::practice::build_practice_registry(
+        fixture_knowledge_package(),
+        practice_connection(&workspace.id),
+    );
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+    assert!(started.last_activity_at.is_some());
+    assert_eq!(started.elapsed_minutes, 0);
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        started.last_activity_at
+    );
+
+    for changed in [
+        session::pause_session_handler(&database, &started.id).unwrap(),
+        session::resume_session_handler(&database, &started.id).unwrap(),
+    ] {
+        assert!(changed.last_activity_at.is_some());
+        assert_eq!(changed.elapsed_minutes, 0);
+        assert_eq!(
+            workspace::get_workspace_handler(&database, &workspace.id)
+                .unwrap()
+                .last_activity_at,
+            changed.last_activity_at
+        );
+    }
+    let attempt_id = started.current_attempt_id.clone().unwrap();
+    tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+        &database,
+        &registry,
+        &installation,
+        crate::commands::practice::EvaluateAttemptInput {
+            workspace_id: workspace.id.clone(),
+            attempt_id,
+            response: crate::commands::practice::ResponseValueInput::SymbolicExpression {
+                value: "0".to_owned(),
+            },
+        },
+    ))
+    .unwrap();
+    let evaluated = session::get_session_handler(&database, &started.id).unwrap();
+    assert_eq!(evaluated.elapsed_minutes, 0);
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        evaluated.last_activity_at
+    );
+    let advanced = tauri::async_runtime::block_on(session::next_problem_handler(
+        &database,
+        &registry,
+        &installation,
+        &started.id,
+    ))
+    .unwrap();
+    assert_eq!(advanced.elapsed_minutes, 0);
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        advanced.last_activity_at
+    );
+}
+
+#[test]
+fn non_session_mutations_do_not_advance_workspace_activity() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    assert_eq!(workspace.last_activity_at, None);
+    workspace::set_workspace_offline_availability_handler(
+        &database,
+        &workspace.id,
+        "problemBanks",
+        true,
+    )
+    .unwrap();
+    goal::update_goal_handler(&database, &workspace.guiding_goal_id, "Changed goal").unwrap();
+    assert_eq!(
+        workspace::get_workspace_handler(&database, &workspace.id)
+            .unwrap()
+            .last_activity_at,
+        None
+    );
+}
+
+#[test]
+fn start_session_rejects_a_missing_workspace_without_creating_a_row() {
+    let database = database();
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: "missing".to_owned(),
+        enabled_module_ids: Vec::new(),
+    };
+    let result = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input("missing"),
+    ));
+    assert_eq!(result.unwrap_err(), "Workspace not found: missing");
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row("SELECT COUNT(*) FROM sessions", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[test]
 fn start_session_leaves_attempt_unbound_for_an_unmapped_concept() {
     let database = database();
     let workspace = create_workspace(&database);
@@ -1480,6 +1748,7 @@ fn the_full_practice_loop_runs_through_the_command_layer() {
     // 3. A wrong answer is rejected and counted, and the attempt stays open.
     let wrong =
         tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+            &database,
             &registry,
             &installation,
             crate::commands::practice::EvaluateAttemptInput {
@@ -1517,6 +1786,7 @@ fn the_full_practice_loop_runs_through_the_command_layer() {
     let answer = format!("2*pi*({coeff}*{b}^3/3 - {b}^4/4)");
     let right =
         tauri::async_runtime::block_on(crate::commands::practice::evaluate_attempt_handler(
+            &database,
             &registry,
             &installation,
             crate::commands::practice::EvaluateAttemptInput {
