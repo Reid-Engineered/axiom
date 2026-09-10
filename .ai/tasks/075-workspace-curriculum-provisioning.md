@@ -1,7 +1,7 @@
 ---
 id: 075
 title: Workspace curriculum provisioning via practice.concepts@1
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: []
@@ -74,10 +74,46 @@ and must not fail because Practice is unavailable.
 - 2026-09-09 — Filed by claude from the approved design, `proposed` for codex. The capability
   shape and the Core boundary are approved as written above; claude locks `CORE.md` and
   `ARCHITECTURE.md` as contract owner before this merges.
+- 2026-09-09 — Claimed by codex. Implementing the locked `practice.concepts@1` contract and
+  workspace-provisioning degradation behavior test-first on `agent/codex/075-workspace-curriculum-provisioning`.
+- 2026-09-09 — Implementation complete. Gates run by claude on a Linux (WSL) toolchain; the
+  Windows MSVC linker is unavailable here and the GNU toolchain cannot link the Tauri
+  cdylib, so no Windows result was treated as a pass.
+- 2026-09-09 — Contract lock: claude reviewed the `CORE.md` and `ARCHITECTURE.md` additions
+  as contract owner and accepted them as written. They state the approved boundary
+  accurately — Core stores opaque strings and the crosswalk, resolves through
+  `ModuleRegistry` as `core.workspace`, never reads `knowledge-package/`, and degrades to a
+  zero-concept workspace. No edit was needed.
+- 2026-09-09 — All applicable gates green; moved to `review`. claude made no code changes to
+  this branch. CI on the PR is the source of truth for the full required set.
 
 ## What was built / tested / left out
 
-Not started.
+- Added `practice.concepts@1` as an additive sixth Practice capability: `ConceptsRequest`,
+  `ConceptsResponse` and `ConceptDescriptor { concept_id, name, topic, summary }` in
+  `practice/types.rs`, a handler in `practice/provider.rs`, and a `[[provides]]` entry in
+  `practice/module.toml`. The existing five capabilities are unchanged.
+- `create_workspace_handler` became async and resolves the capability through
+  `ModuleRegistry` with `calling_module_id: "core.workspace"`, inserting the returned
+  concepts with `knowledge_concept_id` set and Core's own defaults (`mastery_state = 'New'`,
+  `on_exam = 0`, no learner history).
+- `topic` and `summary` are carried in the contract because `concepts.chapter` and
+  `concepts.meaning` are `NOT NULL`; Core inventing either would be Core authoring subject
+  content, which the approved boundary forbids.
+- Workspace creation is split into two transactions so that a Practice failure cannot fail
+  workspace creation. Absent, disabled and failing capability all yield a usable
+  zero-concept workspace.
+- `CORE.md` and `ARCHITECTURE.md` document the boundary, locked by claude as contract owner.
+
+**Tested** (run by claude on Linux; exact commands and results in the Review section): six
+new Rust tests covering the capability's response against the bundled package, provisioning
+with opaque crosswalks, all three degradation branches, and an end-to-end assertion that a
+created workspace's Shell method concept starts a real attempt. `cargo test` 311 passed / 0
+failed; `cargo clippy --all-targets -- -D warnings` clean; `cargo fmt --check` clean.
+Frontend gates are not applicable — this task changes no file under `src/`.
+
+**Left out as scoped:** `knowledge.query@1` as a general capability (explicitly out of scope
+for this beta), any frontend change, and every other task on the beta path.
 
 ## Review
 

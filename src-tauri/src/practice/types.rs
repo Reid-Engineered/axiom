@@ -44,6 +44,24 @@ pub struct StartResponse {
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct ConceptsRequest {
+    pub workspace_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConceptsResponse {
+    pub concepts: Vec<ConceptDescriptor>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConceptDescriptor {
+    pub concept_id: String,
+    pub name: String,
+    pub topic: String,
+    pub summary: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct DescribeRequest {
     pub workspace_id: String,
     pub attempt_id: String,

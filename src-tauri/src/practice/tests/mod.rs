@@ -4,8 +4,10 @@ use tauri::async_runtime::RwLock;
 
 use crate::capabilities::math_verify::MathVerifyProvider;
 use crate::modules::{
-    parse, CapabilityId, CapabilityRequirement, ModuleId, ModuleInstallation, ModuleRegistry,
+    parse, CallEnvelope, CapabilityCall, CapabilityId, CapabilityRequirement, ModuleId,
+    ModuleInstallation, ModuleRegistry,
 };
+use crate::practice::{ConceptsRequest, ConceptsResponse};
 
 use super::store::PracticeStore;
 use super::PracticeProvider;
@@ -23,19 +25,82 @@ fn practice_manifest_parses_and_declares_math_verify_as_a_requirement() {
     assert!(manifest.requires.iter().any(|requirement| {
         requirement.id.as_str() == "math.verify" && requirement.min_version == 1
     }));
-    assert_eq!(manifest.provides.len(), 5);
+    assert_eq!(manifest.provides.len(), 6);
     for capability_id in [
         "practice.generate",
         "practice.evaluate",
         "practice.hint",
         "practice.start",
         "practice.describe",
+        "practice.concepts",
     ] {
         assert!(manifest
             .provides
             .iter()
             .any(|provided| provided.id.as_str() == capability_id && provided.version == 1));
     }
+}
+
+#[test]
+fn practice_concepts_returns_the_bundled_curriculum() {
+    let package_root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge-package");
+    let package = crate::knowledge::load_knowledge_package(&package_root).unwrap();
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: String::new(),
+        enabled_module_ids: vec![ModuleId::new("org.axiom.practice").unwrap()],
+    };
+    let provider = PracticeProvider::new(
+        PracticeStore::new(crate::db::open_in_memory().unwrap()),
+        package,
+        Arc::clone(&registry),
+        installation.clone(),
+    );
+    registry
+        .blocking_write()
+        .register(parse(super::MANIFEST_TOML).unwrap(), Box::new(provider))
+        .unwrap();
+
+    let requirement = CapabilityRequirement {
+        id: CapabilityId::new("practice.concepts").unwrap(),
+        min_version: 1,
+    };
+    let response: ConceptsResponse = tauri::async_runtime::block_on(async {
+        let registry = registry.read().await;
+        let handle = registry.resolve(&installation, &requirement).unwrap();
+        registry
+            .invoke(
+                &handle,
+                &installation,
+                CapabilityCall {
+                    envelope: CallEnvelope {
+                        workspace_id: "workspace-new".to_owned(),
+                        capability_id: requirement.id,
+                        version: 1,
+                        calling_module_id: ModuleId::new("core.workspace").unwrap(),
+                    },
+                    input: ConceptsRequest {
+                        workspace_id: "workspace-new".to_owned(),
+                    },
+                },
+            )
+            .await
+    })
+    .unwrap();
+
+    assert_eq!(response.concepts.len(), 3);
+    let shell = response
+        .concepts
+        .iter()
+        .find(|concept| concept.concept_id == "shell.method_vertical_axis")
+        .unwrap();
+    assert_eq!(
+        shell.name,
+        "The Method of Cylindrical Shells (Vertical Axis of Revolution)"
+    );
+    assert_eq!(shell.topic, "2.3 Volumes of Revolution: Cylindrical Shells");
+    assert!(!shell.summary.trim().is_empty());
 }
 
 #[test]

@@ -173,6 +173,13 @@ its worked examples, so `practice.generate` produces real content rather than on
 content; the generator dispatches on `gen.shell_y_poly` alone, so further families need a
 generator before they need a file.
 
+Concept rows can originate from learner input, explicit sample import, or a capability
+response. On workspace creation, Core resolves `practice.concepts@1` and stores the returned
+opaque names, topics, summaries, and knowledge-concept crosswalk ids with new learner-state
+defaults. Core does not inspect `knowledge-package/` or interpret those subject strings; the
+Practice provider owns package access. If Practice is unavailable, workspace creation remains
+successful and produces no concept rows.
+
 Rules, in order of how often they'll be checked in review:
 
 1. **Only hooks call services.** A component or page never imports from `services/`

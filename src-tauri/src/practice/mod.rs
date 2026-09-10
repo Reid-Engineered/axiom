@@ -7,9 +7,9 @@ pub use error::PracticeError;
 pub use provider::PracticeProvider;
 pub use store::PracticeStore;
 pub use types::{
-    AttemptStatus, DescribeRequest, DescribeResponse, EvaluateRequest, EvaluateResponse,
-    GenerateRequest, GenerateResponse, HintRequest, HintResponse, ResponseValue, StartRequest,
-    StartResponse,
+    AttemptStatus, ConceptDescriptor, ConceptsRequest, ConceptsResponse, DescribeRequest,
+    DescribeResponse, EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse,
+    HintRequest, HintResponse, ResponseValue, StartRequest, StartResponse,
 };
 
 /// The embedded first-party manifest for this module.
