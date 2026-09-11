@@ -24,7 +24,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
   const { concept } = useConcept(session?.conceptId ?? '');
   const { workspace } = useWorkspaceDetails(session?.workspaceId ?? '');
   const { navigate } = useNavigation();
-  const [working, setWorking] = useState('r = x, h = x² − 1\n= 2π∫ (x³ − x) dx');
+  const [working, setWorking] = useState('');
   const [question, setQuestion] = useState('');
   const [intentNoteVisible, setIntentNoteVisible] = useState(false);
   const [mutationError, setMutationError] = useState('');
@@ -103,9 +103,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
             intent={session.intent}
             onChangeIntent={() => setIntentNoteVisible((visible) => !visible)}
             problemIndex={session.problemIndex ?? 1}
-            problemCount={session.problemCount ?? 1}
-            elapsedMinutes={session.elapsedMinutes}
-            targetMinutes={session.intent.targetMinutes ?? session.elapsedMinutes}
+            problemCount={session.problemCount}
             onPause={pause}
           />
         }
@@ -163,16 +161,7 @@ function VisualizationPane({ onExpand }: { onExpand: () => void }) {
       <Button className={styles.expand} variant="secondary" size="sm" onClick={onExpand}>
         Full visualization
       </Button>
-      <p className={styles.placeholder}>
-        solid of revolution — shells
-        <br />
-        region y = x² − 1 on [1, 3], revolved about x = 0
-      </p>
-      <div className={styles.readout}>
-        <span>radius r = x</span>
-        <span>height h = x² − 1</span>
-        <span>drag a shell to inspect</span>
-      </div>
+      <p className={styles.placeholder}>Visualization workspace</p>
     </section>
   );
 }
@@ -195,9 +184,11 @@ function ProblemPane({
   onNext: () => void | Promise<void>;
 }) {
   const solved = attempt.attempt?.status === 'solved';
-  const counter = attempt.attempt
-    ? `Problem ${session.problemIndex ?? 1}`
-    : `Problem ${session.problemIndex ?? 1} of ${session.problemCount ?? 1}`;
+  const counter = `Problem ${session.problemIndex ?? 1}${
+    session.problemCount === undefined || session.problemCount === null
+      ? ''
+      : ` of ${session.problemCount}`
+  }`;
 
   return (
     <section className={styles.problemPane} aria-labelledby="problem-heading">

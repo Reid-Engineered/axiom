@@ -5,7 +5,7 @@ import { SessionToolbar } from './SessionToolbar';
 import { WorkingArea } from './WorkingArea';
 
 describe('session components', () => {
-  it('renders a five-dash toolbar and exposes its optional actions', () => {
+  it('renders persisted problem progress and exposes its optional actions', () => {
     const onChangeIntent = vi.fn();
     const onPause = vi.fn();
     render(
@@ -16,8 +16,6 @@ describe('session components', () => {
         onChangeIntent={onChangeIntent}
         problemIndex={6}
         problemCount={12}
-        elapsedMinutes={20}
-        targetMinutes={35}
         onPause={onPause}
       />,
     );
@@ -29,6 +27,22 @@ describe('session components', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     expect(onChangeIntent).toHaveBeenCalledOnce();
     expect(onPause).toHaveBeenCalledOnce();
+  });
+
+  it('omits problem progress and elapsed-time claims when no total exists', () => {
+    const { container } = render(
+      <SessionToolbar
+        conceptName="Shell method"
+        subjectLine="Calculus II"
+        intent={{ activity: 'Practising', targetMinutes: 35 }}
+        problemIndex={3}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/Problem 3 of/i)).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-complete]')).toHaveLength(0);
+    expect(container).not.toHaveTextContent(/of \d+/i);
+    expect(container).not.toHaveTextContent('′');
   });
 
   it('renders WorkingArea as a controlled learner input', () => {

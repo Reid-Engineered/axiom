@@ -4,19 +4,16 @@ import styles from './SessionToolbar.module.css';
 
 /**
  * 44px session toolbar: concept name, subject line, session-intent label with "Change
- * intent" (never mode tabs), five-dash problem progress, elapsed/target time, Pause
- * (screen 5 — the five dashes mirror the problem pane's "Problem 3 of 5").
+ * intent" (never mode tabs), optional five-dash problem progress, and Pause.
  */
 export interface SessionToolbarProps {
   conceptName: string;
   subjectLine: string;
   intent: SessionIntent;
   onChangeIntent?: () => void;
-  /** Drives the five-dash indicator, e.g. 3 of 5 — matches `Session.problemIndex/Count`. */
+  /** Drives the five-dash indicator only when a persisted problem total exists. */
   problemIndex: number;
-  problemCount: number;
-  elapsedMinutes: number;
-  targetMinutes: number;
+  problemCount?: number | null;
   onPause?: () => void;
   className?: string;
 }
@@ -28,16 +25,15 @@ export function SessionToolbar({
   onChangeIntent,
   problemIndex,
   problemCount,
-  elapsedMinutes,
-  targetMinutes,
   onPause,
   className = '',
 }: SessionToolbarProps) {
   const dashCount = 5;
-  const completedDashes = Math.min(
-    dashCount,
-    Math.ceil((problemIndex / Math.max(problemCount, 1)) * dashCount),
-  );
+  const hasProblemCount = problemCount !== undefined && problemCount !== null;
+  const completedDashes =
+    !hasProblemCount
+      ? 0
+      : Math.min(dashCount, Math.ceil((problemIndex / Math.max(problemCount, 1)) * dashCount));
 
   return (
     <div className={`${styles.toolbar} ${className}`}>
@@ -56,14 +52,13 @@ export function SessionToolbar({
           </Button>
         ) : null}
       </div>
-      <div className={styles.progress} aria-label={`Problem ${problemIndex} of ${problemCount}`}>
-        {Array.from({ length: dashCount }, (_, index) => (
-          <span key={index} data-complete={index < completedDashes} />
-        ))}
-      </div>
-      <span className={styles.time}>
-        {elapsedMinutes}′ of {targetMinutes}′
-      </span>
+      {!hasProblemCount ? null : (
+        <div className={styles.progress} aria-label={`Problem ${problemIndex} of ${problemCount}`}>
+          {Array.from({ length: dashCount }, (_, index) => (
+            <span key={index} data-complete={index < completedDashes} />
+          ))}
+        </div>
+      )}
       {onPause ? (
         <Button variant="secondary" size="sm" onClick={onPause}>
           Pause

@@ -23,8 +23,7 @@
   font-size: var(--font-size-body);
 }
 
-.context span,
-.time {
+.context span {
   color: var(--text-metadata);
   font-size: var(--font-size-small-plus);
 }
@@ -68,8 +67,4 @@
 
 .progress span[data-complete='true'] {
   background: var(--accent-action);
-}
-
-.time {
-  white-space: nowrap;
 }

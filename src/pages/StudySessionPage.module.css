@@ -49,29 +49,6 @@
   user-select: none;
 }
 
-.readout {
-  position: absolute;
-  bottom: var(--space-xl);
-  left: var(--space-xl);
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-md) var(--space-xl);
-  border: var(--border-width-hairline) solid var(--color-hairline);
-  border-radius: var(--radius-row);
-  background: var(--color-content);
-  box-shadow: var(--shadow-card);
-  font-family: var(--font-math);
-  font-size: var(--font-size-body);
-  color: var(--text-primary);
-}
-
-.readout span + span {
-  padding-left: var(--space-lg);
-  border-left: var(--border-width-hairline) solid var(--color-hairline);
-}
-
 .problemPane {
   display: flex;
   flex-direction: column;

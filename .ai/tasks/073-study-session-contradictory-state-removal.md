@@ -1,7 +1,7 @@
 ---
 id: 073
 title: Study Session contradictory-state removal
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: [071]
@@ -52,10 +52,41 @@ acceptance evidence for removed content. This task adds:
 ## Worklog
 
 - 2026-09-09 — Filed by claude from the approved design, `proposed` for codex.
+- 2026-09-10 — Claimed by codex. Beginning the TDD removal of contradictory Study Session
+  content and unbacked toolbar claims after confirming task 071's session contract is
+  approved and merged.
+- 2026-09-10 — Added the required absence assertions first. The targeted suite failed on
+  the prefilled working and on an always-rendered five-dash indicator labelled `Problem 3
+  of undefined`, then passed after the minimal implementation (2 files, 9 tests).
+- 2026-09-10 — Removed the authored working and region/readout copy, made persisted problem
+  totals optional (including a defensive `null` from real IPC), removed elapsed-time props
+  and output, and deleted only the CSS selectors made dead by those removals.
+- 2026-09-10 — All applicable local gates passed: `npm run typecheck` (zero errors),
+  `npm run lint` (zero errors), `npm run build` (163 modules transformed), and
+  `npm run test` (61 files, 165 tests). Separate design-value greps for
+  `#[0-9a-fA-F]{3,6}` and `rgba(` outside `tokens.css` both returned rg exit 1 (no
+  matches).
+- 2026-09-10 — Reviewed task 071's degraded solved-attempt observation. The fallback stays
+  on the same explicit unbound message and controlled working area; this task makes it less
+  misleading by leaving that working empty and otherwise does not change the degraded path.
+- 2026-09-10 — Visual assessment: the visualization pane retains its full-size centred
+  layout and is not empty, but omitting progress also removes the toolbar element that
+  supplied `margin-left: auto`, pulling Pause beside the intent controls. That is the
+  collapsed-spacing condition for the already-filed conditional task 078, which should be
+  activated after 073; no styling was added here.
 
 ## What was built / tested / left out
 
-Not started.
+- The learner's working starts empty; the visualization names no specific region and no
+  longer presents a fabricated mathematical readout.
+- The five-dash indicator and `of N` labels render only with a real problem total. The
+  frozen elapsed-time claim and its component props are removed.
+- Tests explicitly cover every required absence plus prompt → wrong answer and authored
+  hint → correct answer → next problem with cleared answer, hint, and solved feedback.
+- Left out by design: Rust and persistence changes, tutor content, Full Visualization,
+  elapsed-time tracking, and CSS polish. Task 078 owns the observed toolbar alignment gap.
+- Local verification is complete as recorded above. PR publication and required CI are
+  intentionally left to the parent workflow.
 
 ## Review
 

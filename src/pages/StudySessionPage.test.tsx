@@ -14,7 +14,7 @@ function RouteObserver() {
 }
 
 function renderSession(sessionId = 'session-shell-method') {
-  render(
+  return render(
     <NavigationProvider initialRoute={{ type: 'studySession', sessionId }}>
       <StudySessionPage sessionId={sessionId} />
       <RouteObserver />
@@ -76,11 +76,15 @@ describe('StudySessionPage', () => {
       conceptId: 'concept-shells',
       intent: { activity: 'Practising', targetMinutes: 8 },
     });
-    renderSession(session.id);
+    const { container } = renderSession(session.id);
 
     expect(await screen.findByText(/revolved about the y-axis/i)).toBeVisible();
     expect(screen.getByRole('textbox', { name: 'Answer' })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Your working' })).toHaveValue('');
     expect(screen.queryByText(/of 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/y = x² − 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\[1, 3\]/)).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent('′');
   });
 
   it('states plainly when a concept has no practice content', async () => {
@@ -95,7 +99,7 @@ describe('StudySessionPage', () => {
     expect(screen.queryByRole('textbox', { name: 'Answer' })).not.toBeInTheDocument();
   });
 
-  it('offers a hint as the explanation when an answer is wrong', async () => {
+  it('preserves the complete bound-attempt path through the next problem', async () => {
     const session = await startSession({
       workspaceId: 'workspace-calculus',
       conceptId: 'concept-shells',
@@ -107,24 +111,20 @@ describe('StudySessionPage', () => {
     fireEvent.change(answer, { target: { value: '1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
 
+    expect(await screen.findByText('That does not match yet.')).toBeVisible();
     expect(await screen.findByText('Set up the shell method integral.')).toBeVisible();
-  });
-
-  it('shows a plain confirmation and a next problem action once solved', async () => {
-    const session = await startSession({
-      workspaceId: 'workspace-calculus',
-      conceptId: 'concept-shells',
-      intent: { activity: 'Practising', targetMinutes: 8 },
-    });
-    renderSession(session.id);
-    const answer = await screen.findByRole('textbox', { name: 'Answer' });
 
     fireEvent.change(answer, { target: { value: '42.7' } });
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
 
     expect(await screen.findByText('Correct.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next problem' }));
-    await waitFor(() => expect(screen.getByText('Problem 2')).toBeVisible());
+    await waitFor(() => {
+      expect(screen.getByText('Problem 2')).toBeVisible();
+      expect(screen.getByRole('textbox', { name: 'Answer' })).toHaveValue('');
+      expect(screen.queryByText('Set up the shell method integral.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Correct.')).not.toBeInTheDocument();
+    });
   });
 
   it('surfaces an error message when checking an answer fails', async () => {
