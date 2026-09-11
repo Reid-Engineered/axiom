@@ -16,16 +16,15 @@ import { useExploreSampleWorkspace } from './hooks/useExploreSampleWorkspace';
 import { useKeyboardShortcut } from './hooks/useKeyboardShortcut';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import { useNavigation, type Route } from './hooks/useNavigation';
+import { useRestoredContext } from './hooks/useRestoredContext';
 import { WorkspaceProvider } from './hooks/WorkspaceProvider';
 import { useWorkspace } from './hooks/useWorkspace';
-import { useWorkspaces } from './hooks/useWorkspaces';
 import { AppShell } from './layouts/AppShell';
 import { RouteContent } from './layouts/RouteContent';
 import { DevGalleryPage } from './pages/DevGalleryPage';
 import { GoalEditingSheet } from './pages/GoalEditingSheet';
+import type { Workspace } from './types';
 import styles from './App.module.css';
-
-const FALLBACK_WORKSPACE_ID = 'workspace-calculus-ii';
 
 function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {
   if (route.type === 'workspaceOverview') return 'overview';
@@ -35,12 +34,16 @@ function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {
   return undefined;
 }
 
-function Application() {
+interface ApplicationProps {
+  workspaces: Workspace[];
+  refreshWorkspaces: () => Promise<void>;
+}
+
+function Application({ workspaces, refreshWorkspaces }: ApplicationProps) {
   const { route, overlay, navigate, openOverlay, closeOverlay } = useNavigation();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspace();
-  const { workspaces, refresh: refreshWorkspaces } = useWorkspaces();
   const sampleWorkspace = useExploreSampleWorkspace();
-  const workspaceId = activeWorkspaceId ?? workspaces[0]?.id ?? FALLBACK_WORKSPACE_ID;
+  const workspaceId = activeWorkspaceId ?? undefined;
   const palette = useCommandPalette(workspaceId);
 
   // Workspace creation and sample import each happen through their own page-level hook
@@ -73,7 +76,8 @@ function Application() {
             statusText={concept.id === palette.concepts[0]?.id ? 'active' : 'related'}
           />
         ),
-        onSelect: () => navigate({ type: 'conceptView', workspaceId, conceptId: concept.id }),
+        onSelect: () =>
+          workspaceId && navigate({ type: 'conceptView', workspaceId, conceptId: concept.id }),
       })),
     },
     {
@@ -81,7 +85,8 @@ function Application() {
       items: palette.notes.map((note) => ({
         id: note.id,
         content: <CommandPaletteText label={`Note — “${note.text}”`} />,
-        onSelect: () => navigate({ type: 'conceptView', workspaceId, conceptId: note.conceptId }),
+        onSelect: () =>
+          workspaceId && navigate({ type: 'conceptView', workspaceId, conceptId: note.conceptId }),
       })),
     },
     {
@@ -119,6 +124,7 @@ function Application() {
         navigate({ type: 'workspaceOverview', workspaceId: selectedWorkspaceId });
       }}
       onSelectSubItem={(subItem) => {
+        if (!workspaceId) return;
         const routeBySubItem: Record<typeof subItem, Route> = {
           overview: { type: 'workspaceOverview', workspaceId },
           concepts: { type: 'conceptsList', workspaceId },
@@ -130,9 +136,11 @@ function Application() {
       footer={
         <Stage3StubRouteMenu
           onNavigate={navigate}
-          onEditGoal={() =>
-            openOverlay({ type: 'goalEditing', workspaceId, goalId: 'guiding-goal' })
-          }
+          onEditGoal={() => {
+            if (workspaceId) {
+              openOverlay({ type: 'goalEditing', workspaceId, goalId: 'guiding-goal' });
+            }
+          }}
         />
       }
     />
@@ -182,10 +190,20 @@ function App() {
     );
   }
 
+  return <RestoredApplication />;
+}
+
+function RestoredApplication() {
+  const context = useRestoredContext();
+  if (!context) return null;
+
   return (
-    <WorkspaceProvider>
-      <NavigationProvider initialRoute={{ type: 'firstLaunch' }}>
-        <Application />
+    <WorkspaceProvider initialWorkspaceId={context.initialWorkspaceId}>
+      <NavigationProvider initialRoute={context.initialRoute}>
+        <Application
+          workspaces={context.workspaces}
+          refreshWorkspaces={context.refreshWorkspaces}
+        />
       </NavigationProvider>
     </WorkspaceProvider>
   );

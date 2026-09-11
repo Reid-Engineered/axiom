@@ -23,12 +23,15 @@ function matches(query: string, ...values: Array<string | undefined>) {
 }
 
 /** Coordinates Command Palette overlay state and its current query. */
-export function useCommandPalette(workspaceId = 'workspace-calculus-ii') {
+export function useCommandPalette(workspaceId?: string) {
   const { overlay, openOverlay, closeOverlay, navigate } = useNavigation();
   const { concepts } = useConcepts(workspaceId);
   const { modules } = useMarketplaceModules(workspaceId);
   const { session } = useActiveSession(workspaceId);
-  const loadNotes = useCallback(() => getRecentNotes(workspaceId), [workspaceId]);
+  const loadNotes = useCallback(
+    () => (workspaceId ? getRecentNotes(workspaceId) : Promise.resolve([])),
+    [workspaceId],
+  );
   const noteResource = useAsyncResource(loadNotes);
   const [query, setQuery] = useState('');
 
@@ -50,36 +53,46 @@ export function useCommandPalette(workspaceId = 'workspace-calculus-ii') {
 
   const actions = useMemo<CommandPaletteAction[]>(
     () =>
-      [
-        {
-          id: 'practice-current-concept',
-          label: `Practice the ${titleConcept}`,
-          detail: session?.problemCount
-            ? `${session.problemCount} problems · adaptive`
-            : 'Adaptive practice',
-          shortcut: '⏎',
-          run: runInSession,
-        },
-        {
-          id: 'visualize-current-concept',
-          label: `Visualize the ${titleConcept}`,
-          detail: 'opens full view',
-          run: openVisualization,
-        },
-        {
-          id: 'ask-tutor',
-          label: `Ask the tutor about the ${titleConcept}`,
-          shortcut: '⌘T',
-          run: runInSession,
-        },
-        {
-          id: 'new-note',
-          label: `New note on the ${titleConcept}`,
-          shortcut: '⌘N',
-          run: close,
-        },
-      ].filter((action) => matches(query, action.label, action.detail)),
-    [close, openVisualization, query, runInSession, session?.problemCount, titleConcept],
+      workspaceId
+        ? [
+            {
+              id: 'practice-current-concept',
+              label: `Practice the ${titleConcept}`,
+              detail: session?.problemCount
+                ? `${session.problemCount} problems · adaptive`
+                : 'Adaptive practice',
+              shortcut: '⏎',
+              run: runInSession,
+            },
+            {
+              id: 'visualize-current-concept',
+              label: `Visualize the ${titleConcept}`,
+              detail: 'opens full view',
+              run: openVisualization,
+            },
+            {
+              id: 'ask-tutor',
+              label: `Ask the tutor about the ${titleConcept}`,
+              shortcut: '⌘T',
+              run: runInSession,
+            },
+            {
+              id: 'new-note',
+              label: `New note on the ${titleConcept}`,
+              shortcut: '⌘N',
+              run: close,
+            },
+          ].filter((action) => matches(query, action.label, action.detail))
+        : [],
+    [
+      close,
+      openVisualization,
+      query,
+      runInSession,
+      session?.problemCount,
+      titleConcept,
+      workspaceId,
+    ],
   );
 
   const conceptResults = useMemo(() => {

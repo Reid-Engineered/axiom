@@ -1,7 +1,7 @@
 ---
 id: 070
 title: Startup restoration from domain state
-status: proposed
+status: review
 owner: codex
 stage: 8
 depends_on: [071, 072]
@@ -49,7 +49,7 @@ decision, not a defect fix), or any change to `useAttempt` and the attempt lifec
    Step 4 exists to make the order **total and reproducible**, not to approximate recency —
    workspace ids are random, so the tiebreak is arbitrary but deterministic. `getWorkspaces`
    keeps its existing `ORDER BY rowid`, so the sidebar's listing order is unchanged; the
-   comparator runs in the frontend over that list, which is why `071` exposes `createdAt`.
+    comparator runs in the frontend over that list, which is why `071` exposes `createdAt`.
 4. **Immediately after a create or import action, use the workspace that action returned** —
    do not re-run the fallback. A freshly created workspace has null activity, and a freshly
    imported sample would otherwise compete on timestamps it does not have.
@@ -75,10 +75,41 @@ those terms.
 ## Worklog
 
 - 2026-09-09 — Filed by claude from the approved design, `proposed` for codex.
+- 2026-09-10 — Claimed by codex on `agent/codex/070-startup-restoration-from-domain-state`; beginning TDD implementation of the locked domain-derived boot rule. The `useCommandPalette` mock workspace default and missing-workspace navigation guards move here from `077`, because removing only `App.tsx`'s fallback would silently preserve the fabricated id one hop downstream.
+- 2026-09-10 — Added the five-branch pure comparator test and App boot/create/import tests first. The first executable targeted run was red: the comparator module was absent and three new App assertions still observed unconditional First Launch. Implemented domain-derived boot and then fixed a test-exposed import race by making `useRestoredContext`'s initially loaded workspace list the persistent sidebar's source rather than starting a second competing request.
+- 2026-09-10 — Expanded the planned file list narrowly to `useCommandPalette`, `useConcepts`, and `useSessions`: hooks cannot be called conditionally, so the latter two accept an absent workspace and resolve locally to empty/null while the palette suppresses workspace actions, notes, and concepts. Added a mock invocation assertion proving `getConceptsByWorkspace`, `getActiveSessionByWorkspace`, and `getRecentNotes` are not called without an active workspace. `WorkspaceProvider` already accepted `initialWorkspaceId`, so no implementation change was needed there.
+- 2026-09-10 — All applicable local gates passed and the task moved to `review`. CI/PR verification remains for the publishing step.
+- 2026-09-10 — Parent review found the restored-Continue test proved only the destination
+  route while its selected fixture had no bound attempt. Strengthened it to bind a real Shell
+  method attempt before boot, capture its prompt through `describeAttempt`, select that
+  second-listed workspace by activity, and assert Continue renders the identical prompt.
+  `npm run test -- --run src/test/App.test.tsx` then passed 17/17; typecheck, lint, build,
+  and the full 62-file / 175-test suite were re-run and remained green.
 
 ## What was built / tested / left out
 
-Not started.
+- Added `selectStartupWorkspace`, a pure total-order selector implementing activity descending,
+  the all-null creation-time fallback, and descending id tiebreak without changing sidebar order.
+- Added `useRestoredContext`; production startup renders nothing until `getWorkspaces` resolves,
+  then initializes First Launch for zero workspaces or Home plus the selected workspace otherwise.
+- Removed `FALLBACK_WORKSPACE_ID` and the command palette's sample-workspace default. App navigation
+  and workspace-scoped palette data/actions now require a real active workspace; global Marketplace
+  remains available without one.
+- Preserved create/import identity by continuing to set the returned workspace directly and using
+  the restoration resource only as the refreshed sidebar list. Tests cover both paths against a
+  competing more-recent workspace.
+- Verified the selected workspace's Continue card reopens its exact bound attempt by comparing
+  the rendered prompt with the pre-boot `describeAttempt` response.
+- Test-only mock support can replace persisted workspaces, records invoked command names, and inserts
+  the sample workspace on explicit import when the boot baseline is empty.
+- TDD targeted command: `npm run test -- --run src/hooks/selectStartupWorkspace.test.ts src/hooks/useCommandPalette.test.tsx src/test/App.test.tsx` — 3 files, 25 tests passed after the recorded red run.
+- `npm run test` — 62 files, 175 tests passed.
+- `npm run typecheck` — passed with zero errors.
+- `npm run lint` — passed with zero errors or warnings.
+- `npm run build` — passed; 165 modules transformed.
+- `rg -n "#[0-9a-fA-F]{3,6}|rgba\\("` over every changed `src/` file — no matches (rg exit 1).
+- No Rust, route persistence, `localStorage`, new IPC command, attempt-lifecycle, task 074, or task
+  068 changes were made. No design/CSS values were introduced.
 
 ## Review
 

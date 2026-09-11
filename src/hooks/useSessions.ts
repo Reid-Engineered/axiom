@@ -13,15 +13,21 @@ import {
 import { useAsyncResource } from './useAsyncResource';
 
 /** Loads a workspace's resumable session and supports starting a new one. */
-export function useActiveSession(workspaceId: string) {
-  const load = useCallback(() => getActiveSessionByWorkspace(workspaceId), [workspaceId]);
+export function useActiveSession(workspaceId?: string) {
+  const load = useCallback(
+    () => (workspaceId ? getActiveSessionByWorkspace(workspaceId) : Promise.resolve(null)),
+    [workspaceId],
+  );
   const resource = useAsyncResource(load);
   const { setData } = resource;
-  const start = useCallback(async (input: StartSessionInput) => {
-    const session = await startSession(input);
-    setData(session);
-    return session;
-  }, [setData]);
+  const start = useCallback(
+    async (input: StartSessionInput) => {
+      const session = await startSession(input);
+      setData(session);
+      return session;
+    },
+    [setData],
+  );
 
   return { session: resource.data, ...resource, startSession: start };
 }
@@ -31,10 +37,13 @@ export function useSession(sessionId: string) {
   const load = useCallback(() => getSession(sessionId), [sessionId]);
   const resource = useAsyncResource(load);
   const { setData } = resource;
-  const replace = useCallback(<T extends Awaited<ReturnType<typeof getSession>>>(session: T) => {
-    setData(session);
-    return session;
-  }, [setData]);
+  const replace = useCallback(
+    <T extends Awaited<ReturnType<typeof getSession>>>(session: T) => {
+      setData(session);
+      return session;
+    },
+    [setData],
+  );
 
   const pause = useCallback(async () => replace(await pauseSession(sessionId)), [replace, sessionId]);
   const resume = useCallback(async () => replace(await resumeSession(sessionId)), [replace, sessionId]);

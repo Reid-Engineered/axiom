@@ -4,16 +4,22 @@ import { getConcept, getConceptsByWorkspace, searchConcepts } from '../services/
 import { useAsyncResource } from './useAsyncResource';
 
 /** Loads the complete concept graph for a workspace and supports scoped search. */
-export function useConcepts(workspaceId: string) {
-  const load = useCallback(() => getConceptsByWorkspace(workspaceId), [workspaceId]);
+export function useConcepts(workspaceId?: string) {
+  const load = useCallback(
+    () => (workspaceId ? getConceptsByWorkspace(workspaceId) : Promise.resolve([])),
+    [workspaceId],
+  );
   const resource = useAsyncResource(load);
   const [searchResults, setSearchResults] = useState(resource.data ?? []);
 
-  const search = useCallback(async (query: string) => {
-    const results = await searchConcepts(workspaceId, query);
-    setSearchResults(results);
-    return results;
-  }, [workspaceId]);
+  const search = useCallback(
+    async (query: string) => {
+      const results = workspaceId ? await searchConcepts(workspaceId, query) : [];
+      setSearchResults(results);
+      return results;
+    },
+    [workspaceId],
+  );
 
   return { concepts: resource.data ?? [], searchResults, search, ...resource };
 }

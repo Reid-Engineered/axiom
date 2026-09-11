@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { mockWorkspaces } from '../services/mockData/workspaces';
-import { loadMockSessionsForTest } from '../test/mockBackend';
+import { getMockInvocationsForTest, loadMockSessionsForTest } from '../test/mockBackend';
 import { NavigationProvider } from './NavigationProvider';
 import { useCommandPalette } from './useCommandPalette';
 
@@ -21,7 +21,7 @@ describe('useCommandPalette', () => {
   beforeEach(() => loadMockSessionsForTest());
 
   it('opens, tracks a query, returns real grouped data, and clears on close', async () => {
-    const { result } = renderHook(() => useCommandPalette(), { wrapper });
+    const { result } = renderHook(() => useCommandPalette(mockWorkspaces[0].id), { wrapper });
 
     await waitFor(() => expect(result.current.notes).toHaveLength(1));
     await waitFor(() => expect(result.current.concepts.length).toBeGreaterThan(0));
@@ -58,5 +58,21 @@ describe('useCommandPalette', () => {
       'Eigenvectors',
       'Span and independence',
     ]);
+  });
+
+  it('omits workspace-scoped results and actions when no workspace is active', async () => {
+    const { result } = renderHook(() => useCommandPalette(undefined), { wrapper });
+
+    await waitFor(() => expect(result.current.marketplaceModules.length).toBeGreaterThan(0));
+    expect(result.current.actions).toEqual([]);
+    expect(result.current.concepts).toEqual([]);
+    expect(result.current.notes).toEqual([]);
+    expect(getMockInvocationsForTest()).not.toEqual(
+      expect.arrayContaining([
+        'getConceptsByWorkspace',
+        'getActiveSessionByWorkspace',
+        'getRecentNotes',
+      ]),
+    );
   });
 });

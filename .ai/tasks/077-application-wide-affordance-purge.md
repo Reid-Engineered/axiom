@@ -56,6 +56,7 @@ Nothing here is pulled into `070`–`075` unless `074`'s native regression direc
 
 - 2026-09-09 — Filed by claude from the approved design, held outside the beta-critical path
   by explicit decision.
+- 2026-09-10 — The `useCommandPalette` `workspace-calculus-ii` default and the corresponding missing-workspace query/navigation guards moved to task `070`. Startup restoration cannot remove the production fallback honestly while the hook silently recreates it; the remaining dead buttons and defaults stay in this follow-up.
 
 ## What was built / tested / left out
 

@@ -45,6 +45,7 @@ interface MockAttempt {
 }
 
 let mockAttempts: Map<string, MockAttempt>;
+let invokedCommands: string[];
 
 const MOCK_PRACTICE_FAMILY = {
   prompt:
@@ -71,8 +72,8 @@ function createMockAttempt(): MockAttempt {
   return attempt;
 }
 
-
 export function resetMockBackend() {
+  invokedCommands = [];
   mockAttempts = new Map();
   concepts = structuredClone(mockConcepts);
   goals = structuredClone(mockGoals);
@@ -91,6 +92,15 @@ resetMockBackend();
 /** Loads explicit learner activity for tests whose scenario requires an existing session. */
 export function loadMockSessionsForTest(nextSessions: Session[] = mockSessions) {
   sessions = structuredClone(nextSessions);
+}
+
+/** Replaces persisted workspaces for boot and first-launch integration tests. */
+export function setMockWorkspacesForTest(nextWorkspaces: Workspace[]) {
+  workspaces = structuredClone(nextWorkspaces);
+}
+
+export function getMockInvocationsForTest() {
+  return [...invokedCommands];
 }
 
 function args(payload?: InvokeArgs): Record<string, unknown> {
@@ -159,11 +169,18 @@ function materialForWorkspace(workspaceId: string) {
 }
 
 export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown {
+  invokedCommands.push(command);
   const parameters = args(payload);
 
   switch (command) {
-    case 'importSampleWorkspace':
-      return structuredClone(findWorkspace('workspace-calculus-ii'));
+    case 'importSampleWorkspace': {
+      const existing = workspaces.find((workspace) => workspace.id === 'workspace-calculus-ii');
+      if (existing) return structuredClone(existing);
+      const sample = mockWorkspaces.find((workspace) => workspace.id === 'workspace-calculus-ii');
+      if (!sample) throw new Error('Sample workspace fixture not found');
+      workspaces.push(structuredClone(sample));
+      return structuredClone(sample);
+    }
     case 'getWorkspaces':
       return structuredClone(workspaces);
     case 'getWorkspace':
