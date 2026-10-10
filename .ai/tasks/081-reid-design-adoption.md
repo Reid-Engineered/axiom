@@ -50,8 +50,17 @@ These are scoped in 082–086 rather than represented as already implemented.
 
 ## Review
 
-Human sign-off on the direction is recorded above. Independent review of this authored
-amendment and required CI are still pending; the author does not self-approve the PR.
+Reviewer: Marcus (human)
+Date: 2026-10-10
+
+The human approved the concrete PR #26 amendment and explicitly instructed "okay merge"
+after receiving its adoption/specification summary and implementation boundaries. This
+records the human review and sign-off required for these shared-contract changes; it is
+not an approval by the task's author.
+
+Verdict: pass
+
+Merge remains conditional on all seven required CI checks passing on the final PR head.
 
 ## Follow-ups
 
