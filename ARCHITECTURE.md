@@ -5,6 +5,9 @@ data flow; `reference/UI/AXIOM-HANDOFF.md` is authoritative for visual design an
 behavior. When the two could be read as disagreeing, the handoff wins on _look and behavior_,
 this document wins on _how code is organized_.
 
+The product target changed on 2026-10-10 to the full Reid Engineered design in the current
+UI handoff. Section 8 distinguishes that target from the runtime described below.
+
 The frontend implementation is complete through Stage 6. Stage 7 now has its SQLite schema,
 migration runner, domain-specific IPC commands, and frontend service integration.
 
@@ -81,7 +84,7 @@ axiom/
   knowledge-package/        # Stage 8 reference content, Knowledge Package v1 format —
                             # see docs/superpowers/specs/2026-08-30-knowledge-package-v1-spec.md
   e2e/                     # native Tauri WebDriver flow + Linux setup notes
-  reference/UI/              design source of truth (mockups, handoff doc) — do not edit
+  reference/UI/              adopted handoff + visual references; archived legacy handoff
   .ai/                      multi-agent handoff system, see .ai/README.md
   AGENTS.md
   CLAUDE.md
@@ -95,10 +98,11 @@ reads from — not a single stylesheet. See `AGENTS.md` §UI Rules.
 
 ---
 
-## 3. Component inventory
+## 3. Current component inventory (before Reid migration)
 
-One page per screen in `AXIOM-HANDOFF.md` §4–5. Pages are the only layer allowed to call
-hooks that fetch data; everything below them is props-driven.
+The existing page inventory predates the adopted October 2026 handoff. Task 084 adds the
+new product-area routes; tasks 085–086 replace/extend the relevant pages. Pages are the
+only layer allowed to call hooks that fetch data; everything below them is props-driven.
 
 | Page                                                     | Layout used               | Key composed components                                       |
 | -------------------------------------------------------- | ------------------------- | ------------------------------------------------------------- |
@@ -224,13 +228,13 @@ high-value flow rather than full-screen browser coverage.
 
 ## 7. Explicitly out of scope here
 
-Per `AXIOM-HANDOFF.md` §7 ("Not yet designed"): empty states generally, notifications, the
-full concept-graph view, tutor voice mode, in-app reading mode, settings, module authoring,
-import onboarding, and responsive behavior below ~1100px. This document does not invent
-structure for any of them — they get their own design pass, and their own architecture
-addendum, when they're designed.
+The adopted handoff and Roadmap Stage 9 now define the target for app-area navigation,
+concept-map presentation, error profiles, history and adaptive practice. They remain
+unimplemented architecture work until the corresponding task locks its contracts. Tutor
+voice, in-app reading, module authoring, import onboarding and other unscheduled surfaces
+still need separate design passes; do not invent their runtime structure here.
 
-One empty state is designed, as an exception: on a fresh install, `Sidebar`
+One empty state is implemented in the current runtime: on a fresh install, `Sidebar`
 (`components/workspace/Sidebar.tsx`) renders with zero workspaces — First Launch and
 Create Workspace both pass it to `AppShell` (previously omitted entirely on those two
 routes). With `workspaces.length === 0`, `Sidebar` shows a primary "Create workspace" and
@@ -242,3 +246,27 @@ workspace. `Application` (`App.tsx`) owns the one `useWorkspaces()` instance beh
 sidebar and refetches it on navigating to `home`, since `Sidebar` (unlike a page) persists
 across routes and would otherwise miss a workspace created through a different page's own
 hook instance — per §5 rule 3, this is a `refresh()` call, not a lifted/shared store.
+
+## 8. Adopted Reid product target — implementation boundary
+
+The human approved the full visual/product direction on 2026-10-10, recorded in
+[the adoption decision](docs/superpowers/specs/2026-10-10-reid-design-adoption.md).
+The current runtime still has the types, IPC and pages described above; adopting the
+product does not change those interfaces automatically.
+
+- Domains is the UI label for Workspace; existing workspace ids and stored records remain.
+- Today / Practice / Error profile / Concept map / History become stable product routes,
+  scoped to the active workspace. Modules remain interchangeable capabilities, not routes.
+- Numeric mastery/Bloom/decay, misconception opportunities/status, difficulty policy,
+  phased plans/adaptive queues, timing and checker evidence need locked versioned
+  provider contracts, queries/migrations, IPC, services and hooks (task 083).
+- Existing named mastery must not be guessed into numeric evidence. Existing correctness
+  results cannot support sample counts, symbolic proof or method attribution.
+- Learning policy and subject diagnosis belong to capability providers. Core transports
+  and persists opaque versioned workspace-scoped data; the UI displays it through props.
+- Keep the two contexts and existing service/hook boundary. No new store, API client or
+  dynamic module architecture is justified merely by the redesign.
+- Production tokens move to the Reid vocabulary in task 082. Native window controls and
+  reduced-transparency fallbacks require platform validation; drawing markup is not runtime.
+
+Tasks 082–086 update this inventory/data flow when their actual implementations land.

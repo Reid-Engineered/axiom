@@ -37,3 +37,10 @@ Not started.
 ## Review
 
 ## Follow-ups
+
+
+### Adoption clarification — 2026-10-10
+
+Task 081 supersedes the former session visual target. The Reid foundation task 082 and
+Practice task 085 now own the replacement look/flow; retain this original conditional
+brief as history rather than restoring the previous visualization-dominant layout.

@@ -1,8 +1,11 @@
-# Proposal: macOS-style Axiom UI on Reid Engineered
+# Adopted direction: macOS-style Axiom UI on Reid Engineered
 
-**Status: proposal, not adopted.** `reference/UI/AXIOM-HANDOFF.md` remains the source of
-truth. Nothing here changes a component, token or invariant until the human signs off on a
-specific change to the handoff. Review task: `.ai/tasks/080-macos-ui-proposal-review.md`.
+**Status: full visual and product direction adopted on 2026-10-10.** The human explicitly
+selected full adoption after PR #25 merged. The amended
+[UI handoff](../../AXIOM-HANDOFF.md) is the implementation authority; task 081 and
+[the decision](../../../../docs/superpowers/specs/2026-10-10-reid-design-adoption.md) record
+the change. Sample values and inert controls remain illustrations, not runtime evidence.
+The original independent review is archived under .ai/tasks/_archive/080-macos-ui-proposal-review.md.
 
 Drawn 2026-10-09 in a Claude design canvas from the Reid Engineered design system (the
 shared look for Marcus's Mac desktop tools, Meridian first). All data is sample data on
@@ -38,11 +41,12 @@ These are the ideas worth judging separately from the visual style:
 4. **A session with a stated shape.** Warm-up / stretch / combined, each with a one-line
    reason drawn from the learner's history, and a difficulty setting with stated stakes.
 
-## Conflicts with AXIOM-HANDOFF.md
+## Historical conflicts with the superseded handoff
 
-The visual layer was drawn to the Reid Engineered system, not the handoff, and breaks these
-handoff rules. Each needs a decision: adapt the proposal to the handoff, or change the
-handoff with sign-off.
+This table records conflicts with the former handoff. The human-approved amendment
+supersedes those visual/progress/navigation prohibitions; it retains truthful data, goal
+continuity, real platform controls and capability isolation. Refer to the current handoff
+for the adopted behavior rather than treating this historical table as a blocking rule.
 
 | Proposal does | Handoff says | Where |
 |---|---|---|
@@ -57,13 +61,14 @@ handoff with sign-off.
 | Sidebar of app scopes (Today, Practice, Error profile…) with a domain list | Sidebar is the workspace tree, two levels, no modules as rows | §3 |
 | A "Next exam" card | Deadlines live on the goal as an inferred, removable facet | Screen 2, Goal editing |
 
-A likely outcome is to keep ideas 1–4 above and redraw them in the handoff's vocabulary
-(named mastery states, amber mistake dots, light surfaces, workspace sidebar). That redraw
-is not part of this PR.
+All four ideas and the visual direction are now adopted. Implementation is sequenced
+in Roadmap Stage 9 and tasks 082–086; the old recommendation to redraw into the former
+palette/navigation vocabulary is superseded.
 
-## Mechanics the mockup assumes that are not decided
+## Adopted mechanics requiring implementation contracts
 
-Mark each v1 / later / cut in the review:
+The direction is approved. Task 083 must lock actual policies, payloads and persistence;
+the numeric examples below are candidate values rather than validated calibration:
 
 - Pattern resolution rule (mock: 5 clean attempts in a row on questions that could trigger it).
 - Swapping the next question after a miss so the same misconception is tested again.

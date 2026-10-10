@@ -25,8 +25,8 @@ section. A single unresolved fail keeps the task in `changes-requested` — ther
 
 - [ ] No hardcoded color/radius/shadow/spacing — everything traces to `tokens.css`.
 - [ ] No markup duplicated from an existing component — reused, not recreated.
-- [ ] Matches `reference/UI/AXIOM-HANDOFF.md` / current screenshots for the screen(s)
-      touched (check `15-system-refinements.png` supersedes where noted).
+- [ ] Matches the current `reference/UI/AXIOM-HANDOFF.md` and adopted October 2026
+      Reid references for the screen(s) touched; older screenshot restrictions are historical.
 - [ ] Mock copy follows the handoff's copy rules (no exclamation marks, no emoji, states the
       misconception rather than "incorrect").
 
