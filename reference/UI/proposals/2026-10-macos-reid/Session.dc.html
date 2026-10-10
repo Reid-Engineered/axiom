@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Axiom — Session question</title>
+<script src="../../support.js"></script>
+<link rel="stylesheet" href="ds/reid/components/bundle.css">
+<link rel="stylesheet" href="axiom-theme.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#8fb3ff}a:hover{color:#9bbaff}
+</style>
+</helmet>
+<div class="re-root ax" style="min-height: 960px; box-sizing: border-box; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; background: var(--bg);">
+
+<nav class="re-sidebar" aria-label="Sidebar" style="flex: 0 0 232px; min-height: 520px;">
+<div class="ax-lights" data-tauri-drag-region="" aria-hidden="true"><span style="background: #ff5f57;"></span><span style="background: #febc2e;"></span><span style="background: #28c840;"></span></div>
+<a class="re-row" href="Main.dc.html" style="margin-top: 6px;"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="2"></rect><path d="M3 8.5h14M7 2.5v4M13 2.5v4"></path></svg><span class="re-row__label">Today</span><span class="re-row__count">3 due</span></a>
+<a class="re-row" href="Session.dc.html" aria-current="page"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4.5v11l9-5.5z"></path></svg><span class="re-row__label">Practice</span><span class="re-row__count">4 of 6</span></a>
+<a class="re-row" href="Profile.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><circle cx="10" cy="10" r="3"></circle></svg><span class="re-row__label">Error profile</span><span class="re-row__count">6</span></a>
+<a class="re-row" href="Main.dc.html#map"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="5" r="2"></circle><circle cx="15" cy="7" r="2"></circle><circle cx="8" cy="15" r="2"></circle><path d="M5.6 7l1.8 6M7 5.4l6 1.2M13.7 8.6l-4.4 5"></path></svg><span class="re-row__label">Concept map</span></a>
+<a class="re-row" href="Summary.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><path d="M10 6v4l2.5 2"></path></svg><span class="re-row__label">History</span><span class="re-row__count">31</span></a>
+<h2 class="re-sidebar__heading">This session</h2>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center;"><span class="re-status re-status--success" style="color: var(--text);"><span class="re-status__dot"></span>Warm-up</span><span class="re-num" style="font-size: 12px; color: var(--text-faint);">2 of 2</span></div>
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center;"><span class="re-status re-status--info" style="color: var(--text); font-weight: 600;"><span class="re-status__dot"></span>Stretch</span><span class="re-num" style="font-size: 12px; color: var(--text-faint);">2 of 3</span></div>
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center;"><span class="re-status" style="color: var(--text-muted);"><span class="re-status__dot"></span>Combined</span><span class="re-num" style="font-size: 12px; color: var(--text-faint);">0 of 1</span></div>
+</div>
+<div style="flex: 1 1 auto;"></div>
+<div style="margin: 8px 2px 6px; padding: 12px; border-radius: var(--radius-lg); background: var(--fill); display: flex; flex-direction: column; gap: 3px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Next exam</span>
+<span style="font-size: 13px; font-weight: 600;">MTH 112 · Exam 2</span>
+<span style="font-size: 12px; color: var(--text-muted);">Wed, Oct 21 · in 12 days</span>
+</div>
+<a class="re-row re-row--muted" href="Main.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"></path></svg><span class="re-row__label">Settings</span><span class="re-row__count">⌘,</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="re-toolbar" data-tauri-drag-region="" style="height: auto; min-height: 64px; flex-wrap: wrap; row-gap: 8px;">
+<div class="re-toolbar__title"><h1>Stretch · Trig substitution</h1><p>Question 4 of 6 · Bloom level: Apply · Push</p></div>
+<div class="re-toolbar__actions" style="flex-wrap: wrap;">
+<span class="re-num" style="font-size: 12px; color: var(--text-faint);">3:12 on this question</span>
+<a class="re-btn re-btn--secondary re-btn--md" href="Summary.dc.html">End Session…</a>
+</div>
+</header>
+
+<div style="padding: 0 28px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px;" aria-label="Session progress: question 4 of 6">
+<span style="height: 4px; border-radius: 2px; background: var(--signal-success);"></span>
+<span style="height: 4px; border-radius: 2px; background: var(--signal-success);"></span>
+<span style="height: 4px; border-radius: 2px; background: var(--signal-success);"></span>
+<span style="height: 4px; border-radius: 2px; background: var(--accent);"></span>
+<span style="height: 4px; border-radius: 2px; background: var(--fill-strong);"></span>
+<span style="height: 4px; border-radius: 2px; background: var(--fill-strong);"></span>
+</div>
+
+<div style="flex: 1 1 auto; padding: 56px 28px 40px; display: flex; flex-direction: column; align-items: center;">
+<div style="width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 32px;">
+
+<div style="display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><span class="re-chip">Trig substitution</span><span class="re-chip">Apply</span><span class="re-chip">indefinite integral</span></div>
+<p style="margin: 0; font-size: 15px; color: var(--text-muted);">Evaluate for <span class="ax-math"><i>x</i> &gt; 3</span>.</p>
+<div class="ax-math" style="font-size: 40px; line-height: 1.2; color: var(--text); padding: 12px 0;" role="math" aria-label="integral of d x over x squared times the square root of x squared minus 9">∫ <span class="ax-frac"><span>d<i>x</i></span><span><i>x</i><sup style="font-size: 0.55em;">2</sup> √<span class="ax-rad"><i>x</i><sup style="font-size: 0.55em;">2</sup> − 9</span></span></span></div>
+</div>
+
+<div class="re-field">
+<label for="ans">Your answer</label>
+<input id="ans" value="sqrt(x^2 - 9) / (9x)" style="height: 44px; font-family: var(--font-mono); font-size: 15px; border-radius: var(--radius-lg); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring);">
+<div style="display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--radius-md); background: var(--fill);">
+<span style="font-size: 11px; color: var(--text-faint);">Reads as</span>
+<span class="ax-math" style="font-size: 20px;"><span class="ax-frac"><span>√<span class="ax-rad"><i>x</i><sup style="font-size: 0.6em;">2</sup> − 9</span></span><span>9<i>x</i></span></span></span>
+<span style="flex: 1 1 auto;"></span>
+<span style="font-size: 11px; color: var(--text-faint);">Checked by symbolic equivalence, not by text</span>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<a class="re-btn re-btn--secondary re-btn--md" href="Session.dc.html"><svg class="re-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 14.5h5M8 17h4M10 2.5a5 5 0 0 0-3 9c.6.5 1 1.2 1 2h4c0-.8.4-1.5 1-2a5 5 0 0 0-3-9z"></path></svg>Hint…</a>
+<span style="font-size: 12px; color: var(--text-faint);">1 of 2 left · costs 0.05</span>
+<span style="flex: 1 1 auto;"></span>
+<a class="re-btn re-btn--quiet re-btn--md" href="Feedback.dc.html">Skip…</a>
+<a class="re-btn re-btn--primary re-btn--md" href="Feedback.dc.html">Check Answer<kbd style="font: 11px var(--font-ui); opacity: 0.75; margin-left: 4px;">⏎</kbd></a>
+</div>
+
+</div>
+</div>
+</main>
+
+<aside aria-label="Why this question" style="flex: 0 0 300px; box-sizing: border-box; border-radius: var(--radius-xl); background: var(--panel); border: 1px solid var(--border-soft); box-shadow: var(--shadow-float); backdrop-filter: blur(30px); padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<h2 style="margin: 0; font-size: 15px; font-weight: 700;">Why this question</h2>
+<button class="re-iconbtn re-iconbtn--sm" aria-label="Hide inspector"><svg class="re-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"></path></svg></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div class="re-progress__row"><span>Trig substitution</span><span class="re-progress__value">0.62</span></div>
+<span class="ax-meter" role="meter" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" aria-label="Trig substitution mastery"><i style="width: 62%;"></i></span>
+<span style="font-size: 12px; color: var(--text-muted);">Your lowest ready skill. Prerequisites hold: trig integrals 0.81, u-substitution 0.88.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Watching for on this one</span>
+<div style="border-radius: var(--radius-lg); background: var(--fill); padding: 12px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13px; font-weight: 600;">Dropping + C</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">5 of your last 13 indefinite integrals</span>
+</div>
+<div style="border-radius: var(--radius-lg); background: var(--fill); padding: 12px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13px; font-weight: 600;">Swapped triangle for x = a sec θ</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">2 of your last 6 secant substitutions</span>
+</div>
+</div>
+
+<dl class="re-details">
+<div><dt>Bloom level</dt><dd>Apply · Analyze after 2 clean</dd></div>
+<div><dt>Last practised</dt><dd>Wed, Oct 7</dd></div>
+<div><dt>Correct at Apply</dt><dd class="re-num">3 of 7</dd></div>
+<div><dt>A miss here</dt><dd class="re-num" style="color: var(--danger);">−0.05 · 2 in a row drops a level</dd></div>
+</dl>
+
+<span style="font-size: 11px; color: var(--text-faint); margin-top: auto;">Template: trig-sub/sec/apply-03 · parameters a = 3, n = 2</span>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

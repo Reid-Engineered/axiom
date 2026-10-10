@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Axiom — Error profile</title>
+<script src="../../support.js"></script>
+<link rel="stylesheet" href="ds/reid/components/bundle.css">
+<link rel="stylesheet" href="axiom-theme.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#8fb3ff}a:hover{color:#9bbaff}
+</style>
+</helmet>
+<div class="re-root ax" style="min-height: 1000px; box-sizing: border-box; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; background: var(--bg);">
+
+<nav class="re-sidebar" aria-label="Sidebar" style="flex: 0 0 232px; min-height: 520px;">
+<div class="ax-lights" data-tauri-drag-region="" aria-hidden="true"><span style="background: #ff5f57;"></span><span style="background: #febc2e;"></span><span style="background: #28c840;"></span></div>
+<a class="re-row" href="Main.dc.html" style="margin-top: 6px;"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="2"></rect><path d="M3 8.5h14M7 2.5v4M13 2.5v4"></path></svg><span class="re-row__label">Today</span><span class="re-row__count">3 due</span></a>
+<a class="re-row" href="Session.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4.5v11l9-5.5z"></path></svg><span class="re-row__label">Practice</span></a>
+<a class="re-row" href="Profile.dc.html" aria-current="page"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><circle cx="10" cy="10" r="3"></circle></svg><span class="re-row__label">Error profile</span><span class="re-row__count">6</span></a>
+<a class="re-row" href="Main.dc.html#map"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="5" r="2"></circle><circle cx="15" cy="7" r="2"></circle><circle cx="8" cy="15" r="2"></circle><path d="M5.6 7l1.8 6M7 5.4l6 1.2M13.7 8.6l-4.4 5"></path></svg><span class="re-row__label">Concept map</span></a>
+<a class="re-row" href="Summary.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><path d="M10 6v4l2.5 2"></path></svg><span class="re-row__label">History</span><span class="re-row__count">32</span></a>
+<h2 class="re-sidebar__heading">Patterns by skill</h2>
+<a class="re-row re-row--muted" href="Profile.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.8h6.2A1.5 1.5 0 0 1 17 7.8v6.7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z"></path></svg><span class="re-row__label">Integration</span><span class="re-row__count">3</span></a>
+<a class="re-row re-row--muted" href="Profile.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.8h6.2A1.5 1.5 0 0 1 17 7.8v6.7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z"></path></svg><span class="re-row__label">Series</span><span class="re-row__count">1</span></a>
+<a class="re-row re-row--muted" href="Profile.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.8h6.2A1.5 1.5 0 0 1 17 7.8v6.7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z"></path></svg><span class="re-row__label">Volumes</span><span class="re-row__count">2</span></a>
+<div style="flex: 1 1 auto;"></div>
+<div style="margin: 8px 2px 6px; padding: 12px; border-radius: var(--radius-lg); background: var(--fill); display: flex; flex-direction: column; gap: 3px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Next exam</span>
+<span style="font-size: 13px; font-weight: 600;">MTH 112 · Exam 2</span>
+<span style="font-size: 12px; color: var(--text-muted);">Wed, Oct 21 · in 12 days</span>
+</div>
+<a class="re-row re-row--muted" href="Main.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"></path></svg><span class="re-row__label">Settings</span><span class="re-row__count">⌘,</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="re-toolbar" data-tauri-drag-region="" style="height: auto; min-height: 64px; flex-wrap: wrap; row-gap: 8px;">
+<div class="re-toolbar__title"><h1>Error profile</h1><p>6 patterns · from 220 answers since Aug 26</p></div>
+<div class="re-toolbar__actions" style="flex-wrap: wrap;">
+<div class="re-seg" role="group" aria-label="Show"><button aria-pressed="true">Recurring</button><button aria-pressed="false">Improving</button><button aria-pressed="false">Resolved</button><button aria-pressed="false">All</button></div>
+<label class="re-search" style="width: 180px;"><svg class="re-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.5"></circle><path d="M13 13l4 4"></path></svg><input type="search" aria-label="Search patterns" placeholder="Search patterns"></label>
+</div>
+</header>
+
+<div style="padding: 4px 28px 40px; display: flex; flex-direction: column; gap: 28px;">
+
+<p style="margin: 0; max-width: 640px; font-size: 13px; line-height: 19px; color: var(--text-muted);">Built only from how you answer. A pattern is resolved after 5 clean attempts in a row on questions that could trigger it; until then, sessions keep testing for it.</p>
+
+<section aria-labelledby="rec-h" style="display: flex; flex-direction: column; gap: 10px;">
+<h2 id="rec-h" style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-faint);">Recurring · 2</h2>
+
+<a href="Profile.dc.html" aria-current="true" style="text-decoration: none; color: var(--text); border-radius: var(--radius-lg); background: var(--fill-strong); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: baseline;">
+<span style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em;">You keep dropping the constant of integration</span>
+<span class="re-status re-status--danger"><span class="re-status__dot"></span>Recurring</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">6 of your last 14 indefinite integrals · Integration by parts, trig integrals, trig substitution</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-faint);">Today</span>
+</a>
+
+<a href="Profile.dc.html" style="text-decoration: none; color: var(--text); border-radius: var(--radius-lg); background: var(--fill); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: baseline;">
+<span style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em;">You swap the triangle sides when x = a sec θ</span>
+<span class="re-status re-status--danger"><span class="re-status__dot"></span>Recurring</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">2 of your last 6 secant substitutions · you put a on the opposite side instead of adjacent</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-faint);">Oct 7</span>
+</a>
+</section>
+
+<section aria-labelledby="imp-h" style="display: flex; flex-direction: column; gap: 10px;">
+<h2 id="imp-h" style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-faint);">Improving · 2</h2>
+<a href="Profile.dc.html" style="text-decoration: none; color: var(--text); border-radius: var(--radius-lg); background: var(--fill); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: baseline;">
+<span style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em;">You call the ratio test conclusive when L = 1</span>
+<span class="re-status re-status--progress"><span class="re-status__dot"></span>Improving · 3 of 5 clean</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">1 of your last 9 ratio-test questions · Ratio test</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-faint);">Sep 30</span>
+</a>
+<a href="Profile.dc.html" style="text-decoration: none; color: var(--text); border-radius: var(--radius-lg); background: var(--fill); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: baseline;">
+<span style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em;">You use the diameter where the washer method needs the radius</span>
+<span class="re-status re-status--progress"><span class="re-status__dot"></span>Improving · 2 of 5 clean</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-muted);">1 of your last 7 washer questions · Disk and washer</span>
+<span class="re-num" style="font-size: 12px; color: var(--text-faint);">Oct 2</span>
+</a>
+</section>
+
+<section aria-labelledby="res-h" style="display: flex; flex-direction: column; gap: 10px;">
+<h2 id="res-h" style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-faint);">Resolved · 2</h2>
+<div style="border-radius: var(--radius-lg); border: 1px solid var(--border-soft); padding: 12px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;">
+<span style="font-size: 13px; color: var(--text-muted);">You leave θ in the final answer</span>
+<span class="re-status re-status--success"><span class="re-status__dot"></span>Resolved Sep 18</span>
+</div>
+<div style="border-radius: var(--radius-lg); border: 1px solid var(--border-soft); padding: 12px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;">
+<span style="font-size: 13px; color: var(--text-muted);">You drop the 2π in the shell method</span>
+<span class="re-status re-status--success"><span class="re-status__dot"></span>Resolved Sep 24</span>
+</div>
+</section>
+
+</div>
+</main>
+
+<aside aria-label="Pattern detail" style="flex: 0 0 300px; box-sizing: border-box; border-radius: var(--radius-xl); background: var(--panel); border: 1px solid var(--border-soft); box-shadow: var(--shadow-float); backdrop-filter: blur(30px); padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+<h2 class="re-serif" style="margin: 0; font-size: 22px; line-height: 26px; font-weight: 600;">Dropping the constant of integration</h2>
+<button class="re-iconbtn re-iconbtn--sm" aria-label="Close" style="flex: none;"><svg class="re-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"></path></svg></button>
+</div>
+<span class="re-status re-status--danger"><span class="re-status__dot"></span>Recurring · 0 of 5 clean</span>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Times per session, last 10 sessions</span>
+<div role="img" aria-label="Occurrences per session, oldest to newest: 0, 1, 0, 1, 0, 0, 1, 0, 1, 2" style="height: 64px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; align-items: end; border-bottom: 1px solid var(--border-soft);">
+<span style="height: 2px; background: var(--fill-strong); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 26px; background: var(--danger); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 2px; background: var(--fill-strong); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 26px; background: var(--danger); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 2px; background: var(--fill-strong); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 2px; background: var(--fill-strong); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 26px; background: var(--danger); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 2px; background: var(--fill-strong); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 26px; background: var(--danger); border-radius: 2px 2px 0 0;"></span>
+<span style="height: 54px; background: var(--danger); border-radius: 2px 2px 0 0;"></span>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-faint);"><span>Sep 3</span><span>Today</span></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Your last two</span>
+<div style="border-radius: var(--radius-md); background: var(--fill); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+<code style="font-family: var(--font-mono); font-size: 12px;">sqrt(x^2 - 9) / (9x)</code>
+<span style="font-size: 11px; color: var(--text-faint);">Today · trig substitution</span>
+</div>
+<div style="border-radius: var(--radius-md); background: var(--fill); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+<code style="font-family: var(--font-mono); font-size: 12px;">x*sin(x) + cos(x)</code>
+<span style="font-size: 11px; color: var(--text-faint);">Wed, Oct 7 · integration by parts</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">What Axiom does about it</span>
+<span style="font-size: 12px; line-height: 17px; color: var(--text-muted);">Every session includes at least 2 indefinite integrals. A miss swaps the next question for another one. Hints never mention + C.</span>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto;">
+<a class="re-btn re-btn--secondary" href="Session.dc.html">Drill This Pattern</a>
+<a class="re-btn re-btn--quiet" href="Profile.dc.html">Edit Rule…</a>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
