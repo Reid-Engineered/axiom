@@ -42,7 +42,7 @@ and a consistency search for obsolete prohibitions in active authority docs. Mec
 CI runs on the linked PR; no runtime test result or browser-fidelity result is claimed by
 this docs-only amendment.
 
-PR: pending creation.
+PR: [#26](https://github.com/Reid-Engineered/axiom/pull/26).
 
 Left out: runtime redesign, calibrated numeric policies, new capability contracts and
 migrations, native chrome implementation, and browser/platform fidelity verification.
