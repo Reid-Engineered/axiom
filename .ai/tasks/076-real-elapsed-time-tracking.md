@@ -39,3 +39,11 @@ Not started.
 ## Review
 
 ## Follow-ups
+
+
+### Adoption clarification — 2026-10-10
+
+Task 081 adopts elapsed/target timing and numeric learning evidence. The old score-ban
+question in this task's original scope is resolved by the human's full Reid adoption.
+Coordinate the persisted timer contract with 083 and implementation with 085; this
+clarification does not claim the timer already exists.

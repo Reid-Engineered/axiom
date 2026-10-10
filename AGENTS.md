@@ -12,19 +12,20 @@ the rules are*; `.ai/` covers *how agents hand work to each other*; `CLAUDE.md` 
 Axiom is a desktop learning environment (Tauri, offline-first) built around one idea: a
 learner has a **goal**, works inside a **workspace**, and everything the app shows —
 recommendations, tutoring, practice — is in service of that goal, expressed in the learner's
-own terms, never as scores, streaks, or dashboards. The full product model and every
-screen's behavior is specified in `reference/UI/AXIOM-HANDOFF.md` — that document is not
+own terms, with numeric mastery and diagnostic evidence when backed by real capability data.
+The full product model and every screen's behavior is specified in `reference/UI/AXIOM-HANDOFF.md` — that document is not
 background reading, it is the spec. Read it before implementing any page.
 
-The twelve invariants in that document's §6 are non-negotiable design constraints, not
-suggestions. The two most likely to be violated by an agent moving fast:
+The current handoff adopts the full Reid Engineered visual and product direction approved
+on 2026-10-10. The old bans on dark chrome, glass, red feedback, numeric mastery, charts,
+and clean-attempt counts are superseded. Read its twelve current invariants before work.
 
-- **No dashboards, no percentages, no streaks/XP/badges in the core app.** Progress is a
-  named mastery state and a sentence, never a number presented as a score. A module can
-  offer its own opt-in gamified view — this rule is about what Axiom itself shows by
-  default, not a ban on modules ever doing it (see `AXIOM-HANDOFF.md` §6, invariant 3).
-- **Modules are never navigation destinations.** If you're adding a sidebar row for a
-  module, stop — that's the one thing the sidebar is specified to never do.
+- **Evidence must be real.** Numeric values, changes, pattern status, charts and session
+  plans come from persisted capability outputs. Reference-screen sample data never becomes
+  learner data; unavailable evidence is not silently converted to zero.
+- **Modules are not navigation identities.** Today, Practice, Error profile, Concept map
+  and History are adopted stable product areas, scoped to a selected domain/workspace.
+  Installing a module never adds a sidebar row.
 
 ## Engineering principles
 
@@ -59,11 +60,11 @@ suggestions. The two most likely to be violated by an agent moving fast:
   them; it does not import a service, call a hook that fetches, or know which page it's on.
   Only `pages/*` call data-fetching hooks. This is what `ARCHITECTURE.md` §5 rule 1 exists to
   protect — check it in review.
-- **Preserve the mockups' visual language exactly**: two accents only, no gradients beyond
-  the one sanctioned Continue-card treatment, no red, STIX Two Text for math, system font
-  stack for UI. `AXIOM-HANDOFF.md` §2 is the exact spec; when a mockup screenshot and this
-  section disagree, the screenshot is probably older — check `15-system-refinements.png`,
-  which is explicitly authoritative over the four screens it supersedes.
+- **Preserve the adopted visual language**: Reid dark surfaces, blue actions, semantic
+  status colors including red, glass/floating panels, rounded controls, and the theme's
+  system UI/editorial serif/math stacks. The October 2026 references and current
+  AXIOM-HANDOFF.md supersede the older screenshots, including 15-system-refinements.png.
+  Port values to tokens.css; do not import a second production token system.
 - **Copy rules apply to placeholder/mock text too.** No exclamation marks, no emoji, no
   "Amazing!" — mock data should read the way real product copy would, per
   `AXIOM-HANDOFF.md` §2 "Copy rules". Sloppy mock copy sets a bad pattern for whoever

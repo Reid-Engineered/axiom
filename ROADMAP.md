@@ -304,12 +304,43 @@ calculus family.
 
 ---
 
-## Stage 9 and beyond — explicitly not planned here
+## Stage 9 — Reid Engineered product migration
 
-Real 3D visualization engine, tutor/AI integration, the mastery engine, the event bus,
-marketplace backend and module downloads, module sandboxing and signing, offline packaging
-and sync, and everything listed in `AXIOM-HANDOFF.md` §7 ("Not yet designed": empty states,
-notifications, concept-graph view, tutor voice mode, in-app reading mode, settings, module
-authoring, import onboarding, responsive behavior below ~1100px). Each gets its own design
-pass through the brainstorming process and its own architecture addendum before it gets a
-stage here — this roadmap does not pre-decide their shape.
+The human adopted the full October 2026 visual and product direction in task 081.
+[AXIOM-HANDOFF.md](reference/UI/AXIOM-HANDOFF.md) is the target; earlier stages and screenshots
+record the previous implementation, not a requirement to preserve the old palette or
+progress/navigation restrictions. Stage 8 regression/offline proof remains required.
+
+| Task | Deliverable | Owner lane | Depends on |
+|---|---|---|---|
+| 082 | Reid production tokens, primitives, native shell and existing-screen reskin | Antigravity | 081 |
+| 083 | Versioned mastery, pattern, difficulty, verification and adaptive-session contracts | Claude | 081 |
+| 084 | Domain-scoped product navigation, Today, editable plans and concept map | Codex | 082, 083 |
+| 085 | Persisted adaptive Practice, difficulty effects and diagnostic feedback | Codex | 083, 084 |
+| 086 | Error profile, rule editing, history and session summary | Codex | 083, 085 |
+
+Each implementation receives its normal polish and independent review; split these work
+packages into smaller implementation tasks where the contracts demand it. Existing task
+076 supplies the elapsed-time design scope; 078's older visual target is superseded by 082.
+
+**Acceptance criteria**
+
+- Rendered screens match Main/Session/Feedback/Profile/Summary references and use one
+  centralized production token system, working native controls and accessible fallbacks.
+- Zero-domain launch, create/switch domain and exact attempt resume remain real.
+- Numeric mastery, Bloom/readiness/decay, pattern status/charts and session statistics
+  are backed by persisted observations; missing data is an honest unavailable state.
+- Steady/Push/Exam disclose and implement their locked budgets/costs. Adaptive replacements
+  persist with reasons; repeated submissions do not double-apply any effects.
+- Profile drill/rule edits, history, miss review and all navigation destinations work.
+- Rust/provider/migration, hooks, conditional components and required native E2E cover
+  fresh state, domain isolation, retries/skips/hints, queue changes and restart persistence.
+- Stage 8 regression corpus (067) and network-disabled Practice acceptance (068) remain
+  gates; new learning content and verification claims require their own verified support.
+
+## Beyond the migration
+
+Real 3D visualization, tutor integration, an event bus if the locked contracts require it,
+marketplace downloads, module sandboxing/signing, offline packaging/sync and unscheduled
+reading/voice/import/authoring surfaces still receive separate designs. This roadmap
+adopts the product direction without claiming those subsystems already exist.

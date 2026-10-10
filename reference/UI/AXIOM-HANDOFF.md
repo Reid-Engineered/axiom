@@ -1,229 +1,240 @@
 # Axiom — UI Design Handoff
 
-A complete description of the Axiom desktop learning environment as designed, written to be handed to another AI (or engineer) as the source of truth for implementation. Screenshots referenced below are in `screenshots/`.
+**Adopted direction: Reid Engineered, 2026-10-10.** The human approved the full visual
+design and product direction from PR #25, including numeric mastery, error profiles,
+difficulty modes, and the new sidebar. This replaces the previous light, two-accent,
+workspace-tree design restrictions.
 
-Target runtime: **Tauri, multi-platform** (macOS, Windows, Linux). Native-desktop feel, but no platform-specific chrome, vibrancy, or traffic lights — the app leaves a 38px draggable strip at the top of its window and lets each OS supply its own decorations.
+This document is the implementation authority. The five screens and theme under
+[2026-10-macos-reid](proposals/2026-10-macos-reid/README.md) are the visual references.
+Their sample content illustrates behavior; it is not learner data or a working capability.
+The prior handoff is preserved in [the legacy archive](AXIOM-HANDOFF-LEGACY-2026-10.md)
+for historical context. Older screenshots cannot override this document.
 
----
+Adoption changes the product target; it does not claim that the running application has
+already migrated. Architecture §8 and Roadmap Stage 9 distinguish current contracts from
+the new work.
 
-## 1. Product model (implementation-relevant)
+## 1. Product model
 
-```
-Goal ──guides──> Workspace ──contains──> Concepts ──related to──> Concepts
-                     │                        │
-                     ├──enables──> Modules (tools)
-                     └──records──> Sessions, notes, practice history, mastery
-```
-
-- **Workspace** — a curated learning environment for one subject (Calculus II). Owns goals, concepts, material, history, enabled modules, learning preferences. The chosen term over "Collection".
-- **Goal** — a living object holding verbatim natural-language text plus inferred structure (deadline, mastery type, pacing, concept scope). One primary active goal per workspace; history retained.
-- **Session intent** — a short-term goal ("practice 30 minutes", "understand shell integration"), distinct from the workspace goal.
-- **Concept** — semantic node (Shell Method, Integration by Parts) with `prerequisite / related / leads-to` edges, a mastery state, and links to notes, practice, visualizations, tutor threads.
-- **Module** — a capability enabled inside a workspace (Tutor, Visualizer, Practice, CAS, Notes, Review). Never a navigation destination; never described to users in developer language.
-- **Mastery** — five named states: `New · Developing · Familiar · Strong · Mastered`. The **word is the indicator**; the ring glyph is shorthand only, and every ring appears within reading distance of its word. Never a percentage, never a chart. States decay — a workspace may honestly report "was Strong".
-- **Offline** — a workspace-level promise. Resources and modules carry one of `Works offline · Online enhanced · Internet required`.
-- **Goal states** — `Guiding · Waiting · Met · Resting`. Exactly one goal is Guiding and it alone shapes recommendations; a Waiting goal can take over on its own schedule.
-- **Session intent** — the current activity ("Practising", "Reading", "Exploring") shown as a soft label with "Change intent". It steers; it never gates navigation.
-
----
+- A **workspace** remains the persisted learning environment for a subject. The new UI
+  calls these **Domains** in its sidebar; this is a presentation label, not a database
+  rename. Domain selection visibly scopes Practice, Error profile, Concept map, and History.
+- A **goal** retains the learner's natural-language intent, inferred deadline and scope.
+  One Guiding goal shapes recommendations. Waiting, Met, and Resting goals remain available.
+  The Next exam card reflects the active goal's deadline; it never invents a separate exam.
+- A **concept / skill** has prerequisite relationships and learning evidence. Numeric
+  mastery, change since previous practice, decay, readiness, and Bloom level are adopted
+  presentation targets. Named mastery descriptions remain useful explanations.
+- A **session** has an editable plan, named phases, reasons, question positions, difficulty,
+  timing, and a persisted current attempt. Resume restores the same attempt and working.
+- A **pattern** records a recurring misconception, its opportunities and occurrences,
+  first/last seen, recent evidence, clean attempts, and Recurring / Improving / Resolved
+  status. These are provider-produced conclusions, not deductions made by UI components.
+- A **module** provides workspace-scoped capabilities. Practice and Error profile are
+  stable product areas, not module identities. Installing a module does not add navigation.
+- The app remains local-first and offline-first. A fresh install has no fabricated learner
+  history, mastery, patterns, sessions, or sample workspaces. Sample exploration is explicit.
 
 ## 2. Design system
 
-### Surfaces (warm neutral, low chroma)
+### Surfaces and signals
 
-| Role | Value | Use |
-|---|---|---|
-| Content | `#FBFAF8` | main content panes, cards |
-| Chrome | `#F2F1ED` | sidebar, toolbars, secondary panes (`#FAF9F6` for inner rails) |
-| Recessed | `#E9E7E2` | wells, inactive fills |
-| Ink | `#1C1B19` | primary text, dark buttons |
-| Placeholder fill | `repeating-linear-gradient(135deg,#F2F0EA 0 7px,#E9E6DF 7px 14px)` | stands in for rendered visualizations/imagery |
+Use the adopted [theme](proposals/2026-10-macos-reid/axiom-theme.css) and
+[component reference](proposals/2026-10-macos-reid/ds/reid/components/bundle.css).
 
-Text tints: primary `#1C1B19`, secondary `rgba(28,27,25,.55–.62)`, metadata `rgba(28,27,25,.42–.5)`, hairlines `rgba(28,27,25,.07–.12)`.
+| Role | Reference value |
+|---|---|
+| Background | #1e1b19 |
+| Content surface / raised surface | #2a2724 / #302c29 |
+| Sidebar / inspector | rgba(50,46,43,0.88) / rgba(44,41,38,0.92) |
+| Primary / secondary / faint text | #f5f5f7 / rgba(235,235,245,0.70) / rgba(235,235,245,0.56) |
+| Action accent / hover / text | #7ea6ff / #9bbaff / #8fb3ff |
+| Danger / destructive fill | #ff6b5b / #d33a2c |
+| Info / progress / success / neutral | #2f6fdb / #c2692f / #2f8a57 / #8e8e93 |
 
-### Accents — exactly two
+Dark surfaces, blue actions, glass sidebar/inspectors, rounded controls, and floating-panel
+shadows are adopted throughout. Red marks misses or negative changes. Success, progress,
+and neutral signals supplement the action accent. Color never carries a diagnosis alone.
+Reduced-transparency environments use opaque equivalent surfaces with readable contrast.
+Do not add unrelated gradients or glow beyond the supplied component treatment.
 
-- **Action** `oklch(.50 .13 258)` — primary buttons, links, active selection, progress fill, caret.
-- **Mastery** `oklch(.50 .13 150)` — mastery glyph, verified badge, positive practice dots.
-- Amber `oklch(.65 .12 60)` appears only as a "you made a specific mistake" dot. **No red anywhere.**
+Port production values to src/styles/tokens.css. The reference CSS is a drawing resource,
+not a second production token system. Components use semantic tokens and shared primitives.
 
-Both accents share lightness and chroma and differ only in hue, which keeps the palette flat and calm. No gradients on content (one 170° near-white gradient is allowed on the Continue card), no glow, no glass.
+### Typography and metrics
 
-### Typography
+- UI: the theme's system stack, led by -apple-system / SF Pro Text with Windows and generic
+  sans-serif fallbacks. Monospace is for answer entry and technical detail.
+- Editorial headings and mathematics: the theme's New York / ui-serif / Iowan Old Style /
+  Palatino Linotype / Georgia stack. Typeset actual expressions structurally; the hand-set
+  fractions in the mockups are illustrations. Embed any required math assets for offline use.
+- Sidebar 232px; inspector 300px; toolbar 64px; controls 34px (small 28px); rows 28px.
+  Content gutters 28px; spacing scale 4 / 8 / 12 / 16 / 20 / 24 / 28 / 40px.
+- Radii 3 / 6 / 8 / 12 / 16 / 24px and pill controls; use the theme's glass, float, sheet,
+  and menu shadows. Typography follows the supplied screen/component references.
 
-System UI stack for interface (`ui-sans-serif, system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif`), **STIX Two Text** for all mathematics — variables in italic, operators upright.
+macOS chrome may use real native traffic-light controls and draggable regions. Windows and
+Linux retain functioning platform-appropriate window controls. Do not draw inert traffic
+lights as though they minimize, maximize, or close the application.
 
-| Role | Size / weight | Notes |
-|---|---|---|
-| Screen title | 27 / 600, tracking −0.022em | one per screen |
-| Section heading | 20–24 / 600 | |
-| Card title | 15–17 / 600 | |
-| Row title | 13–13.5 / 590 | |
-| Body | 13.5 / 400, line-height 1.65 | `text-wrap: pretty`, max ~560px measure |
-| Secondary body | 12.5 / 400, line-height 1.55 | |
-| Metadata | 11.5 / 400 | |
-| Eyebrow label | 10 / 600 monospace, uppercase, tracking .06em | "CONTINUE", "TOOLS" |
-| Math inline | 13–17 STIX | |
-| Math display | 20 STIX | centered in a `#F6F5F1` well |
+### Components and copy
 
-Note for implementers: the shorthand `font: 400 12px/1 inherit` is **invalid CSS** and is dropped entirely — use longhands (`font-weight`/`font-size`/`line-height`) and let family inherit.
-
-### Metrics
-
-Sidebar 232px · window drag strip 38px · workspace toolbar 38px · session toolbar 44px · content gutter 32–44px · radii: rows 7–8, cards 11–14, sheets 16 · borders 1px hairline · shadows: `0 1px 2px rgba(28,27,25,.04)` for cards, `0 24px 60px rgba(28,27,25,.3)` for sheets. Density is "balanced".
-
-### Components
-
-- **Buttons** — primary (accent fill, white text, radius 8–9, 9–11px vertical padding), secondary (white, hairline border), tertiary (accent text only). Dark ink fill reserved for one-off emphasis (Browse Modules).
-- **Segmented control** — `rgba(28,27,25,.07)` track, white selected pill with a 1px shadow. Used for learning modes (Explain / Practice / Reflect) and marketplace filters.
-- **Chips** — inferred goal facets and concept tags; `display:inline-flex`, removable with a trailing ✕. Chips are objects: removing "Deadline · Dec 12" removes the deadline.
-- **Mastery ring** — a 12–15px circle: hollow 1.5px border (New), then conic fill at 25 / 50 / 75 / 100% in the mastery accent (Developing → Mastered). Used identically on concept rows, concept view, workspace cards, command palette results, and material sections; always paired with the state word. Meanings: New = not started; Developing = can follow a worked solution; Familiar = solves typical problems with prompting; Strong = handles unfamiliar variants unaided; Mastered = held up weeks apart without review.
-- **Chapter state profile** — up to five rings in a row on a collapsed group header, giving a chapter's mastery spread at a glance plus a plain count.
-- **Reasoned recommendation** — an accent-ruled block: action, one line of evidence, a primary "Start · 8 min", and an optional **"Why this?"** that expands to dated observations. Never mentions AI, never explains the model.
-- **Offline chips** — mint "Works offline", grey "Online enhanced", dashed amber-dot "Internet required". Shown only in marketplace listings, module detail, resource lists, and the workspace download sheet.
-- **Progress bar** — 3px, unlabelled, never accompanied by a percentage.
-- **Trust badge** — "Axiom Verified" (mint fill, mastery-hue text, dot) / "Community" (grey, may carry a human number like "4.8k learners") / "Experimental" (dashed outline).
-- **Toggle** — 30×18 pill, accent when on, `rgba(28,27,25,.14)` when off.
-- **Inspector / popover / sheet** — 95% white, hairline border, large soft shadow, always dismissible, always secondary to content.
-- **Placeholder** — striped fill plus a monospace caption naming what belongs there.
+Use shared buttons, segmented difficulty controls, search fields, sidebar rows, detail lists,
+status labels, charts, stat tiles, and mastery meters. Before/after meters distinguish the
+previous observation from the current value in text as well as color.
 
 ### Copy rules
 
-Concise, non-patronising, no exclamation marks, no emoji, no celebration. "Correct." not "Amazing!". Feedback names the misconception ("chose *u* backwards"), never just "incorrect". Reasons are stated in human terms ("you missed this twice on Tuesday"). Numbers appear only when they are context, never as scores.
-
----
+Feedback may say Correct / Incorrect and must also name what happened and what to do next.
+Numeric evidence, summaries, charts, and clean-attempt counts are permitted. Keep copy
+concise and factual: no celebration, exclamation marks, emoji, or invented observations.
+Explain checker conclusions accurately; never call numerical agreement symbolic proof.
 
 ## 3. Navigation
 
-Chosen structure (study A of three explored — see `screenshots/13-navigation-studies.png`):
+The primary sidebar is:
 
-```
-Search (⌘K)
-Home
-Marketplace
-── WORKSPACES ─────────
-Calculus II            ← open workspace expands
-    Overview
-    Concepts
-    Material
-    Tools
-Linear Algebra
-Circuit Analysis
-+ New Workspace
-── footer: avatar · name · settings
-```
+~~~
+Today
+Practice
+Error profile
+Concept map
+History
+── Domains ──
+Calculus II · MTH 112
+other learner-created domains
+Add Domain…
+── Next exam (when the Guiding goal has a deadline)
+Settings
+~~~
 
-Rules: only the open workspace expands; the tree never exceeds two levels; modules are never rows in this sidebar. The sidebar stays visible on First Launch and Create Workspace, for orientation and visual continuity — with zero workspaces to show, it renders an intentional empty state (primary "Create workspace", secondary "Explore a sample workspace" — the same opt-in sample flow as First Launch's own content, never triggered automatically) in place of the tree and its "+ New Workspace" row. It is hidden only in Full Visualization mode, which offers a single "‹ Session" return.
+Search and its keyboard shortcut remain discoverable in the toolbar/command palette.
+Practice, Error profile, Concept map, and History always show their domain scope. Domain
+selection retains workspace identity, goal, and history. With zero domains, show Create
+domain and Explore a sample workspace; scoped areas show an intentional empty state.
 
-Rejected alternatives, kept for reference: **B** 64px icon rail + header workspace switcher + segmented areas (max content width, weaker recognisability); **C** sidebar scoped to one workspace with its concepts and tools inline (deepest focus, harder cross-subject work).
+Settings provides domain tools, preferences, and access to Marketplace; material and notes
+remain reachable from the domain/concept details and command palette. Existing destinations
+must not become dead ends during migration. Contextual session phases, recent sessions, and
+profile filters may occupy sidebar sections as the five references show. Modules never add
+rows. Full Visualization remains a session detour with an explicit return.
 
----
+## 4. Adopted screens
 
-## 4. Screens
+### Today — Main.dc.html
 
-### Screen 1 — First Launch · `screenshots/01-first-launch.png`
-Centred column, max 520px, on a soft radial wash. Logo lockup (26px square outline with a rotated accent diamond) + "Axiom". H1 "What are you learning?", one sentence of reassurance, a single text field pre-filled with a ghost "Calculus II" plus **Continue**. Below a hairline: three text rows in ascending commitment — install a workspace template / import a syllabus, PDF, notes / explore a sample workspace. No account step, no tour, no mention of modules. The sidebar frames this screen too (§3) — empty state, no pre-created workspaces — for continuity into Create Workspace and Home; it is not part of this centred column's own content.
+Dark app shell and floating sidebar; compact toolbar with remembered date/context, search,
+and New session. Show an existing resumable session before offering a new plan. The plan
+states duration, question count, difficulty, and Warm-up / Stretch / Combined phases with
+reasons drawn from actual history. Start session and Change plan are real actions.
 
-### Screen 2 — Create Workspace · `screenshots/02-create-workspace.png`
-Sidebar (still the empty state — no workspace exists until this screen's submit) + content. Two fields only: **Subject** (text) and **What are you trying to accomplish?** (textarea, natural language, focus ring visible). Below them a panel titled **"Axiom read that as"** showing inferred structure as removable chips (Deadline · Dec 12 / Mastery · conceptual, not just procedural / 14 concepts / Pacing · 4 sessions per week / Tools · Tutor, Practice, Visualizer, Notes) with an **Adjust** link that expands comfort level, materials drop target, and pacing in place. Footer: Create Workspace · Cancel · "Nothing here is permanent". Deadline and level are **never asked as form fields** — they are inferred and correctable.
+Watching for surfaces named patterns with evidence; Fading shows previous/current mastery
+and elapsed practice time. A domain concept map shows prerequisite readiness and current
+mastery. Next exam reflects the Guiding goal. Empty evidence produces an empty state, not
+the mockup's populated Calculus II profile.
 
-### Screen 3 — Home · `screenshots/03-home.png`
-Sidebar + content, max 800px measure. One line of remembered context ("Thursday afternoon · 3 days since your last session"). **Continue card**: eyebrow, "Calculus II — Shell Method", one sentence of exactly where you stopped, the half-finished integral typeset (`V = 2π∫₁³ x(x² − 1) dx`), Resume session / Open workspace, and a 206×150 thumbnail holding the visualization's last camera position. Then **Workspaces** — three cards, each carrying name, goal sentence, 3px unlabelled progress, last concept + relative time (a paused workspace says "Paused"). Footer text row: Templates · Marketplace · Import material. No dashboard, no analytics.
+### Practice — Session.dc.html
 
-Alternates explored:
-- **Session-intent led** (`03b`) — "How much time do you have?" with 15/30/60/browsing chips and a three-row plan sized to fit, each row stating its reason. Best for exam season and for freeze-at-the-start learners; presumes one active workspace. Could ship as a preference, not a fork.
-- **Library led** (`03c`) — no sidebar; workspaces are the page, Continue shrinks to a resume strip with "Resume ⏎". Best for four or five simultaneous subjects; wasteful for one.
+Question-first working area with named phase, position, Bloom level, difficulty, actual time,
+End session, and segmented question progress. Render prompt/domain restrictions, answer
+entry, parsed preview when supported, Hint, Skip, and Check answer.
 
-### Screen 4 — Workspace Overview · `screenshots/04-workspace-overview.png`
-Answers "where am I, what next" in the first 300px. Title, goal sentence with "15 days out" and an **Edit goal** link. **Continue** card (concept, "Problem 3 of 5 · you were choosing the radius", Resume / Start something else). **Recommended next** as an accent-ruled block that states its own diagnosis: "You've set up shells correctly twice but picked the wrong radius when the axis wasn't x = 0." **Concepts in play** — four rows with human status ("active", "2 days ago", "due for review", "not started") and mastery glyphs, plus "All 14". Right rail 250px: four tool tiles (Tutor / Practice / Visualize / Notes) + "All tools & modules"; **Recent** as three bullets of real artefacts; and one grey suggestion panel proposing a goal change ("Series is next in the course… Add to plan").
+A dismissible Why this question inspector describes actual selection reasons, watched
+patterns, prerequisites, prior practice, and the difficulty policy. Technical template and
+checker detail can live behind an optional detail disclosure. Tutor and visualization are
+contextual, optional tools; the former visualization-dominant layout is no longer mandatory.
 
-### Screen 5 — Active Study Session · `screenshots/05-study-session.png`
-Chosen layout: **stacked, visualization dominant** (of three studies — `screenshots/14-session-layout-studies.png`).
+### Feedback — Feedback.dc.html
 
-- Session toolbar (44px): concept name, subject line, **session-intent label** ("Practising · Shell Method · problem 3") with a "Change intent" link rather than mode tabs, five-dash session progress, "12′ of 30′", Pause. Learning modes are intent, not navigation: Axiom may nudge ("you've asked three questions about the same setup — want to see it instead?") but never blocks movement between explaining, practising, visualising and reflecting.
-- Upper pane, `flex: 1.35` — the visualization. Floating verb toolbar (Rotate / Slice / Revolve) top-left, ⤢ and ⋯ top-right, and a bottom-left readout bound to the current selection: `radius r = x` · `height h = x² − 1` · "drag a shell to inspect".
-- Lower-left pane (`flex: 1.55`) — "Problem 3 of 5", the prompt in prose with typeset symbols, the integral in a well **with the selected term `x` highlighted** and an "Ask about x" affordance, a dashed **YOUR WORKING** area containing the learner's own lines, then Check / Hint and "⌘⏎ to check".
-- Lower-right pane — **Tutor · Socratic**: one diagnostic question about the visible object with three tappable answers, then a text field. A panel, not a chat log.
-- Sidebar stays visible: a session is a mode of the workspace, not a separate window. Dividers are drag-resizable.
+Keep the question and learner answer visible beside the expected result or a safe
+explanation. A red status accompanies a named misconception. Show the matched pattern,
+mastery/Bloom changes, clean-attempt changes, and what the response changed in the remaining
+plan. Worked solution, pattern detail, and Next question must have working destinations.
 
-Rejected: problem-dominant with the visualization as a narrow inspector (good for solving, poor for intuition); immersive visualization with floating panels (striking, least stable).
+Apply changes once per submission. Never display a swapped question, score update, or
+diagnostic claim until its persisted capability response confirms it. Partial success
+(for example, a correct antiderivative missing its family constant) is explained accurately.
 
-### Screen 6 — Full Visualization Mode · `screenshots/06-full-visualization.png`
-Full-bleed scene, **no sidebar**; header holds "‹ Session", the scene name, Save to notes, Share, Inspector. Bottom-centre floating toolbar with four verbs (Rotate / Slice / Revolve / Cross-section) and **More…**. Bottom-left **Bounds** panel: two labelled sliders (a, b), a shell count with a toggle, and **Advanced…**. Right **Selected shell** inspector — radius, height, `2πrh Δx ≈ 4.48`, one sentence of interpretation ("about 6% of the total volume; shells near x = 3 dominate"), Ask the tutor / Pin to notes; appears only on selection and is dismissible. Zoom and recentre controls bottom-right.
+### Error profile — Profile.dc.html
 
-Visualization philosophy to preserve: scenes are **composed from verified primitives** (coordinate system, function, region, axis, revolution, shell, annotation), not generated as images. The inspector reads out those primitives, and the same object is shared by tutor, practice, notes, and assessment.
+A domain-scoped first-class page with Recurring / Improving / Resolved / All filters and
+search. Rows name patterns, opportunities/occurrences, status, and dated evidence. Selection
+opens a dismissible detail inspector with recent attempts, an occurrence chart, resolution
+policy, Drill this pattern, and Edit rule. Resolved patterns retain their history.
 
-### Screen 7 — Concept View · `screenshots/07-concept-view.png`
-Breadcrumb Calculus II › Concepts › Integration by Parts. Title, then mastery as **ring plus state name and its meaning** — "Mastered — held up weeks apart" — beside "Due for review in 2 days". Display formula `∫ u dv = uv − ∫ v du` in a well. Two paragraphs: the concept explained in the product's own voice, then the learner's own heuristic quoted back at them with evidence ("held up in four of your last five problems"). Verbs: Practice this / Ask the tutor / **Explain it back** (Reflect gets equal billing). "Where it shows up" as tags. Right rail: **Builds on** and **Leads to** with mastery glyphs + "See in concept map"; **Recent practice** typeset and diagnostic (`∫ eˣ sin x dx` — chose *u* backwards, amber dot); **Your notes** excerpt + "2 more notes".
+Opportunity counts include only problems capable of testing the pattern; absent observations
+are not clean attempts. A final expression alone cannot prove which substitution or method
+the learner used. Unsupported attribution is unknown, not an inferred fact.
 
-### Screen 8 — Workspace Tools · `screenshots/08-workspace-tools.png`
-Title "Tools in this workspace" and one reassurance: "Turn something off and it disappears from the workspace — nothing you've made with it is deleted." **On** — six rows (Axiom Tutor, Mathematical Visualizer, Practice, CAS, Notes, Review), each with icon, name, trust badge where relevant, a line saying what it does for learning and what context it sees, Settings, and a toggle. **Off** — three compact tiles (Exam Simulator, Flashcards, Concept Map). Bottom: one suggestion justified by observed behaviour ("Suggested because you keep asking the tutor *why* a method works") with Not now / Take a look. Language is On/Off, never install/uninstall, versions, dependencies, or manifests.
+### History / session summary — Summary.dc.html
 
-### Screen 9 — Module Marketplace · `screenshots/09-marketplace.png`
-Sidebar gains Marketplace sub-items (For you / Templates / Categories / Installed). Opens on **"For your Calculus II workspace"**. Hero row: one featured module with a preview strip, verified badge, educational description, Install / Learn more, "Axiom Labs · Free"; beside it two **Workspace Templates** (Visual Learner, Exam Intensive) each stating its tool count. Then a **Modules** grid of three (Proof Assistant — verified; Series Intuition Pack — community, 4.8k learners; Quiet Mode — community, accessibility), categories as a quiet text row. Bottom: a dashed "Load local module" row for tinkerers — present, unpromoted, not alarming. Descriptions state learning value; no ratings, no marketing language, no warnings on community items.
+History lists real sessions. A completed session opens a summary with elapsed time,
+difficulty, correct/total, hint usage, mastery changes, and repeated patterns. The question
+table traces phase, prompt, result, and before/after mastery. Profile changes and the next
+recommended session explain concrete consequences. Review misses and Done are actionable.
 
-### Screen 10 — Module Detail · `screenshots/10-module-detail.png`
-Icon, title, verified badge, "Axiom Labs · Free · Updated last week". Actions: **Install to Calculus II** (install is workspace-scoped), **Try it first** (live sandboxed preview), "Add to another workspace". A 220px live interactive preview plus four thumbnails. **What it adds to your learning** — two paragraphs, the second being the verified-primitives promise in plain language. Supported concepts as tags. Right rail: **What it can see** — four sentences with defaults visible ("Your notes — off by default", "Nothing leaves your device") and "Change what it sees"; **Works with** (Tutor, Practice, Notes · Review); **Suits** (courses and learning style); three metadata rows (developer, learners using it, offline). Permissions are phrased as capability, never as a scary list.
+### Remaining screens
 
-### Screen 11 — Goal Editing · `screenshots/11-goal-editing.png`
-A 560px **sheet over the dimmed workspace**, not a settings page. Eyebrow "Calculus II · Primary goal", H2 "What are you working toward?", the same natural-language field as Screen 2 containing the new goal, and under it "Was: 'Pass Calculus II.'" with **Revert**. Inferred facets as removable chips (Deadline · none / Mastery · conceptual / Pacing · steady / + Add). Then the key panel, **What changes** — four bullets previewing consequences in learning terms, ending with "**Nothing is deleted.** Notes, mastery, history, and this workspace's previous goal are kept." Footer: Update goal · Cancel · Goal history.
+First Launch and Create Workspace keep their real zero-domain/create flow in the new visual
+language. Workspace Overview, Concept View, Material, Tools, Marketplace, Module Detail,
+Goal Editing, Command Palette, and Full Visualization retain their useful operations while
+adopting the same theme and navigation. Concept View can show numeric mastery and evidence
+beside explanations. Goal editing still previews consequences and preserves all history.
+No screen ships sample evidence merely to match the drawing.
 
-### Screen 12 — Command Palette · `screenshots/12-command-palette.png`
-600px overlay, 96px from the top of the window, over dimmed content. Query "shell", workspace scope badge top-right. Four result groups: **Actions** (Practice the Shell Method — top hit, accent-tinted, with the consequence "5 problems · adaptive" and ⏎; Visualize shells about x = 0; Ask the tutor ⌘T; New note ⌘N), **Concepts** (with inline mastery glyphs and status), **From your work** (a note), and one marketplace result carrying a Community badge. Footer key legend: ↑↓ move · ⏎ run · ⇥ scope · esc close. Commands are phrased as things to do, never as identifiers. ⌘K is the only shortcut a beginner needs, and the sidebar advertises it.
+## 5. Adopted mechanics and implementation boundaries
 
----
+| Mechanic | Adopted target | Contract work required |
+|---|---|---|
+| Mastery and decay | Numeric values, before/after changes, meters, readiness and Bloom progression | Versioned evidence policy; persistence; explainable updates and decay |
+| Pattern resolution | Configurable opportunity-based clean-attempt rule and status; mockup uses five consecutive clean attempts | Opportunity tagging, event history, reset/recurrence rules, persistence and policy editing |
+| Adaptive next question | A miss may replace the next question to retest its pattern; show the change | Persisted queue, reasons, resume semantics, skip/retry behavior and content availability |
+| Difficulty | Steady / Push / Exam, explicit hint budgets and mastery costs | Configurable provider policy and disclosed stakes; test effects of hints and partial success |
+| Attribution | Per-problem pattern opportunities and supported diagnostic evidence | Knowledge Package schema/content and Practice diagnostics; no subject logic in Core |
+| Checker detail | Truthful method, domain, sample/term evidence when supported | Versioned verifier output; optional technical disclosure; no fabricated proofs |
 
-## 5. Scale behaviour (pressure-tested)
+The mockup's 0.05 costs, five-attempt rule, Bloom thresholds, timings, sample counts, and
+example questions are candidate policy values, not validated calibration. Approving the
+direction permits these mechanisms; implementation tasks must lock and test actual policies.
+Do not convert legacy named mastery states to invented numeric scores.
 
-The same layouts were tested against a semester of real content. These behaviours are part of the design, not later optimisations.
+Current Practice IPC exposes correctness/status/submission count and requested hints, not
+these diagnostic, planning, or mastery engines. A presentation migration can ship first;
+unsupported fields remain unavailable until backed by real persisted capabilities.
 
-### Returning after time away · `screenshots/16-returning-after-time-away.png`
-After a long absence the Continue card is **replaced** (same slot, same weight) by context recovery: "You were setting up shell-method integrals", three lines tied to mastery states — what held, what didn't, what changed underneath you — then two exits: a 5-minute refresher or straight back to the exact problem. A **Faded while away** rail names decay honestly ("Trig Substitution · was Strong"). "While you were away" is three dated lines and then stops; a semester never becomes a feed.
+## 6. Invariants
 
-### 87 concepts · `screenshots/17-concepts-at-scale.png`
-The list never opens flat. **Needs work** first (six, three shown), ordered by what it blocks. Everything else collapses **by chapter** — matching the textbook's mental model — with a five-ring state profile and a plain count per chapter. Filters are actionable counts ("Due for review · 11", "On the exam · 22"), not taxonomy. Graph is a toolbar toggle, never the default; the selection rail shows the prerequisite **chain**, which covers the 90% case, plus attached material, visualizations, notes, and problem-bank counts.
+1. Every screen gives the learner a clear next action and a way to inspect the reason.
+2. Advanced policy and checker detail are optional disclosures; everyday copy stays readable.
+3. Numeric mastery, charts, summaries, and clean-attempt counts describe real evidence and
+   disclosed policies. A display never substitutes invented data for an unavailable capability.
+4. Feedback names the issue and next action; red is allowed and never the sole signal.
+5. Modules remain workspace-scoped capabilities. Stable product areas are not module names.
+6. Visualization uses verified primitives shared across practice, tutoring, and notes.
+7. Tutoring remains contextual; it does not become the permanent transcript of the app.
+8. Resume restores the exact persisted attempt and working; a new plan never erases it.
+9. One Guiding goal shapes recommendations; changing goals preserves history and previews effects.
+10. The Reid theme is shared across all screens, expressed through centralized production tokens.
+11. Domain scope is explicit; installing a capability never expands permanent navigation.
+12. Offline operation and honest unavailable states are required; fresh installs contain no fiction.
 
-### 712-page textbook · `screenshots/18-material-textbook.png`
-Material is reached through concepts and search — **there is no folder view**. Results are typed (section / worked example / exercise range), each carrying the reason it matters to this learner and the concept + mastery state it belongs to. "Where you are in the book" compresses 18 chapters into a four-segment bar; out-of-syllabus chapters stay available but never appear in recommendations. Highlights surface as a count plus a "most marked" line. Reading in-app pins tutor answers to the passage and files them under the concept.
+## 7. Implementation order and open work
 
-### Long session, 40 tutor exchanges · `screenshots/19-long-session-tutor.png`
-The tutor panel never becomes a transcript. Exchanges collapse into **"What we've settled"** — two conclusions and one open question, promotable to concept notes — with the full history behind "Earlier today". Only the current exchange is shown in full, so panel height is constant. Explanations can be **pinned to the object** as annotations on the visualization. The sidebar auto-collapses to a 56px rail during deep focus (restore with » or ⌘0). A break suggestion appears once, in the tutor's voice, protective rather than nagging.
+Roadmap Stage 9 schedules visual foundations, capability contracts, product navigation,
+adaptive Practice/feedback, and Error profile/History. Preserve the Stage 8 regression and
+offline acceptance work while migrating. Missing content families, tutor integration,
+verification diagnostics, real visualization, permissions, marketplace downloads, and sync
+still need their own scoped contracts; adopting a screen does not implement them.
 
-### Large visualization · `screenshots/20-learning-canvas.png`
-The learning canvas is the one place Axiom **inverts its own palette**: dark stage, luminous curve, translucent shells, real depth. The chrome is restrained everywhere else precisely so this can be expressive. The equation sits under the object with the dragged term tinted the same hue as the geometry it controls (selection is bidirectional). Five controls visible; bounds, shell count, animation and rendering appear on ⌥ or from More…. The tutor is one corner line plus a "watching this" marker. "Back to problem" keeps it a detour inside the session, not a destination.
+Render and exercise the five adopted reference screens before fidelity approval. Test real
+fresh launch, domain creation/switching, checking/hints, adaptive queue changes, profile
+updates, history, and restart persistence as each capability lands. Verify native chrome
+and reduced-transparency behavior on supported platforms.
 
-### Offline, 20 modules, 4 goals · `screenshots/21-offline-modules-goals.png`
-**Make available offline** is one workspace sheet: four per-kind toggles, honest sizes, one total, and a plain statement of what degrades rather than breaks ("typed tutoring keeps working, with shorter answers"). Third-party limits are stated in the learner's terms. Once downloaded, a single "Available offline" chip sits in the workspace toolbar and nothing else mentions connectivity.
+## 8. Reference precedence
 
-**Twenty installed modules** group by *where they appear*: In the workspace · 4 (the Overview tiles) / Appear when relevant · 9 / Off in this workspace · 7. Axiom hides a tool unused for six weeks and says so once. **No module ever adds a sidebar row** — the four workspace areas are the permanent maximum.
-
-**Four goals**: one Guiding (the only one shaping recommendations), Waiting ones that can take over on their own schedule, Met ones archived with what they achieved, Resting ones collapsed. Overview shows only the guiding goal with "+2 more".
-
----
-
-## 6. Invariants to preserve
-
-1. Simple by default, powerful by choice — every screen shows one obvious next action; advanced controls sit behind Adjust / Advanced… / More… / All tools.
-2. Never expose configuration merely because it exists; never use developer vocabulary (package, manifest, dependency, runtime, API) in the learner interface.
-3. No dashboards, no percentages, no streaks, XP, badges, or leaderboards *in the core app*. Progress is expressed as named mastery states and capability sentences. A module may offer its own gamified progress view as an opt-in capability (per invariant 5 — never promoted to a navigation destination); this invariant governs what Axiom itself shows by default, not what a learner can choose to enable.
-4. Feedback diagnoses; it never merely marks. Amber for a named mistake; no red; no celebration.
-5. Modules are capabilities inside a workspace, never navigation destinations, and they share workspace context.
-6. Visualization is composed from verified primitives and shared across tutor, practice, explanation, notes, assessment.
-7. The tutor is a contextual panel that already knows what you are looking at — Axiom is not a chatbot.
-8. A learner returning after three days must never have to reconstruct what they were doing: the Continue surfaces do it for them.
-9. Goals are living objects; changing one previews its consequences and destroys nothing. Exactly one goal guides at a time.
-10. Two accents, two type families, one placeholder treatment. Any new surface must be expressible in that vocabulary — the dark learning canvas is the single sanctioned exception, and only for the mathematical object itself.
-11. Permanent navigation never grows with capability. Modules surface contextually; the sidebar answers "where am I?" and nothing more.
-12. Offline is a promise, surfaced only where it changes a decision.
-
----
-
-## 7. Not yet designed
-
-Empty states generally, notifications and menus, the full concept-graph view, tutor voice mode, in-app reading mode (the page view behind Material), settings, developer-facing module authoring, onboarding for imported material, and responsive behaviour below ~1100px window width. One empty state is designed, as an exception: the sidebar's zero-workspace state (§3), shown from First Launch through Create Workspace on every fresh install.
-
-## 8. Screenshot index
-
-`00-foundations` · `01-first-launch` · `02-create-workspace` · `03-home` (+ `03b` session-intent and `03c` library alternates) · `04-workspace-overview` · `05-study-session` · `06-full-visualization` · `07-concept-view` · `08-workspace-tools` · `09-marketplace` · `10-module-detail` · `11-goal-editing` · `12-command-palette` · `13-navigation-studies` · `14-session-layout-studies` · `15-system-refinements` (current mastery / recommendation / offline / intent components) · `16-returning-after-time-away` · `17-concepts-at-scale` · `18-material-textbook` · `19-long-session-tutor` · `20-learning-canvas` · `21-offline-modules-goals`.
-
-Screens 5, 6, 9 and 10 (`05`, `06`, `09`, `10`) predate the five-state mastery language and the session-intent label; where they show the older segmented control or bar glyph, **`15-system-refinements` is authoritative**.
+1. This handoff defines behavior, adoption boundaries, and cross-platform requirements.
+2. The five October 2026 .dc.html files plus theme/component CSS define the visual target.
+3. Legacy screenshots and the archived handoff describe prior behavior only where this
+   document explicitly retains it; the old light/two-accent/no-red/no-score rules are superseded.

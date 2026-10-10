@@ -1,7 +1,7 @@
 ---
 id: 080
 title: Review macOS / Reid Engineered UI proposal
-status: review
+status: done
 owner: claude (design)
 stage: —
 depends_on: []
@@ -152,3 +152,12 @@ Verdict: pass
   presentation approval.
 - Separately scope/version diagnostic evidence and adaptive planning capabilities for
   Stage 9+; do not infer an implementation mandate or invariant amendment from this PR.
+
+
+### Completion and later adoption
+
+- 2026-10-10 — PR #25 squash-merged as dd886d2e67a1db72a2995fdf965209844a378a60
+  after all seven required CI checks passed; task branch deleted.
+- 2026-10-10 — The human subsequently approved full visual/product adoption. Task 081
+  supersedes this review's cut/defer recommendations where they relied on the prior
+  handoff. The original review above is retained as historical evidence.
