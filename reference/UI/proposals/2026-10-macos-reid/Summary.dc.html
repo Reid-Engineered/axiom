@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Axiom — Session summary</title>
+<script src="../../support.js"></script>
+<link rel="stylesheet" href="ds/reid/components/bundle.css">
+<link rel="stylesheet" href="axiom-theme.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#8fb3ff}a:hover{color:#9bbaff}
+</style>
+</helmet>
+<div class="re-root ax" style="min-height: 1060px; box-sizing: border-box; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; background: var(--bg);">
+
+<nav class="re-sidebar" aria-label="Sidebar" style="flex: 0 0 232px; min-height: 520px;">
+<div class="ax-lights" data-tauri-drag-region="" aria-hidden="true"><span style="background: #ff5f57;"></span><span style="background: #febc2e;"></span><span style="background: #28c840;"></span></div>
+<a class="re-row" href="Main.dc.html" style="margin-top: 6px;"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="2"></rect><path d="M3 8.5h14M7 2.5v4M13 2.5v4"></path></svg><span class="re-row__label">Today</span></a>
+<a class="re-row" href="Session.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4.5v11l9-5.5z"></path></svg><span class="re-row__label">Practice</span></a>
+<a class="re-row" href="Profile.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><circle cx="10" cy="10" r="3"></circle></svg><span class="re-row__label">Error profile</span><span class="re-row__count">6</span></a>
+<a class="re-row" href="Main.dc.html#map"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="5" r="2"></circle><circle cx="15" cy="7" r="2"></circle><circle cx="8" cy="15" r="2"></circle><path d="M5.6 7l1.8 6M7 5.4l6 1.2M13.7 8.6l-4.4 5"></path></svg><span class="re-row__label">Concept map</span></a>
+<a class="re-row" href="Summary.dc.html" aria-current="page"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><path d="M10 6v4l2.5 2"></path></svg><span class="re-row__label">History</span><span class="re-row__count">32</span></a>
+<h2 class="re-sidebar__heading">Recent sessions</h2>
+<a class="re-row re-row--muted" href="Summary.dc.html" style="font-weight: 600; background: var(--fill);"><span class="re-row__label">Today · Push</span><span class="re-row__count">4/6</span></a>
+<a class="re-row re-row--muted" href="Summary.dc.html"><span class="re-row__label">Wed, Oct 7 · Push</span><span class="re-row__count">5/7</span></a>
+<a class="re-row re-row--muted" href="Summary.dc.html"><span class="re-row__label">Mon, Oct 5 · Steady</span><span class="re-row__count">6/6</span></a>
+<a class="re-row re-row--muted" href="Summary.dc.html"><span class="re-row__label">Fri, Oct 2 · Exam</span><span class="re-row__count">3/7</span></a>
+<div style="flex: 1 1 auto;"></div>
+<div style="margin: 8px 2px 6px; padding: 12px; border-radius: var(--radius-lg); background: var(--fill); display: flex; flex-direction: column; gap: 3px;">
+<span style="font-size: 11px; font-weight: 600; color: var(--text-faint);">Next exam</span>
+<span style="font-size: 13px; font-weight: 600;">MTH 112 · Exam 2</span>
+<span style="font-size: 12px; color: var(--text-muted);">Wed, Oct 21 · in 12 days</span>
+</div>
+<a class="re-row re-row--muted" href="Main.dc.html"><svg class="re-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"></path></svg><span class="re-row__label">Settings</span><span class="re-row__count">⌘,</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="re-toolbar" data-tauri-drag-region="" style="height: auto; min-height: 64px; flex-wrap: wrap; row-gap: 8px;">
+<div class="re-toolbar__title"><h1>Session summary</h1><p>Friday, October 9 · 27 min · Push</p></div>
+<div class="re-toolbar__actions" style="flex-wrap: wrap;">
+<a class="re-btn re-btn--secondary re-btn--md" href="Feedback.dc.html">Review Misses</a>
+<a class="re-btn re-btn--primary re-btn--md" href="Main.dc.html">Done</a>
+</div>
+</header>
+
+<div style="padding: 4px 28px 40px; display: flex; flex-direction: column; gap: 40px; max-width: 1040px;">
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+<div class="re-stat"><div class="re-stat__label">Correct</div><div class="re-stat__value">4<span style="font-size: 20px; color: var(--text-faint);"> of 6</span></div><div class="re-stat__note">Both misses in the stretch round</div></div>
+<div class="re-stat"><div class="re-stat__label">Trig substitution</div><div class="re-stat__value" style="color: var(--danger);">−0.10</div><div class="re-stat__note">0.62 → 0.52 · back to Understand</div></div>
+<div class="re-stat"><div class="re-stat__label">Hints used</div><div class="re-stat__value">1<span style="font-size: 20px; color: var(--text-faint);"> of 2</span></div><div class="re-stat__note">Cost 0.05 on ratio test</div></div>
+<div class="re-stat"><div class="re-stat__label">Patterns repeated</div><div class="re-stat__value">2</div><div class="re-stat__note">+ C and the sec θ triangle</div></div>
+</div>
+
+<section aria-labelledby="q-h" style="display: flex; flex-direction: column; gap: 12px;">
+<h2 id="q-h" style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.02em;">Question by question</h2>
+<div style="border-radius: var(--radius-lg); background: var(--fill); overflow: hidden;">
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 11px; font-weight: 600; color: var(--text-faint); border-bottom: 1px solid var(--border-soft);"><span>Round</span><span>Question</span><span>Result</span><span style="text-align: right;">Mastery</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border-soft); align-items: center;"><span style="color: var(--text-muted);">Warm-up</span><span>Ratio test · does Σ n!/5ⁿ converge</span><span class="re-status re-status--success"><span class="re-status__dot"></span>Correct</span><span class="re-num" style="text-align: right; color: var(--text-muted);">0.74 → 0.79</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border-soft); align-items: center;"><span style="color: var(--text-muted);">Warm-up</span><span>Integration by parts · ∫ x eˣ dx</span><span class="re-status re-status--success"><span class="re-status__dot"></span>Correct</span><span class="re-num" style="text-align: right; color: var(--text-muted);">0.83 → 0.85</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border-soft); align-items: center;"><span style="color: var(--text-muted);">Stretch</span><span>Trig substitution · ∫ √(4 − x²) dx</span><span class="re-status re-status--success"><span class="re-status__dot"></span>Correct</span><span class="re-num" style="text-align: right; color: var(--text-muted);">0.60 → 0.62</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border-soft); align-items: center;"><span style="color: var(--text-muted);">Stretch</span><span>Trig substitution · ∫ dx / (x²√(x² − 9)) <span style="color: var(--text-faint);">· missing + C</span></span><span class="re-status re-status--danger"><span class="re-status__dot"></span>Incorrect</span><span class="re-num" style="text-align: right; color: var(--danger);">0.62 → 0.57</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--border-soft); align-items: center;"><span style="color: var(--text-muted);">Stretch</span><span>Trig substitution · ∫ dx / √(x² − 16) <span style="color: var(--text-faint);">· triangle swapped</span></span><span class="re-status re-status--danger"><span class="re-status__dot"></span>Incorrect</span><span class="re-num" style="text-align: right; color: var(--danger);">0.57 → 0.52</span></div>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px; gap: 12px; padding: 10px 16px; font-size: 13px; align-items: center;"><span style="color: var(--text-muted);">Combined</span><span>Volume of y = √(9 − x²) about the x-axis, washers</span><span class="re-status re-status--success"><span class="re-status__dot"></span>Correct</span><span class="re-num" style="text-align: right; color: var(--text-muted);">0.70 → 0.73</span></div>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px;">
+<section aria-labelledby="pc-h" style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<h2 id="pc-h" style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.02em;">Profile changes</h2>
+<dl class="re-details" style="font-size: 13px;">
+<div><dt style="color: var(--text);">Dropping + C</dt><dd class="re-num" style="color: var(--text-muted);">Seen again · 1 of 5 clean since</dd></div>
+<div><dt style="color: var(--text);">Swapped sec θ triangle</dt><dd class="re-num" style="color: var(--text-muted);">Seen again · 3 of last 7</dd></div>
+<div><dt style="color: var(--text);">Leaving θ in the answer</dt><dd class="re-num" style="color: var(--text-muted);">Clean twice more · stays resolved</dd></div>
+</dl>
+</section>
+
+<section aria-labelledby="next-h" style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<h2 id="next-h" style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.02em;">Next session</h2>
+<div style="border-radius: var(--radius-lg); background: var(--accent-soft); padding: 16px; display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; font-weight: 600;">Saturday · trig substitution opens the stretch round, at Understand</span>
+<span style="font-size: 12px; line-height: 17px; color: var(--text-muted);">Two triangle-construction questions before any full integral. Ratio test moves out to Friday, Oct 16.</span>
+</div>
+</section>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+/* Axiom theme on Reid Engineered: dark-first, alt-blue mapped onto accent. Values copied from the system's tokens.json. */
+:root, .ax {
+  --bg: #1e1b19;
+  --surface: #2a2724;
+  --surface-raised: #302c29;
+  --sidebar: rgba(50,46,43,0.88);
+  --panel: rgba(44,41,38,0.92);
+  --text: #f5f5f7;
+  --text-muted: rgba(235,235,245,0.70);
+  --text-faint: rgba(235,235,245,0.56);
+  --border: rgba(255,255,255,0.12);
+  --border-soft: rgba(255,255,255,0.08);
+  --fill: rgba(255,255,255,0.05);
+  --fill-strong: rgba(255,255,255,0.11);
+  --glass: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.12);
+  /* Axiom accent = alt-blue (dark) */
+  --accent: #7ea6ff;
+  --accent-hover: #9bbaff;
+  --accent-soft: rgba(126,166,255,0.16);
+  --on-accent: #0b1530;
+  --accent-text: #8fb3ff;
+  --focus-ring: rgba(126,166,255,0.40);
+  --danger: #ff6b5b;
+  --danger-fill: #d33a2c;
+  --signal-info: #2f6fdb;
+  --signal-progress: #c2692f;
+  --signal-success: #2f8a57;
+  --signal-neutral: #8e8e93;
+  --scrim: rgba(0,0,0,0.45);
+  --toast-bg: rgba(36,32,29,0.92);
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-serif: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 28px; --space-8: 40px;
+  --radius-xs: 3px; --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px;
+  --radius-xl: 16px; --radius-2xl: 24px; --radius-pill: 999px;
+  --sidebar-width: 232px; --inspector-width: 300px; --toolbar-height: 64px;
+  --control-height: 34px; --control-height-sm: 28px; --row-height: 28px;
+
+  --shadow-glass: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 20px -10px rgba(0,0,0,0.6);
+  --shadow-float: 0 10px 30px -12px rgba(0,0,0,0.6);
+  --shadow-sheet: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.08);
+  --shadow-menu: 0 0 0 0.5px rgba(0,0,0,0.5), 0 18px 40px -10px rgba(0,0,0,0.7);
+  color-scheme: dark;
+}
+html, body { background: #1e1b19; }
+
+/* Axiom-specific pieces built from the same tokens */
+.re-iconbtn--accent { box-shadow: 0 4px 12px -4px rgba(20,40,110,0.6), inset 0 1px 0 rgba(255,255,255,0.25); }
+a.re-row, a.re-btn { text-decoration: none; }
+.ax-lights { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 6px; }
+.ax-lights span { width: 12px; height: 12px; border-radius: 50%; }
+.ax-math { font-family: var(--font-serif); font-variant-numeric: lining-nums; letter-spacing: 0.01em; }
+.ax-math i { font-style: italic; }
+.ax-frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 0.15em; }
+.ax-frac > span { padding: 0 0.2em; line-height: 1.25; }
+.ax-frac > span + span { border-top: 1.5px solid currentColor; }
+.ax-rad { border-top: 1.5px solid currentColor; padding: 0 0.1em; margin-left: 0.04em; }
+.ax-meter { position: relative; display: block; height: 5px; border-radius: 3px; background: var(--fill-strong); overflow: hidden; }
+.ax-meter > b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: rgba(255,107,91,0.35); }
+.ax-meter > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--accent); }
