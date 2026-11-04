@@ -65,3 +65,7 @@ Not started.
 ## Review
 
 ## Follow-ups
+
+- 2026-11-04 ? Task 087 stops fabricated tutor replies and retains the typed question.
+  Disclose unavailable tutoring before learners type or submit; use a neutral notice
+  style and reconcile the fresh-session prompt when implementing false-affordance work.
