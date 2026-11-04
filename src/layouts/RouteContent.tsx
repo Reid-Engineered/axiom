@@ -4,12 +4,14 @@ import type { Route } from '../hooks/useNavigation';
 import { ConceptViewPage } from '../pages/ConceptViewPage';
 import { ConceptsListPage } from '../pages/ConceptsListPage';
 import { CreateWorkspacePage } from '../pages/CreateWorkspacePage';
+import { ErrorProfilePage } from '../pages/ErrorProfilePage';
 import { FirstLaunchPage } from '../pages/FirstLaunchPage';
 import { FullVisualizationPage } from '../pages/FullVisualizationPage';
 import { HomePage } from '../pages/HomePage';
 import { MarketplacePage } from '../pages/MarketplacePage';
 import { MaterialPage } from '../pages/MaterialPage';
 import { ModuleDetailPage } from '../pages/ModuleDetailPage';
+import { SessionHistoryPage } from '../pages/SessionHistoryPage';
 import { StudySessionPage } from '../pages/StudySessionPage';
 import { WorkspaceOverviewPage } from '../pages/WorkspaceOverviewPage';
 import { WorkspaceToolsPage } from '../pages/WorkspaceToolsPage';
@@ -63,6 +65,22 @@ export function RouteContent({ route, sidebar }: RouteContentProps) {
       );
     case 'conceptsList':
       return <ConceptsListPage workspaceId={route.workspaceId} sidebar={sidebar} />;
+    case 'errorProfile':
+      return (
+        <ErrorProfilePage
+          workspaceId={route.workspaceId}
+          initialPatternId={route.patternId}
+          sidebar={sidebar}
+        />
+      );
+    case 'sessionHistory':
+      return (
+        <SessionHistoryPage
+          workspaceId={route.workspaceId}
+          initialSessionId={route.sessionId}
+          sidebar={sidebar}
+        />
+      );
     case 'material':
       return <MaterialPage workspaceId={route.workspaceId} sidebar={sidebar} />;
     case 'workspaceTools':

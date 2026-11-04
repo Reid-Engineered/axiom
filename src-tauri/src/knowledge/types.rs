@@ -2,7 +2,8 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use super::identifier::{
-    ConceptId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
+    ConceptId, DetectorId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, OpportunityId,
+    PatternId, PolicyId, ProblemFamilyId, SourceId,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -16,7 +17,51 @@ pub struct KnowledgePackage {
     pub objectives: Vec<Objective>,
     pub examples: Vec<Example>,
     pub problem_families: Vec<ProblemFamily>,
+    #[serde(default)]
+    pub patterns: Vec<Pattern>,
     pub sources: Vec<Source>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BloomLevel {
+    Remember,
+    Understand,
+    Apply,
+    Analyze,
+    Evaluate,
+    Create,
+}
+
+impl BloomLevel {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Remember => "remember",
+            Self::Understand => "understand",
+            Self::Apply => "apply",
+            Self::Analyze => "analyze",
+            Self::Evaluate => "evaluate",
+            Self::Create => "create",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AssessmentEvidence {
+    FinalAnswer,
+    StructuredStep,
+    MethodSelection,
+}
+
+impl AssessmentEvidence {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::FinalAnswer => "final-answer",
+            Self::StructuredStep => "structured-step",
+            Self::MethodSelection => "method-selection",
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -36,6 +81,10 @@ pub struct Objective {
     pub concept_id: ConceptId,
     pub description: String,
     pub provenance_refs: Vec<ProvenanceRef>,
+    #[serde(default)]
+    pub bloom_level: Option<BloomLevel>,
+    #[serde(default)]
+    pub assessment_evidence: Option<Vec<AssessmentEvidence>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -50,10 +99,51 @@ pub struct Example {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DetectorRef {
+    pub id: DetectorId,
+    pub version: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Pattern {
+    pub id: PatternId,
+    pub name: String,
+    pub concept_ids: Vec<ConceptId>,
+    pub objective_ids: Vec<ObjectiveId>,
+    pub detector: DetectorRef,
+    pub required_evidence: Vec<AssessmentEvidence>,
+    pub resolution_policy_id: PolicyId,
+    pub explanation: String,
+    pub next_action: String,
+    pub provenance_refs: Vec<ProvenanceRef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum EligibilityCondition {
+    Always,
+    Constraint {
+        raw: String,
+        expression: crate::knowledge::constraint::ConstraintExpr,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProblemOpportunity {
+    pub id: OpportunityId,
+    pub pattern_id: PatternId,
+    pub eligible_when: EligibilityCondition,
+    pub required_evidence: Vec<AssessmentEvidence>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProblemFamily {
     pub id: ProblemFamilyId,
     pub concept_id: ConceptId,
     pub objective_ids: Vec<ObjectiveId>,
+    #[serde(default)]
+    pub assessed_objective_ids: Option<Vec<ObjectiveId>>,
+    #[serde(default)]
+    pub opportunities: Option<Vec<ProblemOpportunity>>,
     pub difficulty: DifficultyRange,
     pub generator: GeneratorRef,
     pub parameters: std::collections::BTreeMap<String, ParameterSpec>,
@@ -211,6 +301,8 @@ mod tests {
             id: ProblemFamilyId::new("problem.shell_y_poly").unwrap(),
             concept_id: ConceptId::new("shell.method_vertical_axis").unwrap(),
             objective_ids: vec![],
+            assessed_objective_ids: None,
+            opportunities: None,
             difficulty: DifficultyRange { min: 1, max: 2 },
             generator: GeneratorRef {
                 id: GeneratorId::new("gen.shell_y_poly").unwrap(),

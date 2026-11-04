@@ -11,6 +11,16 @@ pub fn build_practice_registry(
     knowledge_package: KnowledgePackage,
     connection: rusqlite::Connection,
 ) -> (Arc<RwLock<ModuleRegistry>>, ModuleInstallation) {
+    build_practice_registry_with_store(
+        knowledge_package,
+        crate::practice::PracticeStore::new(connection),
+    )
+}
+
+pub fn build_practice_registry_with_store(
+    knowledge_package: KnowledgePackage,
+    store: crate::practice::PracticeStore,
+) -> (Arc<RwLock<ModuleRegistry>>, ModuleInstallation) {
     let mut registry = ModuleRegistry::new();
     registry
         .register(
@@ -29,7 +39,6 @@ pub fn build_practice_registry(
         ],
     };
 
-    let store = crate::practice::PracticeStore::new(connection);
     let provider = PracticeProvider::new(
         store,
         knowledge_package,
@@ -360,6 +369,192 @@ pub async fn describe_attempt(
     input: DescribeAttemptInput,
 ) -> CommandResult<AttemptDescription> {
     describe_attempt_handler(&registry, &installation, input).await
+}
+
+pub async fn create_practice_plan_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::CreatePlanInput,
+) -> CommandResult<crate::practice::Available<crate::practice::Plan>> {
+    invoke_practice(
+        registry,
+        installation,
+        "practice.plan",
+        input.workspace_id.clone(),
+        input,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "createPracticePlan", rename_all = "camelCase")]
+pub async fn create_practice_plan(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::CreatePlanInput,
+) -> CommandResult<crate::practice::Available<crate::practice::Plan>> {
+    create_practice_plan_handler(&registry, &installation, input).await
+}
+
+pub async fn execute_session_action_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::SessionActionInput,
+) -> CommandResult<crate::practice::SessionActionReceipt> {
+    invoke_practice(
+        registry,
+        installation,
+        "practice.session",
+        input.workspace_id.clone(),
+        input,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "executeSessionAction", rename_all = "camelCase")]
+pub async fn execute_session_action(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::SessionActionInput,
+) -> CommandResult<crate::practice::SessionActionReceipt> {
+    execute_session_action_handler(&registry, &installation, input).await
+}
+
+pub async fn get_concept_evidence_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::EvidenceReadRequest,
+) -> CommandResult<Vec<crate::practice::ConceptEvidence>> {
+    invoke_practice(
+        registry,
+        installation,
+        "practice.evidence",
+        input.workspace_id.clone(),
+        input,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "getConceptEvidence", rename_all = "camelCase")]
+pub async fn get_concept_evidence(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::EvidenceReadRequest,
+) -> CommandResult<Vec<crate::practice::ConceptEvidence>> {
+    get_concept_evidence_handler(&registry, &installation, input).await
+}
+
+pub async fn get_practice_patterns_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::PatternsReadRequest,
+) -> CommandResult<crate::practice::PatternListResponse> {
+    invoke_practice(
+        registry,
+        installation,
+        "practice.patterns",
+        input.workspace_id.clone(),
+        input,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "getPracticePatterns", rename_all = "camelCase")]
+pub async fn get_practice_patterns(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::PatternsReadRequest,
+) -> CommandResult<crate::practice::PatternListResponse> {
+    get_practice_patterns_handler(&registry, &installation, input).await
+}
+
+pub async fn get_pattern_detail_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::PatternDetailReadRequest,
+) -> CommandResult<crate::practice::Available<crate::practice::PatternDetail>> {
+    let mut val = serde_json::to_value(&input).map_err(|e| e.to_string())?;
+    if let Some(obj) = val.as_object_mut() {
+        obj.insert("op".to_owned(), serde_json::json!("detail"));
+    }
+    invoke_practice(
+        registry,
+        installation,
+        "practice.patterns",
+        input.workspace_id,
+        val,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "getPatternDetail", rename_all = "camelCase")]
+pub async fn get_pattern_detail(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::PatternDetailReadRequest,
+) -> CommandResult<crate::practice::Available<crate::practice::PatternDetail>> {
+    get_pattern_detail_handler(&registry, &installation, input).await
+}
+
+pub async fn edit_pattern_rule_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    input: crate::practice::EditPatternRuleInput,
+) -> CommandResult<crate::practice::Available<crate::practice::PatternSnapshot>> {
+    let mut val = serde_json::to_value(&input).map_err(|e| e.to_string())?;
+    if let Some(obj) = val.as_object_mut() {
+        obj.insert("op".to_owned(), serde_json::json!("edit-rule"));
+    }
+    invoke_practice(
+        registry,
+        installation,
+        "practice.patterns",
+        input.workspace_id,
+        val,
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "editPatternRule", rename_all = "camelCase")]
+pub async fn edit_pattern_rule(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    input: crate::practice::EditPatternRuleInput,
+) -> CommandResult<crate::practice::Available<crate::practice::PatternSnapshot>> {
+    edit_pattern_rule_handler(&registry, &installation, input).await
+}
+
+pub async fn get_session_history_handler(
+    registry: &Arc<RwLock<ModuleRegistry>>,
+    installation: &ModuleInstallation,
+    workspace_id: String,
+) -> CommandResult<Vec<crate::practice::SessionHistoryEntry>> {
+    invoke_practice(
+        registry,
+        installation,
+        "practice.session",
+        workspace_id.clone(),
+        serde_json::json!({
+            "op": "history",
+            "workspaceId": workspace_id,
+        }),
+    )
+    .await
+    .map_err(practice_error)
+}
+
+#[tauri::command(rename = "getSessionHistory", rename_all = "camelCase")]
+pub async fn get_session_history(
+    registry: State<'_, Arc<RwLock<ModuleRegistry>>>,
+    installation: State<'_, ModuleInstallation>,
+    workspace_id: String,
+) -> CommandResult<Vec<crate::practice::SessionHistoryEntry>> {
+    get_session_history_handler(&registry, &installation, workspace_id).await
 }
 
 #[cfg(test)]

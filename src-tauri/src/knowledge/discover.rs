@@ -4,15 +4,17 @@ use std::path::{Path, PathBuf};
 use super::concept::parse_concept_file;
 use super::error::KnowledgeError;
 use super::example::parse_example_file;
-use super::objective::parse_objective_file;
-use super::problem_family::parse_problem_family_file;
-use super::types::{Concept, Example, Objective, ProblemFamily};
+use super::objective::parse_objective_file_with_version;
+use super::pattern::parse_pattern_file;
+use super::problem_family::parse_problem_family_file_with_version;
+use super::types::{Concept, Example, Objective, Pattern, ProblemFamily};
 
 pub(crate) struct DiscoveredEntities {
     pub concepts: Vec<Concept>,
     pub objectives: Vec<Objective>,
     pub examples: Vec<Example>,
     pub problem_families: Vec<ProblemFamily>,
+    pub patterns: Vec<Pattern>,
 }
 
 pub(crate) fn read_package_toml(root: &Path) -> Result<String, KnowledgeError> {
@@ -27,28 +29,51 @@ pub(crate) fn read_sources_toml(root: &Path) -> Result<String, KnowledgeError> {
     })
 }
 
+#[cfg(test)]
 pub(crate) fn discover_entities(root: &Path) -> Result<DiscoveredEntities, KnowledgeError> {
+    discover_entities_with_version(root, 1)
+}
+
+pub(crate) fn discover_entities_with_version(
+    root: &Path,
+    schema_version: u32,
+) -> Result<DiscoveredEntities, KnowledgeError> {
     let concepts = load_entities(root, "concepts", parse_concept_file, |c: &Concept| {
         c.id.as_str().to_owned()
     })?;
-    let objectives = load_entities(root, "objectives", parse_objective_file, |o: &Objective| {
-        o.id.as_str().to_owned()
-    })?;
+    let objectives = load_entities(
+        root,
+        "objectives",
+        |path, raw| parse_objective_file_with_version(path, raw, schema_version),
+        |o: &Objective| o.id.as_str().to_owned(),
+    )?;
     let examples = load_entities(root, "examples", parse_example_file, |e: &Example| {
         e.id.as_str().to_owned()
     })?;
     let problem_families = load_entities(
         root,
         "problems",
-        parse_problem_family_file,
+        |path, raw| parse_problem_family_file_with_version(path, raw, schema_version),
         |p: &ProblemFamily| p.id.as_str().to_owned(),
     )?;
+    let patterns = if schema_version == 1 {
+        let patterns_dir = root.join("patterns");
+        if patterns_dir.exists() {
+            return Err(KnowledgeError::PatternsDirectoryInSchemaV1 { path: patterns_dir });
+        }
+        Vec::new()
+    } else {
+        load_entities(root, "patterns", parse_pattern_file, |pat: &Pattern| {
+            pat.id.as_str().to_owned()
+        })?
+    };
 
     Ok(DiscoveredEntities {
         concepts,
         objectives,
         examples,
         problem_families,
+        patterns,
     })
 }
 

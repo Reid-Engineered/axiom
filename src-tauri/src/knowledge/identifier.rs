@@ -38,6 +38,10 @@ knowledge_id!(ExampleId);
 knowledge_id!(SourceId);
 knowledge_id!(ProblemFamilyId);
 knowledge_id!(GeneratorId);
+knowledge_id!(PatternId);
+knowledge_id!(OpportunityId);
+knowledge_id!(DetectorId);
+knowledge_id!(PolicyId);
 
 #[cfg(test)]
 mod tests {

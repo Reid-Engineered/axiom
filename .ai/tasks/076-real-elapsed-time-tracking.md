@@ -1,8 +1,8 @@
 ---
 id: 076
 title: Real elapsed-time tracking for sessions
-status: proposed
-owner: unassigned
+status: done
+owner: antigravity
 stage: 9
 depends_on: [073]
 ---
@@ -25,21 +25,31 @@ deferral rather than a silent loss.
 
 ## Plan
 
-Not planned. Needs its own brainstorming pass, starting with the `AGENTS.md:22` question —
-the answer determines whether there is a task here at all.
+Implement active foreground session timing per `083` §7 and policy `P7` (5-second checkpoint cadence, flush before session transitions, restart paused at acknowledged total, no auto-end at target).
 
 ## Worklog
 
 - 2026-09-09 — Filed by claude alongside `073`, which removes the readout this would restore.
+- 2026-11-04 — Claimed by antigravity alongside `085` as part of Track 1.
+- 2026-11-04 — Implemented `session_timing_checkpoints` table and `SessionTiming` persistence in `src-tauri/src/practice/engine.rs`, foreground monotonic elapsed timer and 5-second checkpoint cadence in `src/hooks/useLearningEvidence.ts` (`useAdaptiveSession`), and live `MM:SS` / target readout in `src/pages/StudySessionPage.tsx`.
 
 ## What was built / tested / left out
 
-Not started.
+- Built:
+  - `session_timing_checkpoints` in `src-tauri/src/db/migrations/0005_learning_evidence.sql`
+  - `SessionTiming` checkpointing and `sessions.elapsed_minutes` floor synchronization in `src-tauri/src/practice/engine.rs`
+  - Foreground timer (`document.visibilityState === 'visible'` & `window.document.hasFocus()`) and 5-second checkpoint flush in `src/hooks/useLearningEvidence.ts`
+  - Live `MM:SS` timer pill in `src/pages/StudySessionPage.tsx`
+- Tested:
+  - `src-tauri/src/practice/engine.rs` (`adaptive_session_records_evidence_patterns_and_history_idempotently`)
+  - `src-tauri/src/commands/tests.rs` (`stage_9_learning_evidence_commands_run_end_to_end`)
+  - `src/pages/StudySessionPage.test.tsx`
 
 ## Review
 
-## Follow-ups
+Ready for review.
 
+## Follow-ups
 
 ### Adoption clarification — 2026-10-10
 

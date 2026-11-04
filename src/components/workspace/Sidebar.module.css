@@ -10,6 +10,7 @@
 }
 
 .primaryLinks,
+.productAreas,
 .workspaces {
   display: flex;
   flex-direction: column;
@@ -19,9 +20,26 @@
   gap: var(--space-2xs);
 }
 
+.productAreas {
+  gap: var(--space-2xs);
+  margin-top: var(--space-xl);
+}
+
 .workspaces {
   gap: var(--space-sm);
-  margin-top: var(--space-3xl);
+  margin-top: var(--space-xl);
+}
+
+.activeNav {
+  background: var(--color-recessed);
+  font-weight: 600;
+}
+
+.areaCount {
+  color: var(--text-metadata);
+  font-size: var(--font-size-metadata);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .navButton,

@@ -1890,3 +1890,259 @@ fn the_full_practice_loop_runs_through_the_command_layer() {
     assert_eq!(next_described.submission_count, 0);
     assert_eq!(next_described.hints_revealed, 0);
 }
+
+#[test]
+fn stage_9_learning_evidence_commands_run_end_to_end() {
+    let dir = std::env::temp_dir().join(format!("axiom-stage9-cmd-test-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let db_path = dir.join("axiom.sqlite3");
+
+    {
+        let database = Database::open(&db_path).unwrap();
+        let workspace = create_workspace(&database);
+        insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+        map_concept_to_knowledge_package(&database, "concept-shells");
+        let (registry, installation) = crate::commands::practice::build_practice_registry(
+            bundled_knowledge_package(),
+            crate::db::open(&db_path).unwrap(),
+        );
+
+        // 1. Create a practice plan via create_practice_plan_handler.
+        let plan_avail = tauri::async_runtime::block_on(
+            crate::commands::practice::create_practice_plan_handler(
+                &registry,
+                &installation,
+                crate::practice::CreatePlanInput {
+                    workspace_id: workspace.id.clone(),
+                    operation_id: "op-cmd-plan-1".to_owned(),
+                    goal_id: None,
+                    concept_ids: vec!["concept-shells".to_owned()],
+                    target_ms: Some(1_500_000),
+                    question_limit: Some(3),
+                    difficulty: Some(crate::practice::PracticeDifficulty::Steady),
+                    pattern_id: None,
+                    preview_only: false,
+                },
+            ),
+        )
+        .unwrap();
+        let plan = match plan_avail {
+            crate::practice::Available::Available { value, .. } => value,
+            other => panic!("expected available plan, got {other:?}"),
+        };
+        assert_eq!(plan.queue.len(), 3);
+
+        // 2. Start a session and execute Stage 9 start action.
+        let session = tauri::async_runtime::block_on(session::start_session_handler(
+            &database,
+            &registry,
+            &installation,
+            session_input(&workspace.id),
+        ))
+        .unwrap();
+
+        let start_receipt = tauri::async_runtime::block_on(
+            crate::commands::practice::execute_session_action_handler(
+                &registry,
+                &installation,
+                crate::practice::SessionActionInput {
+                    operation_id: "op-cmd-start-1".to_owned(),
+                    workspace_id: workspace.id.clone(),
+                    session_id: session.id.clone(),
+                    expected_revision: 0,
+                    action: "start".to_owned(),
+                    payload: serde_json::json!({ "planId": plan.id }),
+                    elapsed_delta_ms: Some(0),
+                    attempt_elapsed_delta_ms: Some(0),
+                },
+            ),
+        )
+        .unwrap();
+        let attempt = start_receipt.attempt.clone().unwrap();
+        let (coeff, b) = parameters_from_prompt(&attempt.prompt);
+
+        // 3. Submit a wrong answer missing 2*pi prefactor to trigger error pattern attribution.
+        let missing_two_pi = (coeff as f64) * (b as f64).powi(3) / 3.0 - (b as f64).powi(4) / 4.0;
+        let check_receipt = tauri::async_runtime::block_on(
+            crate::commands::practice::execute_session_action_handler(
+                &registry,
+                &installation,
+                crate::practice::SessionActionInput {
+                    operation_id: "op-cmd-check-1".to_owned(),
+                    workspace_id: workspace.id.clone(),
+                    session_id: session.id.clone(),
+                    expected_revision: start_receipt.revision,
+                    action: "check".to_owned(),
+                    payload: serde_json::json!({
+                        "attemptId": attempt.id,
+                        "response": {
+                            "responseType": "numeric",
+                            "value": format!("{missing_two_pi:.8}")
+                        }
+                    }),
+                    elapsed_delta_ms: Some(15_000),
+                    attempt_elapsed_delta_ms: Some(15_000),
+                },
+            ),
+        )
+        .unwrap();
+        assert!(!check_receipt.mastery_changes.is_empty());
+        assert!(!check_receipt.pattern_changes.is_empty());
+        match &check_receipt.timing {
+            crate::practice::Available::Available { value, .. } => {
+                assert_eq!(value.elapsed_ms, 15_000);
+            }
+            other => panic!("expected available timing, got {other:?}"),
+        }
+
+        // 4. Re-sending the same operation_id returns the exact cached receipt idempotently.
+        let retry_receipt = tauri::async_runtime::block_on(
+            crate::commands::practice::execute_session_action_handler(
+                &registry,
+                &installation,
+                crate::practice::SessionActionInput {
+                    operation_id: "op-cmd-check-1".to_owned(),
+                    workspace_id: workspace.id.clone(),
+                    session_id: session.id.clone(),
+                    expected_revision: start_receipt.revision,
+                    action: "check".to_owned(),
+                    payload: serde_json::json!({
+                        "attemptId": attempt.id,
+                        "response": {
+                            "responseType": "numeric",
+                            "value": format!("{missing_two_pi:.8}")
+                        }
+                    }),
+                    elapsed_delta_ms: Some(15_000),
+                    attempt_elapsed_delta_ms: Some(15_000),
+                },
+            ),
+        )
+        .unwrap();
+        match &retry_receipt.timing {
+            crate::practice::Available::Available { value, .. } => {
+                assert_eq!(value.elapsed_ms, 15_000);
+            }
+            other => panic!("expected available timing, got {other:?}"),
+        }
+
+        // 5. Inspect concept evidence, pattern list, pattern detail, and edit pattern rule.
+        let evidence = tauri::async_runtime::block_on(
+            crate::commands::practice::get_concept_evidence_handler(
+                &registry,
+                &installation,
+                crate::practice::EvidenceReadRequest {
+                    workspace_id: workspace.id.clone(),
+                    concept_ids: vec!["concept-shells".to_owned()],
+                    as_of: None,
+                },
+            ),
+        )
+        .unwrap();
+        assert_eq!(evidence.len(), 1);
+        assert!(matches!(
+            evidence[0].mastery,
+            crate::practice::Available::Available { .. }
+        ));
+
+        let patterns = tauri::async_runtime::block_on(
+            crate::commands::practice::get_practice_patterns_handler(
+                &registry,
+                &installation,
+                crate::practice::PatternsReadRequest {
+                    workspace_id: workspace.id.clone(),
+                    status: None,
+                    search: None,
+                    cursor: None,
+                    limit: None,
+                },
+            ),
+        )
+        .unwrap();
+        assert_eq!(patterns.total_answers, 1);
+        let pattern_list = match patterns.patterns {
+            crate::practice::Available::Available { value, .. } => value,
+            other => panic!("expected available patterns list, got {other:?}"),
+        };
+        assert!(!pattern_list.is_empty());
+        let first_pattern_id = pattern_list[0].pattern_id.clone();
+
+        let detail =
+            tauri::async_runtime::block_on(crate::commands::practice::get_pattern_detail_handler(
+                &registry,
+                &installation,
+                crate::practice::PatternDetailReadRequest {
+                    workspace_id: workspace.id.clone(),
+                    pattern_id: first_pattern_id.clone(),
+                    rule_revision: None,
+                },
+            ))
+            .unwrap();
+        assert!(matches!(
+            detail,
+            crate::practice::Available::Available { .. }
+        ));
+
+        let edited =
+            tauri::async_runtime::block_on(crate::commands::practice::edit_pattern_rule_handler(
+                &registry,
+                &installation,
+                crate::practice::EditPatternRuleInput {
+                    workspace_id: workspace.id.clone(),
+                    operation_id: "op-cmd-rule-1".to_owned(),
+                    expected_revision: 1,
+                    pattern_id: first_pattern_id,
+                    rule_revision: 1,
+                    required_clean: 4,
+                    preview_only: false,
+                },
+            ))
+            .unwrap();
+        match edited {
+            crate::practice::Available::Available { value, .. } => {
+                assert_eq!(value.resolution.required_clean, 4);
+                assert_eq!(value.rule_revision, 2);
+            }
+            other => panic!("expected available updated pattern snapshot, got {other:?}"),
+        }
+
+        // 6. End session and verify session history.
+        tauri::async_runtime::block_on(crate::commands::practice::execute_session_action_handler(
+            &registry,
+            &installation,
+            crate::practice::SessionActionInput {
+                operation_id: "op-cmd-end-1".to_owned(),
+                workspace_id: workspace.id.clone(),
+                session_id: session.id.clone(),
+                expected_revision: check_receipt.revision,
+                action: "end".to_owned(),
+                payload: serde_json::json!({}),
+                elapsed_delta_ms: Some(5_000),
+                attempt_elapsed_delta_ms: Some(5_000),
+            },
+        ))
+        .unwrap();
+
+        let history =
+            tauri::async_runtime::block_on(crate::commands::practice::get_session_history_handler(
+                &registry,
+                &installation,
+                workspace.id.clone(),
+            ))
+            .unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].session_id, session.id);
+        assert_eq!(history[0].status, "completed");
+        match &history[0].summary {
+            crate::practice::Available::Available { value, .. } => match &value.timing {
+                crate::practice::Available::Available { value: t, .. } => {
+                    assert_eq!(t.elapsed_ms, 20_000);
+                }
+                other => panic!("expected available summary timing, got {other:?}"),
+            },
+            other => panic!("expected available session summary, got {other:?}"),
+        }
+    }
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

@@ -331,6 +331,239 @@ impl PracticeProvider {
             hints_total,
         })
     }
+
+    fn handle_plan(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: super::types::CreatePlanInput =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.plan"),
+                message: error.to_string(),
+            })?;
+        let response = super::engine::create_plan(&self.store, &self.knowledge_package, request)
+            .map_err(|error| to_invocation_error("practice.plan", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    async fn handle_session(&self, input: Value) -> Result<Value, InvocationError> {
+        if let Some(op) = input.get("op").and_then(|v| v.as_str()) {
+            if op == "history" {
+                let workspace_id = input
+                    .get("workspaceId")
+                    .or_else(|| input.get("workspace_id"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
+                let entries = super::engine::list_session_history(
+                    &self.store,
+                    &self.knowledge_package,
+                    workspace_id,
+                )
+                .map_err(|error| to_invocation_error("practice.session", error))?;
+                return serde_json::to_value(entries).map_err(|error| InvocationError::Failed {
+                    message: error.to_string(),
+                });
+            }
+        }
+
+        let request: super::types::SessionActionInput =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.session"),
+                message: error.to_string(),
+            })?;
+
+        // For 'check', invoke math.verify@2 through the capability registry before opening the SQLite write transaction!
+        let precomputed_verification = if request.action == "check" {
+            self.precompute_check_verification(&request).await?
+        } else {
+            None
+        };
+
+        let receipt = super::engine::execute_session_action(
+            &self.store,
+            &self.knowledge_package,
+            request,
+            precomputed_verification,
+        )
+        .map_err(|error| to_invocation_error("practice.session", error))?;
+
+        serde_json::to_value(receipt).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    async fn precompute_check_verification(
+        &self,
+        request: &super::types::SessionActionInput,
+    ) -> Result<Option<crate::capabilities::math_verify::VerifyV2Result>, InvocationError> {
+        let maybe_req = {
+            let conn = self
+                .store
+                .lock_connection()
+                .map_err(|e| InvocationError::Failed {
+                    message: e.to_string(),
+                })?;
+            let attempt_id = request
+                .payload
+                .get("attemptId")
+                .or_else(|| request.payload.get("attempt_id"))
+                .and_then(|v| v.as_str())
+                .map(str::to_owned);
+            if let Some(att_id) = attempt_id {
+                if let (Ok(Some(state)), Ok(Some((instance, family_id)))) = (
+                    super::engine::load_attempt_state(&conn, &request.workspace_id, &att_id),
+                    super::engine::load_attempt_secret_instance(
+                        &conn,
+                        &request.workspace_id,
+                        &att_id,
+                    ),
+                ) {
+                    let family = self
+                        .knowledge_package
+                        .problem_families
+                        .iter()
+                        .find(|f| f.id.as_str() == family_id)
+                        .unwrap_or_else(|| &self.knowledge_package.problem_families[0]);
+                    let resp_val = request
+                        .payload
+                        .get("response")
+                        .and_then(|r| r.get("value"))
+                        .cloned()
+                        .unwrap_or_else(|| serde_json::json!(state.answer_text));
+                    let canonical_val = match &instance.canonical_solution {
+                        ResolvedSolution::Symbolic(s) => serde_json::json!(s),
+                        ResolvedSolution::Numeric(n) => serde_json::json!(n),
+                    };
+                    Some(crate::capabilities::math_verify::VerifyV2Request {
+                        workspace_id: request.workspace_id.clone(),
+                        attempt_id: att_id,
+                        response: resp_val,
+                        canonical_solution: canonical_val,
+                        response_type: match family.response_type {
+                            ResponseType::SymbolicExpression => "symbolic-expression".to_owned(),
+                            ResponseType::Numeric => "numeric".to_owned(),
+                        },
+                        restrictions: state.restrictions,
+                        content_ref: crate::capabilities::math_verify::ContentRefInput {
+                            package_id: self.knowledge_package.id.as_str().to_owned(),
+                            package_version: self.knowledge_package.version.to_string(),
+                            entity_id: family.id.as_str().to_owned(),
+                            schema_version: self.knowledge_package.schema_version,
+                            digest: super::engine::package_content_ref(&self.knowledge_package)
+                                .digest,
+                        },
+                        objective_ids: family
+                            .objective_ids
+                            .iter()
+                            .map(|o| o.as_str().to_owned())
+                            .collect(),
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
+
+        let Some(v2_req) = maybe_req else {
+            return Ok(None);
+        };
+
+        let requirement = CapabilityRequirement {
+            id: capability_id("math.verify"),
+            min_version: 2,
+        };
+        let handle = {
+            let registry = self.registry.read().await;
+            registry.resolve(&self.installation, &requirement).ok()
+        };
+        if let Some(handle) = handle {
+            let call = CapabilityCall {
+                envelope: CallEnvelope {
+                    workspace_id: request.workspace_id.clone(),
+                    capability_id: requirement.id,
+                    version: 2,
+                    calling_module_id: ModuleId::new("org.axiom.practice")
+                        .expect("static module id is valid"),
+                },
+                input: v2_req,
+            };
+            let registry = self.registry.read().await;
+            if let Ok(res) = registry
+                .invoke::<_, crate::capabilities::math_verify::VerifyV2Result>(
+                    &handle,
+                    &self.installation,
+                    call,
+                )
+                .await
+            {
+                return Ok(Some(res));
+            }
+        }
+        Ok(None)
+    }
+
+    fn handle_evidence(&self, input: Value) -> Result<Value, InvocationError> {
+        let request: super::types::EvidenceReadRequest =
+            serde_json::from_value(input).map_err(|error| InvocationError::InvalidInput {
+                capability_id: capability_id("practice.evidence"),
+                message: error.to_string(),
+            })?;
+        let response =
+            super::engine::read_concept_evidence(&self.store, &self.knowledge_package, request)
+                .map_err(|error| to_invocation_error("practice.evidence", error))?;
+        serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+            message: error.to_string(),
+        })
+    }
+
+    fn handle_patterns(&self, input: Value) -> Result<Value, InvocationError> {
+        let op = input.get("op").and_then(|v| v.as_str()).unwrap_or("list");
+        match op {
+            "detail" => {
+                let request: super::types::PatternDetailReadRequest = serde_json::from_value(input)
+                    .map_err(|error| InvocationError::InvalidInput {
+                        capability_id: capability_id("practice.patterns"),
+                        message: error.to_string(),
+                    })?;
+                let response = super::engine::read_pattern_detail(
+                    &self.store,
+                    &self.knowledge_package,
+                    request,
+                )
+                .map_err(|error| to_invocation_error("practice.patterns", error))?;
+                serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+                    message: error.to_string(),
+                })
+            }
+            "edit-rule" => {
+                let request: super::types::EditPatternRuleInput = serde_json::from_value(input)
+                    .map_err(|error| InvocationError::InvalidInput {
+                        capability_id: capability_id("practice.patterns"),
+                        message: error.to_string(),
+                    })?;
+                let response =
+                    super::engine::edit_pattern_rule(&self.store, &self.knowledge_package, request)
+                        .map_err(|error| to_invocation_error("practice.patterns", error))?;
+                serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+                    message: error.to_string(),
+                })
+            }
+            _ => {
+                let request: super::types::PatternsReadRequest = serde_json::from_value(input)
+                    .map_err(|error| InvocationError::InvalidInput {
+                        capability_id: capability_id("practice.patterns"),
+                        message: error.to_string(),
+                    })?;
+                let response =
+                    super::engine::read_patterns(&self.store, &self.knowledge_package, request)
+                        .map_err(|error| to_invocation_error("practice.patterns", error))?;
+                serde_json::to_value(response).map_err(|error| InvocationError::Failed {
+                    message: error.to_string(),
+                })
+            }
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -348,6 +581,10 @@ impl CapabilityProvider for PracticeProvider {
             ("practice.start", 1) => self.handle_start(input).await,
             ("practice.describe", 1) => self.handle_describe(input).await,
             ("practice.concepts", 1) => self.handle_concepts(input),
+            ("practice.plan", 1) => self.handle_plan(input),
+            ("practice.session", 1) => self.handle_session(input).await,
+            ("practice.evidence", 1) => self.handle_evidence(input),
+            ("practice.patterns", 1) => self.handle_patterns(input),
             _ => Err(InvocationError::UnknownCapability {
                 capability_id: capability_id.clone(),
                 version,

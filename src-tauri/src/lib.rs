@@ -16,16 +16,20 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
             let database_path = app_data_dir.join("axiom.sqlite3");
-            app.manage(commands::Database::open(&database_path)?);
+            let database = commands::Database::open(&database_path)?;
+            let shared_conn = database.shared_connection();
+            app.manage(database);
 
             let knowledge_package_dir = app.path().resource_dir()?.join("knowledge-package");
             let knowledge_package = knowledge::load_knowledge_package(&knowledge_package_dir)
                 .expect(
                     "bundled knowledge-package must load -- a broken bundle is a build problem",
                 );
-            let practice_connection = db::open(&database_path)?;
-            let (registry, installation) =
-                commands::practice::build_practice_registry(knowledge_package, practice_connection);
+            let practice_store = practice::PracticeStore::new_shared(shared_conn);
+            let (registry, installation) = commands::practice::build_practice_registry_with_store(
+                knowledge_package,
+                practice_store,
+            );
             app.manage(registry);
             app.manage(installation);
 
@@ -67,6 +71,13 @@ pub fn run() {
             commands::practice::evaluate_attempt,
             commands::practice::request_hint,
             commands::practice::describe_attempt,
+            commands::practice::create_practice_plan,
+            commands::practice::execute_session_action,
+            commands::practice::get_concept_evidence,
+            commands::practice::get_practice_patterns,
+            commands::practice::get_pattern_detail,
+            commands::practice::edit_pattern_rule,
+            commands::practice::get_session_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

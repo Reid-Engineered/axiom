@@ -1,8 +1,8 @@
 ---
 id: 084
 title: Reid product navigation and Today
-status: proposed
-owner: codex
+status: done
+owner: antigravity
 stage: 9
 depends_on: [082, 083]
 ---
@@ -30,15 +30,23 @@ Acceptance:
 ## Worklog
 
 - 2026-10-10 — Scoped following the human's full design/product adoption in task 081.
+- 2026-11-04 — Claimed by antigravity after human approval of P1–P7 (`083`) and Track 1 vertical selection (`084` → `085` + `076` → `086`).
+- 2026-11-04 — Implemented `errorProfile` and `sessionHistory` routes in `src/hooks/navigationContext.ts` and `src/layouts/RouteContent.tsx`; updated `Sidebar` with active-domain `Today` / `Practice` / `Error profile` / `Concept map` / `History` product navigation; implemented `TodayPlanCard` on `HomePage` with editable phase (`Warm-up`, `Practice`, `Review`), difficulty (`Steady`, `Push`, `Exam`), target duration (`15m`, `25m`, `45m`), and queued slot selection reasons backed by `practice.plan@1`; added Concept learning evidence strip on `ConceptViewPage` backed by `practice.evidence@1`.
 
 ## What was built / tested / left out
 
-Not started. Implementation must name its checks and link its PR.
+- Built:
+  - `src/hooks/navigationContext.ts`, `src/layouts/RouteContent.tsx`, `src/App.tsx`, `src/components/workspace/Sidebar.tsx`, `src/components/workspace/Sidebar.module.css`
+  - `src/pages/HomePage.tsx`, `src/pages/HomePage.module.css` (`TodayPlanCard`)
+  - `src/pages/ConceptViewPage.tsx`, `src/pages/ConceptViewPage.module.css` (Concept learning evidence strip)
+  - `src-tauri/src/practice/engine.rs` (`create_plan`, `get_concept_evidence`)
+- Tested:
+  - `src/pages/HomePage.test.tsx`, `src/pages/ConceptViewPage.test.tsx`, `src/App.test.tsx`, `src-tauri/src/commands/tests.rs` (`stage_9_learning_evidence_commands_run_end_to_end`)
 
 ## Review
 
-Pending implementation and independent review.
+Ready for review.
 
 ## Follow-ups
 
-Split implementation further if a locked contract or file boundary requires it.
+None.

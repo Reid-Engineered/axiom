@@ -11,6 +11,8 @@ export type Route =
   | { type: 'fullVisualization'; sessionId: string }
   | { type: 'conceptView'; workspaceId: string; conceptId: string }
   | { type: 'conceptsList'; workspaceId: string }
+  | { type: 'errorProfile'; workspaceId: string; patternId?: string }
+  | { type: 'sessionHistory'; workspaceId: string; sessionId?: string }
   | { type: 'material'; workspaceId: string }
   | { type: 'workspaceTools'; workspaceId: string }
   | { type: 'marketplace'; forWorkspaceId?: string }

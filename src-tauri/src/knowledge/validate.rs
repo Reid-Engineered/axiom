@@ -11,6 +11,7 @@ pub(crate) fn validate_references(
 ) -> Result<(), KnowledgeError> {
     let concept_ids: HashSet<_> = entities.concepts.iter().map(|c| &c.id).collect();
     let objectives_by_id: HashMap<_, _> = entities.objectives.iter().map(|o| (&o.id, o)).collect();
+    let patterns_by_id: HashMap<_, _> = entities.patterns.iter().map(|p| (&p.id, p)).collect();
     let source_ids: HashSet<_> = sources.iter().map(|s| &s.id).collect();
 
     for objective in &entities.objectives {
@@ -20,6 +21,35 @@ pub(crate) fn validate_references(
                 field: "concept_id",
                 target: objective.concept_id.as_str().to_owned(),
             });
+        }
+    }
+
+    for pattern in &entities.patterns {
+        for concept_id in &pattern.concept_ids {
+            if !concept_ids.contains(concept_id) {
+                return Err(KnowledgeError::UnresolvedConcept {
+                    entity_id: pattern.id.as_str().to_owned(),
+                    field: "concept_ids",
+                    target: concept_id.as_str().to_owned(),
+                });
+            }
+        }
+        let pattern_concept_set: HashSet<_> = pattern.concept_ids.iter().collect();
+        for objective_id in &pattern.objective_ids {
+            let Some(objective) = objectives_by_id.get(objective_id) else {
+                return Err(KnowledgeError::UnresolvedObjective {
+                    entity_id: pattern.id.as_str().to_owned(),
+                    field: "objective_ids",
+                    target: objective_id.as_str().to_owned(),
+                });
+            };
+            if !pattern_concept_set.contains(&objective.concept_id) {
+                return Err(KnowledgeError::UnresolvedConcept {
+                    entity_id: pattern.id.as_str().to_owned(),
+                    field: "objective_ids",
+                    target: objective.concept_id.as_str().to_owned(),
+                });
+            }
         }
     }
 
@@ -47,6 +77,8 @@ pub(crate) fn validate_references(
             }
         }
     }
+
+    let mut seen_opportunity_ids = HashSet::new();
     for family in &entities.problem_families {
         if !concept_ids.contains(&family.concept_id) {
             return Err(KnowledgeError::UnresolvedConcept {
@@ -68,6 +100,71 @@ pub(crate) fn validate_references(
                     problem_family_id: family.id.as_str().to_owned(),
                     objective_id: objective_id.as_str().to_owned(),
                 });
+            }
+        }
+
+        if let Some(opportunities) = &family.opportunities {
+            let assessed_set: HashSet<_> = family
+                .assessed_objective_ids
+                .as_deref()
+                .unwrap_or(&family.objective_ids)
+                .iter()
+                .collect();
+
+            for opp in opportunities {
+                if !seen_opportunity_ids.insert(opp.id.clone()) {
+                    return Err(KnowledgeError::DuplicateOpportunityId {
+                        opportunity_id: opp.id.as_str().to_owned(),
+                    });
+                }
+                let Some(pattern) = patterns_by_id.get(&opp.pattern_id) else {
+                    return Err(KnowledgeError::UnresolvedPattern {
+                        entity_id: family.id.as_str().to_owned(),
+                        target: opp.pattern_id.as_str().to_owned(),
+                    });
+                };
+
+                let intersects_assessed = pattern
+                    .objective_ids
+                    .iter()
+                    .any(|obj_id| assessed_set.contains(obj_id));
+                if !intersects_assessed {
+                    return Err(KnowledgeError::OpportunityPatternScopeMismatch {
+                        problem_family_id: family.id.as_str().to_owned(),
+                        opportunity_id: opp.id.as_str().to_owned(),
+                        pattern_id: pattern.id.as_str().to_owned(),
+                    });
+                }
+
+                let opp_evidence_set: HashSet<_> = opp.required_evidence.iter().copied().collect();
+                for req in &pattern.required_evidence {
+                    if !opp_evidence_set.contains(req) {
+                        return Err(KnowledgeError::OpportunityMissingRequiredEvidence {
+                            problem_family_id: family.id.as_str().to_owned(),
+                            opportunity_id: opp.id.as_str().to_owned(),
+                            missing: req.as_str().to_owned(),
+                        });
+                    }
+                }
+                for obj_id in &pattern.objective_ids {
+                    if assessed_set.contains(obj_id) {
+                        if let Some(objective) = objectives_by_id.get(obj_id) {
+                            if let Some(obj_evidence) = &objective.assessment_evidence {
+                                for req in obj_evidence {
+                                    if !opp_evidence_set.contains(req) {
+                                        return Err(
+                                            KnowledgeError::OpportunityMissingRequiredEvidence {
+                                                problem_family_id: family.id.as_str().to_owned(),
+                                                opportunity_id: opp.id.as_str().to_owned(),
+                                                missing: req.as_str().to_owned(),
+                                            },
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -98,6 +195,13 @@ pub(crate) fn validate_references(
             .examples
             .iter()
             .map(|e| (e.id.as_str(), &e.provenance_refs)),
+        &source_ids,
+    )?;
+    validate_provenance_sources(
+        entities
+            .patterns
+            .iter()
+            .map(|pat| (pat.id.as_str(), &pat.provenance_refs)),
         &source_ids,
     )?;
 
@@ -163,6 +267,8 @@ mod tests {
             concept_id: ConceptId::new(concept_id).unwrap(),
             description: "d".to_owned(),
             provenance_refs: provenance("src.a"),
+            bloom_level: None,
+            assessment_evidence: None,
         }
     }
 
@@ -188,6 +294,7 @@ mod tests {
             objectives: vec![objective("shell.obj", "shell.a")],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.obj"])],
             problem_families: vec![],
+            patterns: vec![],
         };
         assert!(validate_references(&entities, &[source("src.a")]).is_ok());
     }
@@ -199,6 +306,7 @@ mod tests {
             objectives: vec![objective("shell.obj", "shell.missing")],
             examples: vec![],
             problem_families: vec![],
+            patterns: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -213,6 +321,7 @@ mod tests {
             objectives: vec![],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.missing"])],
             problem_families: vec![],
+            patterns: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -227,6 +336,7 @@ mod tests {
             objectives: vec![objective("shell.obj", "shell.b")],
             examples: vec![example("shell.ex", "shell.a", vec!["shell.obj"])],
             problem_families: vec![],
+            patterns: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[source("src.a")]),
@@ -241,6 +351,7 @@ mod tests {
             objectives: vec![],
             examples: vec![],
             problem_families: vec![],
+            patterns: vec![],
         };
         assert!(matches!(
             validate_references(&entities, &[]),

@@ -8,3 +8,8 @@ offline = "full"
 [[provides]]
 id = "math.verify"
 version = 1
+
+[[provides]]
+id = "math.verify"
+version = 2
+

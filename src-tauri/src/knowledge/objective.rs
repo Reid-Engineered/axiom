@@ -3,21 +3,22 @@ use std::path::Path;
 use super::error::KnowledgeError;
 use super::frontmatter::split_frontmatter;
 use super::identifier::ConceptId;
+use super::pattern::{parse_assessment_evidence_list, parse_bloom_level};
 use super::provenance::convert_provenance_refs;
-use super::raw::RawObjectiveFrontmatter;
+use super::raw::{RawObjectiveFrontmatter, RawObjectiveV2Frontmatter};
 use super::types::Objective;
 
+#[cfg(test)]
 pub(crate) fn parse_objective_file(path: &Path, raw: &str) -> Result<Objective, KnowledgeError> {
+    parse_objective_file_with_version(path, raw, 1)
+}
+
+pub(crate) fn parse_objective_file_with_version(
+    path: &Path,
+    raw: &str,
+    schema_version: u32,
+) -> Result<Objective, KnowledgeError> {
     let (toml_text, body) = split_frontmatter(path, raw)?;
-    let raw_frontmatter: RawObjectiveFrontmatter =
-        toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
-            path: path.to_owned(),
-            source,
-        })?;
-
-    let id = super::identifier::ObjectiveId::new(raw_frontmatter.id)?;
-    let concept_id = ConceptId::new(raw_frontmatter.concept_id)?;
-
     let description = body.trim().to_owned();
     if description.is_empty() {
         return Err(KnowledgeError::EmptyField {
@@ -26,14 +27,53 @@ pub(crate) fn parse_objective_file(path: &Path, raw: &str) -> Result<Objective, 
         });
     }
 
-    let provenance_refs = convert_provenance_refs(id.as_str(), raw_frontmatter.provenance_refs)?;
+    if schema_version == 1 {
+        let raw_frontmatter: RawObjectiveFrontmatter =
+            toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
+                path: path.to_owned(),
+                source,
+            })?;
 
-    Ok(Objective {
-        id,
-        concept_id,
-        description: body,
-        provenance_refs,
-    })
+        let id = super::identifier::ObjectiveId::new(raw_frontmatter.id)?;
+        let concept_id = ConceptId::new(raw_frontmatter.concept_id)?;
+        let provenance_refs =
+            convert_provenance_refs(id.as_str(), raw_frontmatter.provenance_refs)?;
+
+        Ok(Objective {
+            id,
+            concept_id,
+            description: body,
+            provenance_refs,
+            bloom_level: None,
+            assessment_evidence: None,
+        })
+    } else {
+        let raw_frontmatter: RawObjectiveV2Frontmatter =
+            toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
+                path: path.to_owned(),
+                source,
+            })?;
+
+        let id = super::identifier::ObjectiveId::new(raw_frontmatter.id)?;
+        let entity_id = id.as_str().to_owned();
+        let concept_id = ConceptId::new(raw_frontmatter.concept_id)?;
+        let bloom_level = parse_bloom_level(&entity_id, &raw_frontmatter.bloom_level)?;
+        let assessment_evidence = parse_assessment_evidence_list(
+            &entity_id,
+            "assessment_evidence",
+            &raw_frontmatter.assessment_evidence,
+        )?;
+        let provenance_refs = convert_provenance_refs(&entity_id, raw_frontmatter.provenance_refs)?;
+
+        Ok(Objective {
+            id,
+            concept_id,
+            description: body,
+            provenance_refs,
+            bloom_level: Some(bloom_level),
+            assessment_evidence: Some(assessment_evidence),
+        })
+    }
 }
 
 #[cfg(test)]

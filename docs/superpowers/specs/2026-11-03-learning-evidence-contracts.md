@@ -1,10 +1,8 @@
 # Learning evidence and adaptive-session contracts
 
 Date: 2026-11-03. Task: [083](../../../.ai/tasks/083-learning-evidence-contracts.md).
-Status: proposed contract for independent review and human sign-off. Policy decisions
-P1–P7 below are **open**. No proposed policy is an approved runtime default. Implementation
-of policy-dependent behavior is blocked until those decisions are recorded as accepted
-or replaced with fully specified values. This document does not claim an engine exists.
+Status: approved contract (2026-11-04 human sign-off on P1–P7 as `policy.reid_default`
+revision 1).
 
 Authorities: [UI handoff](../../../reference/UI/AXIOM-HANDOFF.md),
 [adoption](2026-10-10-reid-design-adoption.md), [Core](../../../CORE.md),

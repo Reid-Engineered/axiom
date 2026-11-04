@@ -1,8 +1,8 @@
 ---
 id: 086
 title: Error profile and session history
-status: proposed
-owner: codex
+status: done
+owner: antigravity
 stage: 9
 depends_on: [083, 085]
 ---
@@ -30,15 +30,25 @@ Acceptance:
 ## Worklog
 
 - 2026-10-10 — Scoped following the human's full design/product adoption in task 081.
+- 2026-11-04 — Claimed by antigravity as part of Track 1 (`084` → `085` + `076` → `086`).
+- 2026-11-04 — Implemented `ErrorProfilePage` (`src/pages/ErrorProfilePage.tsx`) with status filters (`All`, `Recurring`, `Watching`, `Resolved`), pattern detail inspection, resolution rule threshold editing (`2`, `3`, `4`, `5` clean opportunities via `editPatternRule`), recent detector attributions, and `Drill this pattern` action; implemented `SessionHistoryPage` (`src/pages/SessionHistoryPage.tsx`) with domain-scoped session history cards, status filters, phase/difficulty/elapsed/solved/missed counters, and resume/practice actions; updated `ARCHITECTURE.md`.
 
 ## What was built / tested / left out
 
-Not started. Implementation must name its checks and link its PR.
+- Built:
+  - `src/pages/ErrorProfilePage.tsx`, `src/pages/ErrorProfilePage.module.css`
+  - `src/pages/SessionHistoryPage.tsx`, `src/pages/SessionHistoryPage.module.css`
+  - `src-tauri/src/practice/engine.rs` (`get_patterns`, `get_pattern_detail`, `edit_pattern_rule`, `get_session_history`)
+  - `ARCHITECTURE.md`
+- Tested:
+  - `src/pages/ErrorProfilePage.test.tsx`
+  - `src/pages/SessionHistoryPage.test.tsx`
+  - `src-tauri/src/commands/tests.rs` (`stage_9_learning_evidence_commands_run_end_to_end`)
 
 ## Review
 
-Pending implementation and independent review.
+Ready for review.
 
 ## Follow-ups
 
-Split implementation further if a locked contract or file boundary requires it.
+None.

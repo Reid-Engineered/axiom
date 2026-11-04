@@ -7,7 +7,7 @@ use super::identifier::{KnowledgePackageId, SourceId};
 use super::raw::{RawKnowledgePackage, RawSource, RawSourcesFile};
 use super::types::Source;
 
-const SUPPORTED_SCHEMA_VERSION: u32 = 1;
+const SUPPORTED_SCHEMA_VERSIONS: [u32; 2] = [1, 2];
 
 pub(crate) struct PackageIdentity {
     pub id: KnowledgePackageId,
@@ -24,7 +24,7 @@ pub(crate) fn parse_package_toml(raw_toml: &str) -> Result<PackageIdentity, Know
             source,
         })?;
 
-    if raw.schema_version != SUPPORTED_SCHEMA_VERSION {
+    if !SUPPORTED_SCHEMA_VERSIONS.contains(&raw.schema_version) {
         return Err(KnowledgeError::UnsupportedSchemaVersion {
             found: raw.schema_version,
         });
@@ -114,11 +114,18 @@ mod tests {
     }
 
     #[test]
-    fn unsupported_schema_version_is_rejected() {
+    fn schema_version_2_package_toml_parses_into_identity() {
         let toml = VALID_PACKAGE.replace("schema_version = 1", "schema_version = 2");
+        let identity = parse_package_toml(&toml).unwrap();
+        assert_eq!(identity.schema_version, 2);
+    }
+
+    #[test]
+    fn unsupported_schema_version_is_rejected() {
+        let toml = VALID_PACKAGE.replace("schema_version = 1", "schema_version = 3");
         assert!(matches!(
             parse_package_toml(&toml),
-            Err(KnowledgeError::UnsupportedSchemaVersion { found: 2 })
+            Err(KnowledgeError::UnsupportedSchemaVersion { found: 3 })
         ));
     }
 

@@ -360,6 +360,115 @@
   border-radius: var(--radius-card);
 }
 
+.todayPlanCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--space-2xl);
+  padding: var(--space-3xl);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.todayPlanMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.todayPlanHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.todayPlanTitle {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--font-size-title-sm);
+  font-weight: 600;
+}
+
+.phaseList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.phaseItem {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.phaseName {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.phaseReason {
+  font-size: var(--font-size-metadata);
+  color: var(--text-metadata);
+}
+
+.planControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.controlGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.todayPlanAside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-left: var(--space-2xl);
+  border-left: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.watchingCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-radius: var(--radius-row);
+  background: var(--color-content);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.watchingTitle {
+  margin: 0;
+  font-size: var(--font-size-small-plus);
+  font-weight: 600;
+}
+
+.watchingMeta {
+  margin: 0;
+  font-size: var(--font-size-metadata);
+  color: var(--text-metadata);
+}
+
+
 .libraryCard > div:first-child {
   min-height: calc(var(--layout-rail-width) - var(--space-4xl));
   border-bottom-right-radius: 0;

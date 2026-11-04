@@ -7,12 +7,13 @@ import { Placeholder } from '../components/primitives/Placeholder';
 import { WorkspaceCard } from '../components/workspace/WorkspaceCard';
 import { useConcept, useConcepts } from '../hooks/useConcepts';
 import { useGoals } from '../hooks/useGoals';
+import { useErrorProfile, usePracticePlan } from '../hooks/useLearningEvidence';
 import { useNavigation } from '../hooks/useNavigation';
 import { useActiveSession } from '../hooks/useSessions';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { useRecentWorkspaceActivity, useWorkspaces } from '../hooks/useWorkspaces';
 import { AppShell } from '../layouts/AppShell';
-import type { Session, Workspace } from '../types';
+import type { PracticeDifficulty, Session, Workspace } from '../types';
 import styles from './HomePage.module.css';
 
 export type HomePageVariant = 'default' | 'session-intent' | 'library';
@@ -23,6 +24,12 @@ export interface HomePageProps {
 }
 
 const LONG_ABSENCE_DAYS = 30;
+const DIFFICULTIES: PracticeDifficulty[] = ['Steady', 'Push', 'Exam'];
+const DURATION_OPTIONS = [
+  { label: '15 min', ms: 15 * 60_000 },
+  { label: '25 min', ms: 25 * 60_000 },
+  { label: '45 min', ms: 45 * 60_000 },
+] as const;
 
 /** Home context and workspace entry points in one of the three specified variants. */
 export function HomePage({ variant = 'default', sidebar }: HomePageProps) {
@@ -77,6 +84,7 @@ function DefaultHome({
           : 'Your workspace context is ready.'}
       </p>
       {primaryWorkspace ? <PrimaryContextCard workspace={primaryWorkspace} /> : null}
+      {primaryWorkspace ? <TodayPlanCard workspace={primaryWorkspace} /> : null}
       <section className={styles.workspaceSection}>
         <header>
           <h1>Workspaces</h1>
@@ -109,6 +117,168 @@ function DefaultHome({
         </button>
       </nav>
     </main>
+  );
+}
+
+function TodayPlanCard({ workspace }: { workspace: Workspace }) {
+  const { plan: planAvail, difficulty, targetMs, rebuildPlan } = usePracticePlan(workspace.id);
+  const { listResponse } = useErrorProfile(workspace.id);
+  const { session, startSession } = useActiveSession(workspace.id);
+  const { navigate } = useNavigation();
+  const [editingPlan, setEditingPlan] = useState(false);
+
+  const plan = planAvail?.state === 'available' ? planAvail.value : null;
+  const patterns =
+    listResponse?.patterns.state === 'available' ? listResponse.patterns.value : [];
+  const topPattern =
+    patterns.find((p) => p.status === 'Recurring' || p.status === 'Improving') ?? patterns[0];
+
+  const handleStartPlanSession = async () => {
+    if (session) {
+      navigate({ type: 'studySession', sessionId: session.id });
+      return;
+    }
+    const firstSlotConceptId = plan?.queue[0]?.conceptId ?? 'calc-concept-22';
+    const created = await startSession({
+      workspaceId: workspace.id,
+      conceptId: firstSlotConceptId,
+      intent: {
+        activity: 'Practising',
+        detail: `${difficulty} adaptive plan`,
+        targetMinutes: Math.round(targetMs / 60_000),
+      },
+    });
+    navigate({ type: 'studySession', sessionId: created.id });
+  };
+
+  return (
+    <section className={styles.todayPlanCard} aria-label="Today session plan">
+      <div className={styles.todayPlanMain}>
+        <div className={styles.todayPlanHeader}>
+          <div>
+            <span className={styles.eyebrow}>Today · {workspace.name}</span>
+            <h2 className={styles.todayPlanTitle}>
+              {plan
+                ? `${Math.round((plan.targetMs ?? targetMs) / 60_000)}-minute ${plan.difficulty} practice plan (${plan.queue.length} questions)`
+                : 'Adaptive session plan'}
+            </h2>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            aria-expanded={editingPlan}
+            onClick={() => setEditingPlan((open) => !open)}
+          >
+            {editingPlan ? 'Done editing' : 'Edit plan'}
+          </Button>
+        </div>
+
+        {editingPlan ? (
+          <div className={styles.planControls} aria-label="Session plan controls">
+            <div className={styles.controlGroup} role="group" aria-label="Difficulty level">
+              {DIFFICULTIES.map((diff) => (
+                <Button
+                  key={diff}
+                  size="sm"
+                  variant={difficulty === diff ? 'dark' : 'secondary'}
+                  aria-pressed={difficulty === diff}
+                  onClick={() => void rebuildPlan({ difficulty: diff })}
+                >
+                  {diff}
+                </Button>
+              ))}
+            </div>
+            <div className={styles.controlGroup} role="group" aria-label="Target duration">
+              {DURATION_OPTIONS.map((opt) => (
+                <Button
+                  key={opt.label}
+                  size="sm"
+                  variant={targetMs === opt.ms ? 'dark' : 'secondary'}
+                  aria-pressed={targetMs === opt.ms}
+                  onClick={() => void rebuildPlan({ targetMs: opt.ms })}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {plan ? (
+          <ul className={styles.phaseList} aria-label="Plan phases">
+            {plan.phases.map((phase) => {
+              const count = plan.queue.filter((s) => s.phaseId === phase.id).length;
+              return (
+                <li key={phase.id} className={styles.phaseItem}>
+                  <span className={styles.phaseName}>
+                    {phase.name} · {count}q
+                  </span>
+                  <span className={styles.phaseReason}>{phase.reason}</span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+
+        <div className={styles.actions}>
+          <Button onClick={() => void handleStartPlanSession()}>
+            {session ? 'Resume active session' : 'Start session'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate({ type: 'conceptsList', workspaceId: workspace.id })}
+          >
+            Open concept map
+          </Button>
+          <Button
+            variant="tertiary"
+            onClick={() => navigate({ type: 'sessionHistory', workspaceId: workspace.id })}
+          >
+            Session history
+          </Button>
+        </div>
+      </div>
+
+      <aside className={styles.todayPlanAside} aria-label="Watching for">
+        <span className={styles.eyebrow}>Watching for</span>
+        {topPattern ? (
+          <div className={styles.watchingCard}>
+            <h3 className={styles.watchingTitle}>{topPattern.name}</h3>
+            <p className={styles.watchingMeta}>
+              {topPattern.status} · {topPattern.cleanStreak}/{topPattern.resolution.requiredClean}{' '}
+              clean streak
+            </p>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() =>
+                navigate({
+                  type: 'errorProfile',
+                  workspaceId: workspace.id,
+                  patternId: topPattern.patternId,
+                })
+              }
+            >
+              Inspect in Error profile
+            </Button>
+          </div>
+        ) : (
+          <div className={styles.watchingCard}>
+            <h3 className={styles.watchingTitle}>No recurring error patterns yet</h3>
+            <p className={styles.watchingMeta}>
+              Checked practice attempts will populate your domain Error profile.
+            </p>
+            <Button
+              size="sm"
+              variant="tertiary"
+              onClick={() => navigate({ type: 'errorProfile', workspaceId: workspace.id })}
+            >
+              Open Error profile
+            </Button>
+          </div>
+        )}
+      </aside>
+    </section>
   );
 }
 
