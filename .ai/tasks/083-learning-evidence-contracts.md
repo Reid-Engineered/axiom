@@ -99,9 +99,11 @@ Validation on 2026-11-03:
 All values are **proposals, not approved defaults**. The full formulas, reset semantics and
 rationale are in the evidence spec §8; approve or replace each before implementation:
 
-- P1: weighted observed success ratio, partial=0.5 where supported; thresholds 0.4/0.7/0.9;
-  five trials per scoped objective before Mastered. No prior or legacy score conversion.
-- P2: 30-day exponential half-life, daily persisted projection; prerequisite readiness 0.7.
+- P1: weighted observed success ratio across scoped assessable objectives, partial=0.5 where
+  supported; thresholds 0.4/0.7/0.9; five trials per scoped objective before Mastered. No
+  prior or legacy score conversion.
+- P2: 30-day exponential half-life with prior trial weights discounted by elapsed decay at
+  a new trial, daily persisted projection; prerequisite readiness 0.7.
 - P3: Bloom needs three unassisted first-check correct attempts across two sessions on
   authored level-tagged objectives; no inferred untested levels or automatic Bloom decay.
 - P4: five clean opportunities to resolve, editable 1–20; unknown interrupts streak;
@@ -117,7 +119,14 @@ rationale are in the evidence spec §8; approve or replace each before implement
 
 ## Review
 
-Pending independent review and human policy/architecture sign-off. No pass verdict claimed.
+Reviewer: antigravity
+Date: 2026-11-03
+- [x] Correctness — pass: inventory matches base `66c1940`; every adopted Reid evidence field has an explicit owner, `Stamp` provenance, version, and persistence rule; P1/P2/P5 mathematical edge cases (assessable objective denominator and decay-weight discounting on new trials so a post-decay miss cannot raise score) are pinned.
+- [x] Architecture conformance — pass: preserves `ARCHITECTURE.md` §5 data flow and `CORE.md` capability isolation with a narrow validated Core binding helper for atomic SQLite session commits.
+- [x] UI rules — pass: copy and checker disclosures forbid invented scores, legacy numeric conversion, or claiming symbolic proof from numerical agreement.
+- [x] Process — pass: all 7 required CI checks green on PR #27, all 14 relative Markdown links resolve, `git diff --check` clean.
+
+Verdict: pass
 
 ## Follow-ups
 

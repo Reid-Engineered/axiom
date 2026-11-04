@@ -426,13 +426,15 @@ edit can change approval metadata or silently alter another policy field.
   weighted assessed trials, with no pseudo-count or initial score. First assessable check
   per attempt has weight 1; correct=1, incorrect=0, partial=0.5 only with supported objective
   assessment; unverifiable/skip has no trial. Concept score is equal-weight mean of scoped
-  objective scores, unavailable until every scoped objective has evidence. Developing
+  assessable objective scores, unavailable until every scoped assessable objective has
+  evidence (unassessable authored objectives are disclosed in limitations). Developing
   [0,0.4), Familiar [0.4,0.7), Strong [0.7,0.9), Mastered [0.9,1] requires at least 5
   assessed attempts per scoped objective; otherwise cap named state at Strong. Rationale:
   auditable observed ratio, limited resistance to one-attempt mastery; no legacy conversion.
 - **P2 decay/readiness:** propose exponential decay of the observed score with 30-day
-  half-life since last assessed practice; at a new trial calculate the ratio using all
-  trials and restart the decay anchor. Persist one as-of decay projection per UTC day on
+  half-life since last assessed practice; at a new trial discount prior trial weights by
+  the elapsed decay factor before adding the new trial and restarting the decay anchor
+  (so a miss after decay cannot raise the displayed score). Persist one as-of decay projection per UTC day on
   first evidence read, keyed by concept/policy/day; same-day reads reuse it. Readiness
   requires every prerequisite's available decayed score >=0.7; no prerequisites is ready,
   any missing evidence is unknown unless another prerequisite is already not-ready.
