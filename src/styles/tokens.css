@@ -1,39 +1,75 @@
 :root {
+  color-scheme: dark;
+  --color-surface: #2a2724;
+  --color-surface-raised: #302c29;
+  --color-sidebar: #322e2b;
+  --color-inspector: #2c2926;
+  --color-sidebar-glass: rgba(50, 46, 43, 0.88);
+  --color-inspector-glass: rgba(44, 41, 38, 0.92);
+  --color-fill-strong: rgba(255, 255, 255, 0.11);
+  --accent-hover: #9bbaff;
+  --accent-text: #8fb3ff;
+  --accent-soft: rgba(126, 166, 255, 0.16);
+  --text-on-accent: #0b1530;
+  --color-danger: #ff6b5b;
+  --color-danger-fill: #d33a2c;
+  --signal-info: #2f6fdb;
+  --signal-progress: #c2692f;
+  --signal-neutral: #8e8e93;
+  --color-toggle-knob: #f5f5f7;
+  --font-serif: 'New York', ui-serif, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --control-height: 34px;
+  --control-height-sm: 28px;
+  --row-height: 28px;
+  --radius-pill: 999px;
+  --radius-panel: 24px;
+  --space-7: 28px;
+  --space-8: 40px;
+  --focus-width: 2px;
+  --focus-offset: 3px;
+  --glass-blur: 20px;
+  --shadow-glass: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  --shadow-menu: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 18px 40px -10px rgba(0, 0, 0, 0.7);
+  --motion-fast: 0.15s;
+  --motion-normal: 0.2s;
   /* surfaces */
-  --color-content: #fbfaf8;
-  --color-chrome: #f2f1ed;
-  --color-chrome-rail: #faf9f6;
-  --color-recessed: #e9e7e2;
-  --color-ink: #1c1b19;
+  --color-content: #1e1b19;
+  --color-chrome: #302c29;
+  --color-chrome-rail: #2a2724;
+  --color-recessed: rgba(255, 255, 255, 0.05);
+  --color-ink: #f5f5f7;
 
   /* text */
-  --text-primary: #1c1b19;
-  --text-secondary: rgba(28, 27, 25, 0.58);
-  --text-metadata: rgba(28, 27, 25, 0.46);
-  --color-hairline: rgba(28, 27, 25, 0.1);
-  --color-hairline-strong: rgba(28, 27, 25, 0.14);
-  --color-overlay: rgba(28, 27, 25, 0.3);
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(235, 235, 245, 0.7);
+  --text-metadata: rgba(235, 235, 245, 0.56);
+  --color-hairline: rgba(255, 255, 255, 0.08);
+  --color-hairline-strong: rgba(255, 255, 255, 0.12);
+  --color-overlay: rgba(0, 0, 0, 0.45);
 
-  /* accents — exactly two, plus the amber mistake dot. No red anywhere. */
-  --accent-action: oklch(0.5 0.13 258);
-  --accent-mastery: oklch(0.5 0.13 150);
-  --accent-amber: oklch(0.65 0.12 60);
+  /* The lighter progress text preserves contrast on the dark surfaces. */
+  --accent-action: #7ea6ff;
+  --accent-mastery: #2f8a57;
+  --text-success: #78cf9b;
+  --font-size-title-sm: 18px;
+  --accent-amber: #e5a16c;
 
   /* type */
   --font-ui:
-    ui-sans-serif, system-ui, 'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue',
-    sans-serif;
-  --font-math: 'STIX Two Text', serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
+    'Helvetica Neue', sans-serif;
+  --font-math: var(--font-serif);
 
   /* metrics */
   --sidebar-width: 232px;
   --drag-strip-height: 38px;
-  --toolbar-height-workspace: 38px;
-  --toolbar-height-session: 44px;
-  --content-gutter: 32px;
+  --toolbar-height-workspace: 64px;
+  --toolbar-height-session: 64px;
+  --content-gutter: 28px;
   --layout-column-width: 520px;
   --layout-column-width-wide: 560px;
-  --layout-rail-width: 250px;
+  --layout-rail-width: 300px;
   --layout-gallery-width: 900px;
   --layout-home-width: 800px;
   --gallery-placeholder-height: 100px;
@@ -65,6 +101,7 @@
   --space-2xl: 20px;
   --space-3xl: 24px;
   --space-4xl: 32px;
+  --space-5xl: 40px;
 
   /* type scale */
   --font-size-eyebrow: 10px;
@@ -100,13 +137,47 @@
   --placeholder-stripe-end: 14px;
 
   /* radii */
-  --radius-row: 7px;
-  --radius-control: 5px;
-  --radius-small: 4px;
+  --radius-row: 8px;
+  --radius-control: 6px;
+  --radius-small: 3px;
   --radius-card: 12px;
   --radius-sheet: 16px;
 
   /* shadows */
-  --shadow-card: 0 1px 2px rgba(28, 27, 25, 0.04);
-  --shadow-sheet: 0 24px 60px rgba(28, 27, 25, 0.3);
+  --shadow-card: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --shadow-sheet: 0 30px 80px -20px rgba(0, 0, 0, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+}
+
+@media (forced-colors: active) {
+  :root {
+    --color-content: Canvas;
+    --color-surface: Canvas;
+    --color-surface-raised: Canvas;
+    --color-chrome: Canvas;
+    --color-chrome-rail: Canvas;
+    --color-sidebar: Canvas;
+    --color-inspector: Canvas;
+    --color-sidebar-glass: Canvas;
+    --color-inspector-glass: Canvas;
+    --color-recessed: Canvas;
+    --color-fill-strong: Canvas;
+    --color-ink: CanvasText;
+    --text-primary: CanvasText;
+    --text-secondary: CanvasText;
+    --text-metadata: CanvasText;
+    --text-success: CanvasText;
+    --color-hairline: CanvasText;
+    --color-hairline-strong: CanvasText;
+    --accent-action: Highlight;
+    --accent-hover: Highlight;
+    --accent-text: LinkText;
+    --accent-soft: Canvas;
+    --text-on-accent: HighlightText;
+    --color-danger: CanvasText;
+    --color-toggle-knob: CanvasText;
+    --shadow-card: none;
+    --shadow-sheet: none;
+    --shadow-glass: none;
+    --shadow-menu: none;
+  }
 }

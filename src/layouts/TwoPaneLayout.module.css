@@ -15,8 +15,39 @@
 .rail {
   flex: 0 0 var(--layout-rail-width);
   min-width: 0;
-  background: var(--color-chrome-rail);
+  background: var(--color-inspector);
   border-left: var(--border-width-hairline) solid var(--color-hairline);
   padding: var(--content-gutter);
   overflow-y: auto;
+}
+
+@supports (backdrop-filter: blur(var(--glass-blur))) {
+  .rail {
+    background: var(--color-inspector-glass);
+    backdrop-filter: blur(var(--glass-blur));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .rail {
+    background: var(--color-inspector);
+    backdrop-filter: none;
+  }
+}
+
+@media (max-width: 70rem) {
+  .root {
+    flex-wrap: wrap;
+    overflow-y: auto;
+  }
+  .main {
+    flex-basis: 100%;
+    overflow-y: visible;
+  }
+  .rail {
+    flex: 1 1 100%;
+    border-left: 0;
+    border-top: var(--border-width-hairline) solid var(--color-hairline);
+    overflow-y: visible;
+  }
 }

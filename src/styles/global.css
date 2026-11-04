@@ -1,4 +1,4 @@
-@import "./tokens.css";
+@import './tokens.css';
 
 *,
 *::before,
@@ -17,7 +17,7 @@ body {
   background: var(--color-content);
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 13.5px;
+  font-size: var(--font-size-body);
   line-height: 1.65;
   text-wrap: pretty;
   -webkit-font-smoothing: antialiased;
@@ -32,4 +32,42 @@ p {
 
 button {
   font-family: inherit;
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+
+input,
+textarea,
+select {
+  accent-color: var(--accent-action);
+  caret-color: var(--accent-action);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-metadata);
+  opacity: 1;
+}
+
+:root :focus-visible {
+  outline: var(--focus-width) solid var(--accent-action);
+  outline-offset: var(--focus-offset);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -20,7 +20,7 @@
   height: var(--toggle-height);
   border-radius: var(--toggle-radius);
   background-color: var(--color-hairline-strong);
-  transition: background-color 0.2s ease;
+  transition: background-color var(--motion-normal) ease;
   flex-shrink: 0;
   display: inline-block;
 }
@@ -36,9 +36,9 @@
   width: var(--toggle-knob-size);
   height: var(--toggle-knob-size);
   border-radius: 50%;
-  background-color: var(--color-content);
+  background-color: var(--color-toggle-knob);
   box-shadow: var(--shadow-card);
-  transition: transform 0.2s ease;
+  transition: transform var(--motion-normal) ease;
 }
 
 .knobChecked {

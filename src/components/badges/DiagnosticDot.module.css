@@ -6,7 +6,7 @@
 }
 
 .typeMistake {
-  background-color: var(--accent-amber);
+  background-color: var(--color-danger);
 }
 
 .typePositive {
