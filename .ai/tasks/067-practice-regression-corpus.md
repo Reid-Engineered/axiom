@@ -146,6 +146,23 @@ lives inside the existing `generation/tests/` module.
 
 ## Review
 
+Reviewer: Codex independent review, 2026-11-04
+Implementation PR: https://github.com/Reid-Engineered/axiom/pull/30
+
+- Correctness: pass after returned-seed comparison fix and focused regression test.
+- Architecture: pass; production boundaries unchanged, implementation is test-only.
+- UI rules: not applicable.
+- Scope and worklog: pass; 22 cases cover all 20 reachable parameter pairs; actual
+  bundled package and real Practice/math.verify providers are exercised.
+- Regeneration safety: pass; both explicit environment variable and ignored-test opt-in
+  are required. File/list agreement catches accidental one-sided removal; append-only
+  history remains a review policy.
+- Process: pending all required CI gates and human sign-off for this task-record change.
+  Targeted GNU corpus test cold build was interrupted before execution, not a test failure.
+
+Verdict: code review pass; merge gates pending. This documentation update does not change
+reviewed code or regenerate corpus content.
+
 2026-11-04 — Independent Codex review identified that the field-level drift reporter
 omitted the returned seed. Added seed comparison and `corpus_reports_returned_seed_drift`,
 which mutates only the returned seed and checks the precise diagnostic. Integrated current
