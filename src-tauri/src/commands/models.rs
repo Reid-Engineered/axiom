@@ -194,6 +194,12 @@ pub struct TutorExchange {
     pub pinned_to_visualization: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TutorStatus {
+    Unavailable,
+}
+
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
@@ -216,6 +222,8 @@ pub struct Session {
     pub settled_conclusions: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub open_question: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tutor_status: Option<TutorStatus>,
     pub started_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_activity_at: Option<String>,

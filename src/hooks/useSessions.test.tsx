@@ -21,8 +21,15 @@ describe('session domain hooks', () => {
     });
     expect(result.current.session?.status).toBe('active');
     await act(async () => {
+      await result.current.addTutorExchange('Why is the radius measured from the axis?');
+    });
+    expect(result.current.session?.tutorStatus).toBe('unavailable');
+    expect(result.current.session?.exchanges).toHaveLength(40);
+    await act(async () => {
       await result.current.pauseSession();
     });
+    expect(result.current.session?.tutorStatus).toBeUndefined();
+    expect(result.current.session?.exchanges).toHaveLength(40);
   });
 
   it('loads an active fixture session and can start a fixture-backed session', async () => {

@@ -386,15 +386,10 @@ export function handleMockInvoke(command: string, payload?: InvokeArgs): unknown
     case 'addTutorExchange': {
       const session = findSession(parameters.sessionId as string);
       if (session.status === 'completed') throw new Error(`Session is completed: ${session.id}`);
-      session.exchanges.push({
-        id: `exchange-${crypto.randomUUID()}`,
-        question: (parameters.question as string).trim(),
-        answer:
-          'Start with what the current representation makes visible, then test one step against the goal.',
-        occurredAt: new Date().toISOString(),
-        pinnedToVisualization: false,
-      });
-      return structuredClone(session);
+      return {
+        ...structuredClone(session),
+        tutorStatus: 'unavailable',
+      };
     }
     case 'endSession': {
       const session = findSession(parameters.id as string);

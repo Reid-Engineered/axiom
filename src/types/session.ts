@@ -44,6 +44,8 @@ export interface Session {
   /** "What we've settled" — up to two conclusions, derived from exchanges. */
   settledConclusions: string[];
   openQuestion?: string;
+  /** Explicit status when a tutor turn was requested while no tutor capability exists. */
+  tutorStatus?: 'unavailable';
   startedAt: string;
   lastActivityAt?: string;
   pausedAt?: string;
