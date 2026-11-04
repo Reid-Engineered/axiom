@@ -1,0 +1,21 @@
+{
+  "family_id": "problem.shell_y_poly",
+  "seed": 42,
+  "response_type": "symbolic-expression",
+  "resolved_parameters": {
+    "a": 0.0,
+    "b": 2.0,
+    "coeff": 5.0
+  },
+  "prompt": "Define R as the region bounded above by the graph of f(x) = 5x - x^2 and below by the\nx-axis over the interval [0, 2]. Find the volume of the solid of revolution formed by\nrevolving R around the y-axis.",
+  "hints": [
+    "Rotation is around the y-axis and the region is given as a function of x, so identify the shell radius and the shell height as functions of x.",
+    "The shell radius is the distance from the axis of rotation, r(x) = x, and the shell height is the curve itself, h(x) = 5x - x^2.",
+    "Assemble the definite integral over the given interval: V = \\int_{0}^{2} 2\\pi x (5x - x^2) dx.",
+    "Expand the integrand to 2\\pi(5x^2 - x^3) and evaluate its antiderivative 2\\pi[5x^3/3 - x^4/4] from 0 to 2."
+  ],
+  "canonical_solution": {
+    "kind": "symbolic",
+    "value": "2*pi*(5*2^3/3 - 2^4/4)"
+  }
+}
