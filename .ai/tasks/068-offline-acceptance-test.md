@@ -81,6 +81,15 @@ intact. Getting that distinction right is most of the work.
 
 ## Worklog
 
+- 2026-11-04 — Codex addressed Claude review of d99effe: the real wrapper now
+  requires a child completion marker, has abort/process-group cleanup, and gives the
+  outer test 150 seconds versus the child's 120. Added empty-child rejection and
+  abort regressions. Replaced the ambiguous CORS-mode negative proof with the same
+  no-cors-mutated binary passing online and failing in isolation. Recorded exact
+  artifact provenance below and updated ARCHITECTURE.md's native-test paragraph.
+  CI's initial native failure was ElementNotInteractableError on the Answer click;
+  explicitly scroll the field into view in its scrollable pane before interaction.
+
 - 2026-11-04 — Isolation decision before implementation: re-execute this one native
   test inside `unshare --user --map-root-user --net`; enable only `lo`, and run the
   harness, tauri-driver, WebKit driver and app as descendants in that namespace.
@@ -151,6 +160,35 @@ Validation actually executed on 2026-11-04:
   frontend hash restored), and reran all three native flows successfully. No mutation
   is committed; the negative log remains in the WSL cache as `negative.log`.
 
+Review remediation validation (supersedes the original CORS-mode negative proof):
+
+- Five Linux `node --test e2e/harness-checks.mjs` checks passed, zero skipped, including
+  zero-completion rejection and abortion. Windows syntax/Prettier/whitespace checks
+  passed. Production source in this worktree remains unchanged.
+- The snapshot is based on PR head `d99effe311deb2ee8d39d24069916d709a49c12b`, plus this
+  commit's e2e-only remediation. Build command: `npm run build:e2e` with explicit
+  `CARGO_TARGET_DIR=/home/marcus/axiom/src-tauri/target`. That shared Cargo cache's
+  release artifacts were overwritten during the disposable mutation and restored by
+  the clean rebuild; no other checkout's source was edited. Each tested executable
+  was copied immediately to a private `artifacts/<control|clean>/bin/axiom`, with its
+  matching knowledge-package under `../lib/Axiom/`, so test runs do not depend on
+  later changes to the cache's release binary.
+- Mutated `describeAttempt` awaited
+  `fetch('https://1.1.1.1/', { mode: 'no-cors', signal: AbortSignal.timeout(5000) })`.
+  Exact binary `/home/marcus/.cache/axiom-068/artifacts/control/bin/axiom`, SHA-256
+  `2730f171fbb0e6aee7c44e2cd72ce1b29c3df0a6f58a7314c524f12323253e84`:
+  the learner assertions passed online with only isolation wrapper/guards/marker
+  removed from a disposable test copy, then the real isolated test failed with exit 1
+  at the Answer wait after isolation and session entry. Logs: `online-control.log`
+  and `offline-control.log` under `/home/marcus/.cache/axiom-068/`.
+- Restored `practiceService.ts` directly from this unchanged worktree (both SHA-256
+  `98398589966cc63778ef76fae22a4d2b489a0d37c4f258a10f87d6388cbbe202`), rebuilt, then
+  all three native flows passed using
+  `AXIOM_E2E_APP=/home/marcus/.cache/axiom-068/artifacts/clean/bin/axiom xvfb-run -a node
+  --test --test-concurrency=1 e2e/*.test.mjs`. Clean binary SHA-256
+  `3c3deb5187fcc77f5d08e3f54b04b97f0b191cf9c192e9b92033bae7f1869711`;
+  log `clean-native.log`. Neither the mutation nor online-only control is committed.
+
 Limits / gates remaining:
 
 - GitHub's Ubuntu/Node 20 CI execution and independent review remain pending on the PR;
@@ -158,15 +196,27 @@ Limits / gates remaining:
   not attempted; the offline acceptance deliberately requires Linux namespaces.
 - No Rust or production frontend/service code changed. Separate Cargo test/check/
   clippy/fmt gates were not run locally; the native release build did compile Rust.
-  CI retains all existing frontend/backend gates. No folder-layout/data-flow rule
-  changed, so no architecture update is needed.
+  CI retains all existing frontend/backend gates. ARCHITECTURE.md now describes the
+  actual native flows, shared helpers and namespace/completion boundary.
 - Isolation proves this learner flow works without external networking; it does not
   assert absence of best-effort outbound attempts or test offline sync. No app UI,
   Practice production logic, task 067 files or other task records are included.
 
 ## Review
 
-Awaiting independent review and CI. Human sign-off is required before merging the
+Claude reviewed d99effe on 2026-11-04: changes-requested. Isolation guards, loopback,
+native Practice assertions, answer oracle and helper extraction passed inspection.
+Blocking proof gaps were the ambiguous CORS-mode negative control and wrapper acceptance
+of a zero-completion child. Remediation above addresses both; fresh independent review
+and CI remain required. Initial CI native run failed on a clipped Answer click; fresh
+CI must validate the explicit scroll. No gate is waived.
+
+Human sign-off is required before merging the
 task record under `.ai/merge-strategy.md`; implementation agent has not merged or watched.
 
 ## Follow-ups
+
+- Consolidate the remaining first-launch test helper duplication in a separately
+  scoped maintenance task; restart persistence and offline Practice share helpers now.
+- Network namespaces leave filesystem Unix-domain IPC available. This proves the
+  learner flow works with external IP networking unavailable, not a general sandbox.

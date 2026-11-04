@@ -47,6 +47,13 @@ permission failure, missing command or forged marker is a failure, never a skip.
 addresses avoid confusing DNS failures with isolation. All native processes inherit the
 namespace; WebDriver still communicates over loopback. This proves this flow can complete
 without external networking, not that the app never attempts best-effort network calls.
+Filesystem Unix-domain sockets to host services remain accessible; this is network
+namespace isolation, not a general IPC sandbox.
+
+The child writes a parent-created completion marker only after all learner assertions and
+the final isolation guard pass. A zero exit without that marker fails even if nested Node
+test discovery ran no tests. The outer test allows 150 seconds, the inner flow 120; aborting
+the outer test terminates the isolated process group and force-kills survivors.
 
 The test creates real learner data through the UI, opens the bundled vertical-axis Shell
 concept (its full provider-owned name), starts Practice, rejects `0`, verifies the automatic
@@ -73,9 +80,12 @@ sets `kernel.apparmor_restrict_unprivileged_userns=0` on its disposable VM. On a
 local machine, use an environment that permits namespaces; the harness never silently
 falls back to an online run or changes this system setting itself.
 
-For a negative offline-behavior check, use a disposable source copy: temporarily await a
-required `fetch('https://1.1.1.1/')` before `describeAttempt` invokes Practice, build that
-copy, and run this same native test against it. Expect the Answer field wait to fail
-because the required request cannot complete. Rebuild the unmodified source afterward.
+For a negative offline-behavior check, use a disposable source copy: temporarily await
+`fetch('https://1.1.1.1/', { mode: 'no-cors', signal: AbortSignal.timeout(5000) })` before
+`describeAttempt` invokes Practice. Build that copy and save its binary separately. Run
+the same learner assertions once online with only the namespace wrapper/guards/marker
+removed from a disposable test copy; require a pass to exclude CORS/TLS/endpoint failures.
+Then run the unmodified isolated test against that exact binary; require the Answer wait
+to fail. Rebuild clean source, save a distinct clean binary, and rerun all native flows.
 A failed namespace guard alone is not this negative Practice proof. The task 068 handoff
 records which of these checks were actually executed.

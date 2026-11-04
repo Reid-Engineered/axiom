@@ -43,15 +43,57 @@ test(
         `
       import test from 'node:test';
       import { writeFile } from 'node:fs/promises';
-      import { assertOfflineIsolation } from ${JSON.stringify(isolationModule)};
+      import { assertOfflineIsolation, markOfflineComplete } from ${JSON.stringify(isolationModule)};
       test('nested isolation proof', async () => {
         await assertOfflineIsolation(process.env.AXIOM_E2E_PARENT_NETNS);
         await writeFile(${JSON.stringify(marker)}, 'completed');
+        await markOfflineComplete();
       });
     `,
       );
       await runIsolated(fixture);
       assert.equal(await readFile(marker, 'utf8'), 'completed');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  'isolated wrapper rejects a successful child without completion evidence',
+  {
+    skip: process.platform !== 'linux',
+    timeout: 10_000,
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'axiom-empty-child-'));
+    try {
+      const fixture = path.join(directory, 'empty.test.mjs');
+      await writeFile(fixture, 'export {};');
+      await assert.rejects(runIsolated(fixture), /without completing the learner flow/);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  'isolated wrapper stops its process group when aborted',
+  {
+    skip: process.platform !== 'linux',
+    timeout: 10_000,
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'axiom-aborted-child-'));
+    try {
+      const fixture = path.join(directory, 'stalled.test.mjs');
+      await writeFile(
+        fixture,
+        "import test from 'node:test'; test('stalled', async () => new Promise(() => setInterval(() => {}, 1000)));",
+      );
+      await assert.rejects(runIsolated(fixture, { signal: AbortSignal.timeout(2_000) }), {
+        name: 'TimeoutError',
+      });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

@@ -7,15 +7,15 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { By, Key, until } from 'selenium-webdriver';
 import { startSession, stopProcess, createWorkspaceFromFirstLaunch } from './native-helpers.mjs';
-import { assertOfflineIsolation, runIsolated } from './offline-isolation.mjs';
+import { assertOfflineIsolation, markOfflineComplete, runIsolated } from './offline-isolation.mjs';
 import { shellVolumeAnswer } from './shell-volume.mjs';
 
 test(
   'native Practice completes with external networking disabled',
-  { timeout: 120_000 },
-  async () => {
+  { timeout: process.env.AXIOM_E2E_PARENT_NETNS ? 120_000 : 150_000 },
+  async (context) => {
     if (!process.env.AXIOM_E2E_PARENT_NETNS) {
-      await runIsolated(fileURLToPath(import.meta.url));
+      await runIsolated(fileURLToPath(import.meta.url), { signal: context.signal });
       return;
     }
     await assertOfflineIsolation(process.env.AXIOM_E2E_PARENT_NETNS);
@@ -50,6 +50,8 @@ test(
         await driver.findElement(By.id('problem-heading')).getAttribute('textContent'),
         'Problem 1',
       );
+      // The default CI window clips the answer below the scrollable working area.
+      await driver.executeScript('arguments[0].scrollIntoView({ block: "center" });', input);
       await input.click();
       await driver.actions({ async: true }).sendKeys('0').perform();
       await click("//button[normalize-space(.)='Check']");
@@ -73,6 +75,7 @@ test(
       );
       const hints = await driver.findElement(pane).findElements(By.css('ul li'));
       assert.notEqual(await hints[0].getText(), await hints[1].getText());
+      await driver.executeScript('arguments[0].scrollIntoView({ block: "center" });', input);
       await input.click();
       await driver
         .actions({ async: true })
@@ -115,6 +118,7 @@ test(
         0,
       );
       await assertOfflineIsolation(process.env.AXIOM_E2E_PARENT_NETNS);
+      await markOfflineComplete();
     } finally {
       if (driver) await driver.quit().catch(() => undefined);
       await Promise.allSettled(processes.map(stopProcess));
