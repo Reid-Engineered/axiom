@@ -157,16 +157,20 @@ Implementation PR: https://github.com/Reid-Engineered/axiom/pull/30
 - Regeneration safety: pass; both explicit environment variable and ignored-test opt-in
   are required. File/list agreement catches accidental one-sided removal; append-only
   history remains a review policy.
-- Process: pending all required CI gates and human sign-off for this task-record change.
+- Process: all seven required CI checks passed at head `73eb333` on 2026-11-04.
+  Human sign-off for this task-record change remains required before merge.
   Targeted GNU corpus test cold build was interrupted before execution, not a test failure.
 
-Verdict: code review pass; merge gates pending. This documentation update does not change
-reviewed code or regenerate corpus content.
+Verdict: pass
+
+The independent code review and all required CI gates pass at `73eb333`. This review-only
+commit changes no code or corpus content; its fresh required checks must also pass before
+merge. Human sign-off under merge-strategy remains a separate merge requirement.
 
 2026-11-04 — Independent Codex review identified that the field-level drift reporter
 omitted the returned seed. Added seed comparison and `corpus_reports_returned_seed_drift`,
 which mutates only the returned seed and checks the precise diagnostic. Integrated current
 `origin/master` (082/083); CI on the resulting PR must validate the combined tree.
-Final review verdict and fresh check results remain pending.
+The finding is resolved. Final review passes; all seven checks passed at `73eb333`.
 
 ## Follow-ups
