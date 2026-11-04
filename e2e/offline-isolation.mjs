@@ -24,7 +24,9 @@ export async function runIsolated(testFile, { signal } = {}) {
     try {
       process.kill(-child.pid, killSignal);
     } catch (error) {
-      if (error.code !== 'ESRCH') throw error;
+      if (error.code !== 'ESRCH') {
+        console.warn(`Offline acceptance process cleanup failed: ${error.message}`);
+      }
     }
   };
   const abort = () => {

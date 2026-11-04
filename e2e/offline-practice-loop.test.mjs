@@ -27,6 +27,7 @@ test(
       await createWorkspaceFromFirstLaunch(driver, 'Offline Practice');
       const click = async (xpath) => {
         const element = await driver.wait(until.elementLocated(By.xpath(xpath)), 10_000);
+        await driver.executeScript('arguments[0].scrollIntoView({ block: "center" });', element);
         await element.click();
       };
       await click(

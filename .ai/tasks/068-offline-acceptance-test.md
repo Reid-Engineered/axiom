@@ -188,6 +188,9 @@ Review remediation validation (supersedes the original CORS-mode negative proof)
   --test --test-concurrency=1 e2e/*.test.mjs`. Clean binary SHA-256
   `3c3deb5187fcc77f5d08e3f54b04b97f0b191cf9c192e9b92033bae7f1869711`;
   log `clean-native.log`. Neither the mutation nor online-only control is committed.
+  That log includes the explicit Answer scroll added after the initial CI failure.
+  The WSL window did not reproduce clipping, so local success does not prove the CI
+  window issue resolved; the updated required native CI result remains authoritative.
 
 Limits / gates remaining:
 
@@ -203,6 +206,20 @@ Limits / gates remaining:
   Practice production logic, task 067 files or other task records are included.
 
 ## Review
+
+Claude re-reviewed `c821fb8` on 2026-11-04: all five original findings resolved;
+correctness/architecture pass apart from the conditional CI clipping risk. Required
+CI was still pending. Additional notes: scroll all button targets, prove a grandchild
+stops on abort, keep cleanup errors from replacing the original failure, and document
+timeout limits and whether the clean log included scrolling.
+
+Codex addressed those notes: the shared click helper scrolls every button target;
+the abort fixture launches `sleep 60` and verifies it is absent or killed/zombie after
+abortion (host init may reap it later); process cleanup errors are logged without
+replacing the primary failure. README documents abandoned temporary data and session
+escape limitations. Five Linux harness checks and the native isolated Practice flow
+passed again with these changes; syntax, Prettier and whitespace checks passed. The
+updated required CI result remains the gate for the runner-specific clipping issue.
 
 Claude reviewed d99effe on 2026-11-04: changes-requested. Isolation guards, loopback,
 native Practice assertions, answer oracle and helper extraction passed inspection.

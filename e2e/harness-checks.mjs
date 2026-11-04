@@ -3,6 +3,7 @@ import { mkdtemp, readFile, readlink, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { setTimeout as delay } from 'node:timers/promises';
 import { assertOfflineIsolation, runIsolated } from './offline-isolation.mjs';
 import { shellVolumeAnswer } from './shell-volume.mjs';
 
@@ -85,16 +86,51 @@ test(
   },
   async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'axiom-aborted-child-'));
+    const controller = new AbortController();
+    let running;
     try {
       const fixture = path.join(directory, 'stalled.test.mjs');
+      const pidFile = path.join(directory, 'grandchild.pid');
       await writeFile(
         fixture,
-        "import test from 'node:test'; test('stalled', async () => new Promise(() => setInterval(() => {}, 1000)));",
+        `import test from 'node:test';
+        import { spawn } from 'node:child_process';
+        import { writeFile } from 'node:fs/promises';
+        test('stalled', async () => {
+          const grandchild = spawn('sleep', ['60']);
+          await writeFile(${JSON.stringify(pidFile)}, String(grandchild.pid));
+          await new Promise(() => {});
+        });`,
       );
-      await assert.rejects(runIsolated(fixture, { signal: AbortSignal.timeout(2_000) }), {
-        name: 'TimeoutError',
-      });
+      running = runIsolated(fixture, { signal: controller.signal });
+      void running.catch(() => undefined);
+      let pid;
+      for (let attempt = 0; attempt < 50 && !pid; attempt += 1) {
+        pid = Number(
+          await readFile(pidFile, 'utf8').catch((error) => {
+            if (error.code === 'ENOENT') return '';
+            throw error;
+          }),
+        );
+        if (!pid) await delay(100);
+      }
+      assert.ok(pid > 0, 'Stalled fixture did not start its grandchild.');
+      controller.abort(new Error('Requested abort after grandchild started'));
+      await assert.rejects(running, /Requested abort after grandchild started/);
+      let stopped = false;
+      for (let attempt = 0; attempt < 20 && !stopped; attempt += 1) {
+        const stat = await readFile(`/proc/${pid}/stat`, 'utf8').catch((error) => {
+          if (error.code === 'ENOENT') return '';
+          throw error;
+        });
+        // A killed orphan can remain a zombie until the host's init reaps it.
+        stopped = !stat || /^\d+ \(.*\) Z /.test(stat);
+        if (!stopped) await delay(100);
+      }
+      assert.ok(stopped, 'Grandchild remained running after the wrapper aborted.');
     } finally {
+      controller.abort();
+      await running?.catch(() => undefined);
       await rm(directory, { recursive: true, force: true });
     }
   },
