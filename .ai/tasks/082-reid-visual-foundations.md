@@ -54,7 +54,7 @@ Built:
 
 Validation (Windows host, 2026-11-03):
 - PASS: npm run typecheck; npm run lint (sequential rerun); npm run build.
-- PASS: npm test, 62 files / 209 tests. Existing fixture-backed page, hook, component and app tests cover creation/navigation, resume, checks and hints. Targeted StudySessionPage suite: 7 passed. New contrast suite: 44 passed.
+- PASS: npm test, 62 files / 209 tests. Existing fixture-backed page, hook, component and app tests cover creation/navigation, resume, checks and hints. Targeted StudySessionPage suite: 7 passed. New contrast suite: 44 passed. Final targeted rerun after qualitative glyph/status styling: 4 files / 60 tests passed; final build and lint passed.
 - PASS: design-value scan (hex / rgba outside tokens.css) found no matches; all CSS token references resolve; no production component imports services; git diff --check clean.
 - BLOCKED: cargo check --locked and cargo test --locked, via --manifest-path src-tauri/Cargo.toml: link.exe missing. Visual Studio Build Tools/vswhere also absent. No Rust code changed.
 - BLOCKED: cargo clippy --all-targets --locked -- -D warnings: clippy component absent. cargo fmt --all --check: rustfmt component absent.
@@ -63,7 +63,7 @@ Validation (Windows host, 2026-11-03):
 
 Left out deliberately: new Today/product-area navigation (084), evidence contracts (083), numeric mastery/diagnostics/difficulty/adaptive queues (085), profile/history/summary features (086). Existing empty/unavailable surfaces remain; no sample reference observations were imported. Implementation stays in one PR; outstanding work is acceptance evidence, not a newly invented contract.
 
-PR: pending creation.
+PR: https://github.com/Reid-Engineered/axiom/pull/28 (draft).
 
 ## Review
 
