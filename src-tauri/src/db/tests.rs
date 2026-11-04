@@ -299,3 +299,97 @@ fn session_activity_columns_are_nullable_and_preserve_existing_rows() {
     assert_eq!(session_activity, None);
     assert_eq!(workspace_created, None);
 }
+
+#[test]
+fn remove_canned_tutor_exchanges_migration_purges_fabricated_replies() {
+    let mut connection = Connection::open_in_memory().unwrap();
+    super::configure(&connection).unwrap();
+    connection
+        .execute_batch(
+            "CREATE TABLE schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );",
+        )
+        .unwrap();
+    for migration in super::schema::MIGRATIONS
+        .iter()
+        .filter(|migration| migration.version <= 4)
+    {
+        connection.execute_batch(migration.sql).unwrap();
+        connection
+            .execute(
+                "INSERT INTO schema_migrations (version, name) VALUES (?1, ?2)",
+                params![migration.version, migration.name],
+            )
+            .unwrap();
+    }
+    insert_workspace_and_guiding_goal(&mut connection);
+    insert_concept(&connection, "concept-shells", "Shell method");
+    connection
+        .execute(
+            "INSERT INTO sessions (
+                id, workspace_id, concept_id, status, intent_activity, resume_summary,
+                elapsed_minutes, started_at
+             ) VALUES (
+                'session-existing', ?1, 'concept-shells', 'active', 'Practising',
+                'Ready to continue.', 0, '2026-09-08T12:00:00Z'
+             )",
+            [WORKSPACE_ID],
+        )
+        .unwrap();
+    connection
+        .execute(
+            "INSERT INTO tutor_exchanges (
+                id, session_id, position, question, answer, occurred_at, pinned_to_visualization
+             ) VALUES (
+                'exchange-canned', 'session-existing', 0,
+                'What should I use as the radius?',
+                'Start with what the current representation makes visible, then test one step against the goal.',
+                '2026-09-08T12:01:00Z', 0
+             )",
+            [],
+        )
+        .unwrap();
+    connection
+        .execute(
+            "INSERT INTO tutor_exchanges (
+                id, session_id, position, question, answer, occurred_at, pinned_to_visualization
+             ) VALUES (
+                'exchange-other', 'session-existing', 1,
+                'Where is the axis of rotation?',
+                'Measure horizontal distance from x = 0.',
+                '2026-09-08T12:02:00Z', 0
+             )",
+            [],
+        )
+        .unwrap();
+
+    migrate(&mut connection).unwrap();
+
+    let remaining_ids: Vec<String> = connection
+        .prepare("SELECT id FROM tutor_exchanges WHERE session_id = 'session-existing' ORDER BY position")
+        .unwrap()
+        .query_map([], |row| row.get(0))
+        .unwrap()
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .unwrap();
+    assert_eq!(remaining_ids, vec!["exchange-other"]);
+    let session_status: String = connection
+        .query_row(
+            "SELECT status FROM sessions WHERE id = 'session-existing'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(session_status, "active");
+    let migration_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM schema_migrations WHERE version = 5",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(migration_count, 1);
+}

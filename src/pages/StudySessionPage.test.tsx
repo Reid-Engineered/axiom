@@ -45,29 +45,83 @@ describe('StudySessionPage', () => {
     ).not.toBeVisible();
   });
 
-  it('submits a tutor question, pauses, edits working, and opens the visualization detour', async () => {
+  it('submits a tutor question, renders the unavailable state without adding an exchange, pauses, edits working, and opens the visualization detour', async () => {
     loadMockSessionsForTest();
     renderSession();
     const working = await screen.findByRole('textbox', { name: 'Your working' });
 
     fireEvent.change(working, { target: { value: 'r = 2 − x' } });
     expect(working).toHaveValue('r = 2 − x');
+    const availability = screen.getByRole('status', { name: 'Tutor availability' });
+    expect(availability).toBeEmptyDOMElement();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Ask about this step' }), {
       target: { value: 'Why is the radius measured from the axis?' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
-    await waitFor(() => expect(screen.getByText('41 exchanges today')).toBeVisible());
+    await waitFor(() =>
+      expect(
+        within(availability).getByText(
+          'Tutor replies are not available in this build yet.',
+        ),
+      ).toBeVisible(),
+    );
+    expect(screen.getByText('40 exchanges today')).toBeVisible();
+    expect(
+      within(screen.getByRole('article', { name: 'Current tutor exchange' })).getByText(
+        /Measure from the axis of rotation/,
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Ask about this step' })).toHaveValue(
+      'Why is the radius measured from the axis?',
+    );
+    expect(
+      screen.queryByText(
+        'Start with what the current representation makes visible, then test one step against the goal.',
+      ),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     await waitFor(async () =>
       expect((await getSession('session-shell-method')).status).toBe('paused'),
     );
+    expect(
+      within(availability).getByText(
+        'Tutor replies are not available in this build yet.',
+      ),
+    ).toBeVisible();
 
     fireEvent.click(screen.getByRole('button', { name: 'Full visualization' }));
     expect(screen.getByRole('status', { name: 'Current route' })).toHaveTextContent(
       'fullVisualization',
     );
+  });
+
+  it('shows the tutor unavailable state on a fresh session without persisting a fabricated reply', async () => {
+    const session = await startSession({
+      workspaceId: 'workspace-calculus',
+      conceptId: 'concept-shells',
+      intent: { activity: 'Practising', targetMinutes: 8 },
+    });
+    renderSession(session.id);
+
+    expect(await screen.findByText('0 exchanges today')).toBeVisible();
+    expect(screen.getByText('Ask about the step you are working on.')).toBeVisible();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Ask about this step' }), {
+      target: { value: 'How do I set up the shell height?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+
+    expect(await screen.findByText('Tutor replies are not available in this build yet.')).toBeVisible();
+    expect(screen.queryByRole('article', { name: 'Current tutor exchange' })).not.toBeInTheDocument();
+    expect(screen.getByText('0 exchanges today')).toBeVisible();
+    expect(
+      screen.queryByText(
+        'Start with what the current representation makes visible, then test one step against the goal.',
+      ),
+    ).not.toBeInTheDocument();
+    expect((await getSession(session.id)).exchanges).toEqual([]);
   });
 
   it('renders the bound attempt prompt and no problem total', async () => {
