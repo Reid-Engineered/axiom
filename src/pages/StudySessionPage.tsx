@@ -330,7 +330,13 @@ function TutorPane({
           </div>
         </section>
       ) : null}
-      {current ? (
+      {session.tutorStatus === 'unavailable' ? (
+        <article className={styles.currentExchange} aria-label="Current tutor exchange">
+          <p className={styles.currentAnswer} role="status">
+            Tutor replies are not available in this build yet.
+          </p>
+        </article>
+      ) : current ? (
         <article className={styles.currentExchange} aria-label="Current tutor exchange">
           <div className={styles.timestampDivider}>
             <span>Now · problem {session.problemIndex ?? 1}</span>

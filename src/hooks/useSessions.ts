@@ -32,7 +32,11 @@ export function useSession(sessionId: string) {
   const resource = useAsyncResource(load);
   const { setData } = resource;
   const replace = useCallback(<T extends Awaited<ReturnType<typeof getSession>>>(session: T) => {
-    setData(session);
+    setData((previous) =>
+      previous?.tutorStatus && !session.tutorStatus
+        ? { ...session, tutorStatus: previous.tutorStatus }
+        : session,
+    );
     return session;
   }, [setData]);
 

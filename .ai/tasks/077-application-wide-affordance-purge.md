@@ -20,10 +20,10 @@ out of `070`–`075` so the beta path stays reviewable.
 
 **Ordered by severity, led by the one that writes to the database:**
 
-1. **The canned tutor answer.** `add_tutor_exchange_handler`
-   (`src-tauri/src/commands/session.rs:328`) persists a fixed sentence as the tutor's reply,
-   indistinguishable in `tutor_exchanges` from a real one. The only defect in the whole
-   inventory that writes fiction into the learner's own record. Do this first.
+1. **The canned tutor answer** — *Moved to task `087` (`087-remove-canned-tutor-reply.md`).*
+   `add_tutor_exchange_handler` (`src-tauri/src/commands/session.rs:328`) persists a fixed
+   sentence as the tutor's reply, indistinguishable in `tutor_exchanges` from a real one. The
+   only defect in the whole inventory that writes fiction into the learner's own record.
 2. **Seed hygiene beyond sessions** — mastery states above `New`, `recentDiagnostics`,
    `learnerHeuristic` / `heuristicEvidence`, `notes`, `workspaceActivity` events. All claim
    learner activity. `072` removed only the seeded sessions and the two workspace columns the
@@ -47,8 +47,8 @@ screenshots (the sample workspace shown mid-journey, Screen 5's tutor panel); an
 seeded mastery states is a product decision about what a sample workspace is *for*, not a bug
 fix.
 
-Expect three or four small tasks once the shape is agreed. Item 1 is separable and worth
-filing on its own immediately.
+Expect three or four small tasks once the shape is agreed. Item 1 has been split out to task
+`087`.
 
 Nothing here is pulled into `070`–`075` unless `074`'s native regression directly reaches it.
 
@@ -56,6 +56,7 @@ Nothing here is pulled into `070`–`075` unless `074`'s native regression direc
 
 - 2026-09-09 — Filed by claude from the approved design, held outside the beta-critical path
   by explicit decision.
+- 2026-11-03 — Split item 1 ("The canned tutor answer") into `.ai/tasks/087-remove-canned-tutor-reply.md`.
 
 ## What was built / tested / left out
 

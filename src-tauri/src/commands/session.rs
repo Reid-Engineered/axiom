@@ -13,7 +13,7 @@ use crate::practice::{
 
 use super::{
     database_error, new_id, now, CommandResult, Database, Session, SessionIntent,
-    StartSessionInput, TutorExchange,
+    StartSessionInput, TutorExchange, TutorStatus,
 };
 
 pub(crate) fn load_session(connection: &Connection, id: &str) -> CommandResult<Option<Session>> {
@@ -44,6 +44,7 @@ pub(crate) fn load_session(connection: &Connection, id: &str) -> CommandResult<O
                     problem_index: row.get(10)?,
                     problem_count: row.get(11)?,
                     open_question: row.get(12)?,
+                    tutor_status: None,
                     started_at: row.get(13)?,
                     paused_at: row.get(14)?,
                     exchanges: Vec::new(),
@@ -475,37 +476,14 @@ pub fn resume_session_handler(database: &Database, id: &str) -> CommandResult<Se
 pub fn add_tutor_exchange_handler(
     database: &Database,
     session_id: &str,
-    question: &str,
+    _question: &str,
 ) -> CommandResult<Session> {
-    let mut connection = database.connection()?;
+    let connection = database.connection()?;
     ensure_mutable_session(&connection, session_id)?;
-    let transaction = connection.transaction().map_err(database_error)?;
-    let position = transaction
-        .query_row(
-            "SELECT COALESCE(MAX(position), -1) + 1
-             FROM tutor_exchanges WHERE session_id = ?1",
-            [session_id],
-            |row| row.get::<_, i64>(0),
-        )
-        .map_err(database_error)?;
-    transaction
-        .execute(
-            "INSERT INTO tutor_exchanges (
-                id, session_id, position, question, answer, occurred_at,
-                pinned_to_visualization
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0)",
-            params![
-                new_id("exchange"),
-                session_id,
-                position,
-                question.trim(),
-                "Start with what the current representation makes visible, then test one step against the goal.",
-                now(),
-            ],
-        )
-        .map_err(database_error)?;
-    transaction.commit().map_err(database_error)?;
-    load_session(&connection, session_id)?.ok_or_else(|| format!("Session not found: {session_id}"))
+    let mut session = load_session(&connection, session_id)?
+        .ok_or_else(|| format!("Session not found: {session_id}"))?;
+    session.tutor_status = Some(TutorStatus::Unavailable);
+    Ok(session)
 }
 
 pub fn end_session_handler(database: &Database, id: &str) -> CommandResult<Session> {
