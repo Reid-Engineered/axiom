@@ -377,3 +377,32 @@ page task is reviewed against `ARCHITECTURE.md`, not routed around silently.
 The three subsystems named in the introduction — the event bus, Core's storage abstraction,
 and permissions — stay aspirational until their own design pass gives them the same
 treatment §§1–5 just got.
+
+## 9. Stage 9 learning-evidence boundary (task 083, proposed)
+
+The [learning-evidence contract](docs/superpowers/specs/2026-11-03-learning-evidence-contracts.md)
+and [Knowledge evidence extension](docs/superpowers/specs/2026-11-03-knowledge-evidence-extension.md)
+define the proposed payloads, ownership, versioning and persistence for mastery,
+Bloom/readiness, patterns, difficulty, adaptive plans and verification. Human policy
+decisions P1–P7 and independent review remain pending; these are not existing capabilities
+or approved numeric defaults.
+
+Core owns workspace/goal/session identity, measured session time, registry routing and
+opaque provider/plan bindings. Providers own all subject assessment, evidence calculations,
+policy costs, content eligibility and diagnostic attribution. Core never derives a score
+from a named mastery state or reads a Knowledge Package to choose questions. A stable
+Practice or Error profile route does not select a module by name.
+
+The proposed `practice.plan@1`, `practice.session@1`, `practice.evidence@1`,
+`practice.patterns@1` and `math.verify@2` retain the serializable registry call boundary.
+Existing @1 contracts are unchanged. Missing providers, content, evidence or approved
+policies produce explicit unavailable results, not zero scores or invented diagnoses.
+Historical records retain their original provider, policy and package snapshots.
+
+Task 083 proposes a narrow transactional binding seam for the in-tree Practice aggregate:
+one SQLite transaction commits a session action's receipt, attempt, evidence and queue
+together with Core's validated opaque current-attempt/plan binding. Separate connections
+with sequential writes do not satisfy this boundary. Core does not execute subject rules;
+the provider cannot acquire arbitrary access to Core tables. The implementation must expose
+only the validated binding operation. General module storage, permissions and an event bus
+remain separate designs, not prerequisites silently bundled into this contract.

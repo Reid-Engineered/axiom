@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
   padding: var(--space-xl) var(--space-lg);
-  background: var(--color-chrome);
+  background: var(--color-sidebar);
   color: var(--text-primary);
   font-family: var(--font-ui);
   box-sizing: border-box;
@@ -39,7 +39,9 @@
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
   user-select: none;
 }
 
@@ -51,7 +53,7 @@
 .shortcut {
   color: var(--text-metadata);
   font-size: var(--font-size-metadata);
-  font-family: monospace;
+  font-family: var(--font-mono);
   background: var(--color-recessed);
   padding: var(--space-2xs) var(--space-md-minus);
   border-radius: var(--radius-small);
@@ -103,4 +105,18 @@
   margin: 0;
   color: var(--accent-amber);
   font-size: var(--font-size-small);
+}
+
+@supports (backdrop-filter: blur(var(--glass-blur))) {
+  .root {
+    background: var(--color-sidebar-glass);
+    backdrop-filter: blur(var(--glass-blur));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .root {
+    background: var(--color-sidebar);
+    backdrop-filter: none;
+  }
 }

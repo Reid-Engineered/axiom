@@ -89,7 +89,9 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     try {
       await attempt.next();
     } catch (caught) {
-      setMutationError(caught instanceof Error ? caught.message : 'Could not advance to the next problem.');
+      setMutationError(
+        caught instanceof Error ? caught.message : 'Could not advance to the next problem.',
+      );
     }
   };
 
@@ -211,9 +213,7 @@ function ProblemPane({
       ) : null}
       {!attempt.attempt && !attempt.loading && !attempt.error ? (
         <>
-          <p className={styles.problemText}>
-            There is no practice content for this concept yet.
-          </p>
+          <p className={styles.problemText}>There is no practice content for this concept yet.</p>
           <WorkingArea value={working} onChange={onWorkingChange} />
         </>
       ) : null}
@@ -234,9 +234,15 @@ function ProblemPane({
             />
           </label>
           {attempt.evaluation && !attempt.evaluation.correct ? (
-            <p className={styles.feedback}>That does not match yet.</p>
+            <p className={`${styles.feedback} ${styles.feedbackMiss}`} role="status">
+              That does not match yet.
+            </p>
           ) : null}
-          {solved ? <p className={styles.feedback}>Correct.</p> : null}
+          {solved ? (
+            <p className={`${styles.feedback} ${styles.feedbackCorrect}`} role="status">
+              Correct.
+            </p>
+          ) : null}
           {attempt.revealedHints.length ? (
             <ul className={styles.hintList}>
               {attempt.revealedHints.map((text, index) => (

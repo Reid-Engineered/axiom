@@ -4,7 +4,7 @@ import { useResizablePanes } from '../hooks/useResizablePanes';
 import styles from './SessionShell.module.css';
 
 /**
- * Session toolbar (44px) plus a resizable pane grid: visualization (upper, `flex: 1.35`),
+ * Session toolbar plus a resizable pane grid: visualization (upper, `flex: 1.35`),
  * problem (lower-left, `flex: 1.55`), tutor (lower-right). Sidebar stays visible — a
  * session is a mode of the workspace, not a separate window (screen 5).
  */
