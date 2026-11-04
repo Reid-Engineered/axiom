@@ -29,6 +29,22 @@ version = 1
 id = "practice.concepts"
 version = 1
 
+[[provides]]
+id = "practice.plan"
+version = 1
+
+[[provides]]
+id = "practice.session"
+version = 1
+
+[[provides]]
+id = "practice.evidence"
+version = 1
+
+[[provides]]
+id = "practice.patterns"
+version = 1
+
 [[requires]]
 id = "math.verify"
 min_version = 1

@@ -77,7 +77,7 @@ fn migration_applies_the_current_schema_once() {
 
     assert_eq!(version, LATEST_SCHEMA_VERSION);
     assert_eq!(migration_count, LATEST_SCHEMA_VERSION);
-    assert_eq!(domain_table_count, 26);
+    assert_eq!(domain_table_count, 39);
 }
 
 #[test]

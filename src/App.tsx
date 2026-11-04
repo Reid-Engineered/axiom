@@ -8,7 +8,7 @@ import {
   CommandPaletteText,
   type CommandPaletteResultGroup,
 } from './components/overlays/CommandPalette';
-import { Sidebar } from './components/workspace/Sidebar';
+import { Sidebar, type ProductArea } from './components/workspace/Sidebar';
 import { Stage3StubRouteMenu } from './components/workspace/Stage3StubRouteMenu';
 import type { WorkspaceTreeProps } from './components/workspace/WorkspaceTree';
 import { NavigationProvider } from './hooks/NavigationProvider';
@@ -16,6 +16,7 @@ import { useExploreSampleWorkspace } from './hooks/useExploreSampleWorkspace';
 import { useKeyboardShortcut } from './hooks/useKeyboardShortcut';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import { useNavigation, type Route } from './hooks/useNavigation';
+import { useActiveSession } from './hooks/useSessions';
 import { WorkspaceProvider } from './hooks/WorkspaceProvider';
 import { useWorkspace } from './hooks/useWorkspace';
 import { useWorkspaces } from './hooks/useWorkspaces';
@@ -35,12 +36,22 @@ function activeSubItem(route: Route): WorkspaceTreeProps['activeSubItem'] {
   return undefined;
 }
 
+function activeProductArea(route: Route): ProductArea | undefined {
+  if (route.type === 'home' || route.type === 'workspaceOverview') return 'today';
+  if (route.type === 'studySession') return 'practice';
+  if (route.type === 'errorProfile') return 'errorProfile';
+  if (route.type === 'conceptsList' || route.type === 'conceptView') return 'conceptMap';
+  if (route.type === 'sessionHistory') return 'history';
+  return undefined;
+}
+
 function Application() {
   const { route, overlay, navigate, openOverlay, closeOverlay } = useNavigation();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspace();
   const { workspaces, refresh: refreshWorkspaces } = useWorkspaces();
   const sampleWorkspace = useExploreSampleWorkspace();
   const workspaceId = activeWorkspaceId ?? workspaces[0]?.id ?? FALLBACK_WORKSPACE_ID;
+  const { session, startSession } = useActiveSession(workspaceId);
   const palette = useCommandPalette(workspaceId);
 
   // Workspace creation and sample import each happen through their own page-level hook
@@ -102,11 +113,30 @@ function Application() {
 
   useKeyboardShortcut('k', palette.open);
 
+  const openOrStartPractice = async () => {
+    if (session) {
+      navigate({ type: 'studySession', sessionId: session.id });
+      return;
+    }
+    const created = await startSession({
+      workspaceId,
+      conceptId: 'calc-concept-22',
+      intent: { activity: 'Practising', detail: 'Adaptive practice session', targetMinutes: 25 },
+    });
+    navigate({ type: 'studySession', sessionId: created.id });
+  };
+
   const sidebar = (
     <Sidebar
       workspaces={workspaces}
       openWorkspaceId={activeWorkspaceId ?? undefined}
       activeSubItem={activeSubItem(route)}
+      activeArea={activeProductArea(route)}
+      onToday={() => navigate({ type: 'home' })}
+      onPractice={() => void openOrStartPractice()}
+      onErrorProfile={() => navigate({ type: 'errorProfile', workspaceId })}
+      onConceptMap={() => navigate({ type: 'conceptsList', workspaceId })}
+      onHistory={() => navigate({ type: 'sessionHistory', workspaceId })}
       onSearch={palette.open}
       onHome={() => navigate({ type: 'home' })}
       onMarketplace={() => navigate({ type: 'marketplace', forWorkspaceId: workspaceId })}

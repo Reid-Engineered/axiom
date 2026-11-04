@@ -1,7 +1,7 @@
 ---
 id: 083
 title: Lock mastery diagnostic and adaptive-session contracts
-status: review
+status: done
 owner: codex
 stage: 9
 depends_on: [081]
@@ -96,8 +96,7 @@ Validation on 2026-11-03:
 
 ## Open policy decisions for the human
 
-All values are **proposals, not approved defaults**. The full formulas, reset semantics and
-rationale are in the evidence spec §8; approve or replace each before implementation:
+Approved on 2026-11-04 by the human as `policy.reid_default` (revision 1):
 
 - P1: weighted observed success ratio across scoped assessable objectives, partial=0.5 where
   supported; thresholds 0.4/0.7/0.9; five trials per scoped objective before Mastered. No

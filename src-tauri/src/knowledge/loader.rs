@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use super::discover::{discover_entities, read_package_toml, read_sources_toml};
+use super::discover::{discover_entities_with_version, read_package_toml, read_sources_toml};
 use super::error::KnowledgeError;
 use super::package::{parse_package_toml, parse_sources_toml};
 use super::relationships::validate_relationships;
@@ -18,7 +18,7 @@ pub fn load_knowledge_package(root: &Path) -> Result<KnowledgePackage, Knowledge
     let sources_toml = read_sources_toml(root)?;
     let sources = parse_sources_toml(&sources_toml)?;
 
-    let entities = discover_entities(root)?;
+    let entities = discover_entities_with_version(root, identity.schema_version)?;
 
     validate_references(&entities, &sources)?;
     validate_relationships(&entities.concepts)?;
@@ -33,6 +33,7 @@ pub fn load_knowledge_package(root: &Path) -> Result<KnowledgePackage, Knowledge
         objectives: entities.objectives,
         examples: entities.examples,
         problem_families: entities.problem_families,
+        patterns: entities.patterns,
         sources,
     })
 }

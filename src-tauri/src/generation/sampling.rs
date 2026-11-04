@@ -115,6 +115,8 @@ mod tests {
             id: ProblemFamilyId::new("problem.test_fixture").unwrap(),
             concept_id: ConceptId::new("concept.test").unwrap(),
             objective_ids: vec![ObjectiveId::new("objective.test").unwrap()],
+            assessed_objective_ids: None,
+            opportunities: None,
             difficulty: DifficultyRange { min: 1, max: 1 },
             generator: GeneratorRef {
                 id: GeneratorId::new("gen.test").unwrap(),

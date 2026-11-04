@@ -4,36 +4,152 @@ use std::path::Path;
 use super::constraint::{is_parameter_name, parse_constraint, ConstraintExpr, Term};
 use super::error::KnowledgeError;
 use super::frontmatter::split_frontmatter;
-use super::identifier::{ConceptId, GeneratorId, ObjectiveId, ProblemFamilyId};
+use super::identifier::{
+    ConceptId, GeneratorId, ObjectiveId, OpportunityId, PatternId, ProblemFamilyId,
+};
+use super::pattern::parse_assessment_evidence_list;
 use super::problem_family_body::parse_problem_family_body;
 use super::provenance::convert_provenance_refs;
-use super::raw::{RawBound, RawCanonicalSolution, RawParameterSpec, RawProblemFamilyFrontmatter};
+use super::raw::{
+    RawBound, RawCanonicalSolution, RawDifficultyRange, RawGeneratorRef, RawHint, RawParameterSpec,
+    RawProblemFamilyFrontmatter, RawProblemFamilyV2Frontmatter, RawProblemOpportunity,
+    RawProvenanceRef,
+};
 use super::types::{
-    Bound, CanonicalSolution, DifficultyRange, GeneratorRef, Hint, ParameterSpec, ParameterType,
-    ProblemFamily, ProblemFamilyStatus, ResponseType,
+    Bound, CanonicalSolution, DifficultyRange, EligibilityCondition, GeneratorRef, Hint,
+    ParameterSpec, ParameterType, ProblemFamily, ProblemFamilyStatus, ProblemOpportunity,
+    ResponseType,
 };
 
+#[cfg(test)]
 pub(crate) fn parse_problem_family_file(
     path: &Path,
     raw: &str,
 ) -> Result<ProblemFamily, KnowledgeError> {
+    parse_problem_family_file_with_version(path, raw, 1)
+}
+
+pub(crate) fn parse_problem_family_file_with_version(
+    path: &Path,
+    raw: &str,
+    schema_version: u32,
+) -> Result<ProblemFamily, KnowledgeError> {
     let (toml_text, body) = split_frontmatter(path, raw)?;
-    let frontmatter: RawProblemFamilyFrontmatter =
-        toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
-            path: path.to_owned(),
-            source,
-        })?;
+
+    struct CommonRawFamily {
+        id: String,
+        concept_id: String,
+        objective_ids: Vec<String>,
+        assessed_objective_ids: Option<Vec<String>>,
+        opportunities: Option<Vec<RawProblemOpportunity>>,
+        difficulty: RawDifficultyRange,
+        generator: RawGeneratorRef,
+        parameters: std::collections::BTreeMap<String, RawParameterSpec>,
+        constraints: Vec<String>,
+        response_type: String,
+        canonical_solution: RawCanonicalSolution,
+        hints: Vec<RawHint>,
+        provenance_refs: Vec<RawProvenanceRef>,
+        status: String,
+    }
+
+    let frontmatter = if schema_version == 1 {
+        let raw_fm: RawProblemFamilyFrontmatter =
+            toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
+                path: path.to_owned(),
+                source,
+            })?;
+        CommonRawFamily {
+            id: raw_fm.id,
+            concept_id: raw_fm.concept_id,
+            objective_ids: raw_fm.objective_ids,
+            assessed_objective_ids: None,
+            opportunities: None,
+            difficulty: raw_fm.difficulty,
+            generator: raw_fm.generator,
+            parameters: raw_fm.parameters,
+            constraints: raw_fm.constraints,
+            response_type: raw_fm.response_type,
+            canonical_solution: raw_fm.canonical_solution,
+            hints: raw_fm.hints,
+            provenance_refs: raw_fm.provenance_refs,
+            status: raw_fm.status,
+        }
+    } else {
+        let raw_fm: RawProblemFamilyV2Frontmatter =
+            toml::from_str(&toml_text).map_err(|source| KnowledgeError::TomlSyntax {
+                path: path.to_owned(),
+                source,
+            })?;
+        CommonRawFamily {
+            id: raw_fm.id,
+            concept_id: raw_fm.concept_id,
+            objective_ids: raw_fm.objective_ids,
+            assessed_objective_ids: Some(raw_fm.assessed_objective_ids),
+            opportunities: Some(raw_fm.opportunities),
+            difficulty: raw_fm.difficulty,
+            generator: raw_fm.generator,
+            parameters: raw_fm.parameters,
+            constraints: raw_fm.constraints,
+            response_type: raw_fm.response_type,
+            canonical_solution: raw_fm.canonical_solution,
+            hints: raw_fm.hints,
+            provenance_refs: raw_fm.provenance_refs,
+            status: raw_fm.status,
+        }
+    };
+
     let id = ProblemFamilyId::new(frontmatter.id)?;
     let entity_id = id.as_str().to_owned();
     let concept_id = ConceptId::new(frontmatter.concept_id)?;
     if frontmatter.objective_ids.is_empty() {
         return Err(KnowledgeError::MissingProblemFamilyObjectives { entity_id });
     }
-    let objective_ids = frontmatter
-        .objective_ids
-        .into_iter()
-        .map(ObjectiveId::new)
-        .collect::<Result<_, _>>()?;
+    let mut seen_objectives = HashSet::new();
+    let mut objective_ids = Vec::with_capacity(frontmatter.objective_ids.len());
+    for raw_objective_id in frontmatter.objective_ids {
+        let objective_id = ObjectiveId::new(raw_objective_id)?;
+        if !seen_objectives.insert(objective_id.clone()) {
+            return Err(KnowledgeError::DuplicateReferenceInList {
+                entity_id: entity_id.clone(),
+                field: "objective_ids",
+                target: objective_id.as_str().to_owned(),
+            });
+        }
+        objective_ids.push(objective_id);
+    }
+
+    let assessed_objective_ids = match frontmatter.assessed_objective_ids {
+        None => None,
+        Some(raw_assessed) => {
+            if raw_assessed.is_empty() {
+                return Err(KnowledgeError::MissingAssessedObjectives {
+                    entity_id: entity_id.clone(),
+                });
+            }
+            let mut seen_assessed = HashSet::new();
+            let mut assessed = Vec::with_capacity(raw_assessed.len());
+            for raw_id in raw_assessed {
+                let obj_id = ObjectiveId::new(raw_id)?;
+                if !seen_assessed.insert(obj_id.clone()) {
+                    return Err(KnowledgeError::DuplicateReferenceInList {
+                        entity_id: entity_id.clone(),
+                        field: "assessed_objective_ids",
+                        target: obj_id.as_str().to_owned(),
+                    });
+                }
+                if !seen_objectives.contains(&obj_id) {
+                    return Err(KnowledgeError::AssessedObjectiveNotInFamily {
+                        problem_family_id: entity_id.clone(),
+                        objective_id: obj_id.as_str().to_owned(),
+                    });
+                }
+                assessed.push(obj_id);
+            }
+            Some(assessed)
+        }
+    };
+
     if frontmatter.difficulty.min > frontmatter.difficulty.max {
         return Err(KnowledgeError::InvalidDifficultyRange {
             entity_id,
@@ -59,6 +175,47 @@ pub(crate) fn parse_problem_family_file(
     for constraint in &constraints {
         validate_constraint_parameters(&entity_id, constraint, &parameters)?;
     }
+
+    let opportunities = match frontmatter.opportunities {
+        None => None,
+        Some(raw_opps) => {
+            let mut seen_patterns = HashSet::new();
+            let mut opps = Vec::with_capacity(raw_opps.len());
+            for raw_opp in raw_opps {
+                let opp_id = OpportunityId::new(raw_opp.id)?;
+                let pattern_id = PatternId::new(raw_opp.pattern_id)?;
+                if !seen_patterns.insert(pattern_id.clone()) {
+                    return Err(KnowledgeError::DuplicatePatternInFamily {
+                        problem_family_id: entity_id.clone(),
+                        pattern_id: pattern_id.as_str().to_owned(),
+                    });
+                }
+                let eligible_when = if raw_opp.eligible_when == "always" {
+                    EligibilityCondition::Always
+                } else {
+                    let expression = parse_constraint(&entity_id, &raw_opp.eligible_when)?;
+                    validate_constraint_parameters(&entity_id, &expression, &parameters)?;
+                    EligibilityCondition::Constraint {
+                        raw: raw_opp.eligible_when,
+                        expression,
+                    }
+                };
+                let required_evidence = parse_assessment_evidence_list(
+                    opp_id.as_str(),
+                    "required_evidence",
+                    &raw_opp.required_evidence,
+                )?;
+                opps.push(ProblemOpportunity {
+                    id: opp_id,
+                    pattern_id,
+                    eligible_when,
+                    required_evidence,
+                });
+            }
+            Some(opps)
+        }
+    };
+
     let response_type = match frontmatter.response_type.as_str() {
         "symbolic-expression" => ResponseType::SymbolicExpression,
         "numeric" => ResponseType::Numeric,
@@ -127,6 +284,8 @@ pub(crate) fn parse_problem_family_file(
         id,
         concept_id,
         objective_ids,
+        assessed_objective_ids,
+        opportunities,
         difficulty,
         generator,
         parameters,

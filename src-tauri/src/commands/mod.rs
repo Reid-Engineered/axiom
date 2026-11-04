@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use rusqlite::Connection;
 
@@ -22,16 +22,20 @@ pub use models::*;
 
 pub type CommandResult<T> = Result<T, String>;
 
-pub struct Database(Mutex<Connection>);
+pub struct Database(Arc<Mutex<Connection>>);
 
 impl Database {
     pub fn open(path: impl AsRef<Path>) -> rusqlite::Result<Self> {
-        crate::db::open(path).map(|connection| Self(Mutex::new(connection)))
+        crate::db::open(path).map(|connection| Self(Arc::new(Mutex::new(connection))))
     }
 
     #[cfg(test)]
     pub fn open_in_memory() -> rusqlite::Result<Self> {
-        crate::db::open_in_memory().map(|connection| Self(Mutex::new(connection)))
+        crate::db::open_in_memory().map(|connection| Self(Arc::new(Mutex::new(connection))))
+    }
+
+    pub fn shared_connection(&self) -> Arc<Mutex<Connection>> {
+        Arc::clone(&self.0)
     }
 
     pub(crate) fn connection(&self) -> CommandResult<MutexGuard<'_, Connection>> {

@@ -232,6 +232,83 @@ pub enum KnowledgeError {
         problem_family_id: String,
         objective_id: String,
     },
+    PatternsDirectoryInSchemaV1 {
+        path: PathBuf,
+    },
+    UnknownBloomLevel {
+        entity_id: String,
+        value: String,
+    },
+    UnknownAssessmentEvidence {
+        entity_id: String,
+        value: String,
+    },
+    EmptyAssessmentEvidence {
+        entity_id: String,
+        field: &'static str,
+    },
+    DuplicateAssessmentEvidence {
+        entity_id: String,
+        field: &'static str,
+        value: String,
+    },
+    InvalidDetectorVersion {
+        entity_id: String,
+        version: u32,
+    },
+    MissingPatternConcepts {
+        entity_id: String,
+    },
+    MissingPatternObjectives {
+        entity_id: String,
+    },
+    MissingPatternSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    DuplicatePatternSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    OutOfOrderPatternSection {
+        entity_id: String,
+        section: &'static str,
+    },
+    UnknownPatternSection {
+        entity_id: String,
+        heading: String,
+    },
+    ContentBeforePatternExplanation {
+        entity_id: String,
+    },
+    MissingAssessedObjectives {
+        entity_id: String,
+    },
+    AssessedObjectiveNotInFamily {
+        problem_family_id: String,
+        objective_id: String,
+    },
+    UnresolvedPattern {
+        entity_id: String,
+        target: String,
+    },
+    DuplicateOpportunityId {
+        opportunity_id: String,
+    },
+    DuplicatePatternInFamily {
+        problem_family_id: String,
+        pattern_id: String,
+    },
+    OpportunityPatternScopeMismatch {
+        problem_family_id: String,
+        opportunity_id: String,
+        pattern_id: String,
+    },
+    OpportunityMissingRequiredEvidence {
+        problem_family_id: String,
+        opportunity_id: String,
+        missing: String,
+    },
 }
 
 impl fmt::Display for KnowledgeError {
@@ -257,7 +334,7 @@ impl fmt::Display for KnowledgeError {
                 write!(f, "invalid TOML in {}: {source}", path.display())
             }
             Self::UnsupportedSchemaVersion { found } => {
-                write!(f, "unsupported schema_version {found}; only 1 is accepted")
+                write!(f, "unsupported schema_version {found}; only 1 and 2 are accepted")
             }
             Self::MalformedVersion { field, value } => {
                 write!(f, "{field} is not a semantic version: {value}")
@@ -340,6 +417,26 @@ impl fmt::Display for KnowledgeError {
             Self::DuplicateHintLevel { entity_id, level } => write!(f, "{entity_id} declares hint level {level} more than once"),
             Self::UnknownProblemFamilyStatus { entity_id, value } => write!(f, "{entity_id} declares unknown status: {value}"),
             Self::ProblemFamilyCrossConceptObjective { problem_family_id, objective_id } => write!(f, "problem family {problem_family_id} references objective {objective_id} belonging to a different concept"),
+            Self::PatternsDirectoryInSchemaV1 { path } => write!(f, "{} contains a patterns/ directory, which requires schema_version = 2", path.display()),
+            Self::UnknownBloomLevel { entity_id, value } => write!(f, "{entity_id} declares unknown bloom_level: {value}"),
+            Self::UnknownAssessmentEvidence { entity_id, value } => write!(f, "{entity_id} declares unknown assessment_evidence: {value}"),
+            Self::EmptyAssessmentEvidence { entity_id, field } => write!(f, "{entity_id}.{field} must contain at least one assessment evidence item"),
+            Self::DuplicateAssessmentEvidence { entity_id, field, value } => write!(f, "{entity_id}.{field} lists {value} more than once"),
+            Self::InvalidDetectorVersion { entity_id, version } => write!(f, "{entity_id} declares invalid detector version {version}; version must be >= 1"),
+            Self::MissingPatternConcepts { entity_id } => write!(f, "pattern {entity_id} has no concept_ids; at least one is required"),
+            Self::MissingPatternObjectives { entity_id } => write!(f, "pattern {entity_id} has no objective_ids; at least one is required"),
+            Self::MissingPatternSection { entity_id, section } => write!(f, "pattern {entity_id} is missing required section ## {section}"),
+            Self::DuplicatePatternSection { entity_id, section } => write!(f, "pattern {entity_id} declares ## {section} more than once"),
+            Self::OutOfOrderPatternSection { entity_id, section } => write!(f, "pattern {entity_id}: ## {section} appears out of order"),
+            Self::UnknownPatternSection { entity_id, heading } => write!(f, "pattern {entity_id} contains unrecognized heading: {heading}"),
+            Self::ContentBeforePatternExplanation { entity_id } => write!(f, "pattern {entity_id} has non-whitespace content before ## Explanation"),
+            Self::MissingAssessedObjectives { entity_id } => write!(f, "problem family {entity_id} has no assessed_objective_ids; at least one is required"),
+            Self::AssessedObjectiveNotInFamily { problem_family_id, objective_id } => write!(f, "problem family {problem_family_id} lists assessed objective {objective_id} not present in objective_ids"),
+            Self::UnresolvedPattern { entity_id, target } => write!(f, "{entity_id} references unknown Pattern: {target}"),
+            Self::DuplicateOpportunityId { opportunity_id } => write!(f, "duplicate Opportunity id across package: {opportunity_id}"),
+            Self::DuplicatePatternInFamily { problem_family_id, pattern_id } => write!(f, "problem family {problem_family_id} declares pattern {pattern_id} more than once"),
+            Self::OpportunityPatternScopeMismatch { problem_family_id, opportunity_id, pattern_id } => write!(f, "problem family {problem_family_id} opportunity {opportunity_id} references pattern {pattern_id} whose objectives do not intersect the family's assessed_objective_ids"),
+            Self::OpportunityMissingRequiredEvidence { problem_family_id, opportunity_id, missing } => write!(f, "problem family {problem_family_id} opportunity {opportunity_id} omits required evidence {missing}"),
         }
     }
 }

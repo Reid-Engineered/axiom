@@ -156,3 +156,40 @@
 .error {
   color: var(--accent-amber);
 }
+
+.evidenceCard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: var(--border-width-hairline) solid var(--color-hairline);
+}
+
+.evidenceItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.evidenceLabel {
+  color: var(--text-metadata);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+.evidenceValue {
+  color: var(--text-primary);
+  font-size: var(--font-size-body-plus);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.evidenceMeta {
+  color: var(--text-secondary);
+  font-size: var(--font-size-metadata);
+}
+

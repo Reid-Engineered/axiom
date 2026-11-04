@@ -9,6 +9,7 @@ mod identifier;
 mod loader;
 mod objective;
 mod package;
+mod pattern;
 mod problem_family;
 mod problem_family_body;
 mod provenance;
@@ -22,15 +23,17 @@ pub(crate) use constraint::parse_constraint;
 pub use constraint::{ArithOp, CompareOp, ConstraintExpr, Term};
 pub use error::KnowledgeError;
 pub use identifier::{
-    ConceptId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, ProblemFamilyId, SourceId,
+    ConceptId, DetectorId, ExampleId, GeneratorId, KnowledgePackageId, ObjectiveId, OpportunityId,
+    PatternId, PolicyId, ProblemFamilyId, SourceId,
 };
 pub use loader::load_knowledge_package;
 pub use relationships::related_concepts;
 pub use types::{
-    Bound, CanonicalSolution, Concept, DifficultyRange, Example, GeneratorRef, Hint,
-    KnowledgePackage, Objective, ParameterSpec, ParameterType, ProblemFamily, ProblemFamilyStatus,
-    ProblemInstance, ProvenanceKind, ProvenanceRef, ResolvedSolution, ResponseType, Source,
-    SourceLocator,
+    AssessmentEvidence, BloomLevel, Bound, CanonicalSolution, Concept, DetectorRef,
+    DifficultyRange, EligibilityCondition, Example, GeneratorRef, Hint, KnowledgePackage,
+    Objective, ParameterSpec, ParameterType, Pattern, ProblemFamily, ProblemFamilyStatus,
+    ProblemInstance, ProblemOpportunity, ProvenanceKind, ProvenanceRef, ResolvedSolution,
+    ResponseType, Source, SourceLocator,
 };
 
 #[cfg(test)]

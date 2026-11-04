@@ -1,4 +1,4 @@
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 
@@ -7,7 +7,7 @@ use crate::knowledge::ProblemInstance;
 use super::error::PracticeError;
 use super::types::AttemptStatus;
 
-pub struct PracticeStore(Mutex<Connection>);
+pub struct PracticeStore(Arc<Mutex<Connection>>);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AttemptRow {
@@ -24,7 +24,15 @@ pub struct AttemptRow {
 
 impl PracticeStore {
     pub fn new(connection: Connection) -> Self {
-        Self(Mutex::new(connection))
+        Self(Arc::new(Mutex::new(connection)))
+    }
+
+    pub fn new_shared(connection: Arc<Mutex<Connection>>) -> Self {
+        Self(connection)
+    }
+
+    pub(crate) fn lock_connection(&self) -> Result<MutexGuard<'_, Connection>, PracticeError> {
+        self.connection()
     }
 
     fn connection(&self) -> Result<MutexGuard<'_, Connection>, PracticeError> {

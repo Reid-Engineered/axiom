@@ -56,6 +56,41 @@ pub(crate) struct RawObjectiveFrontmatter {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub(crate) struct RawObjectiveV2Frontmatter {
+    pub id: String,
+    pub concept_id: String,
+    pub bloom_level: String,
+    pub assessment_evidence: Vec<String>,
+    #[serde(default)]
+    pub provenance_refs: Vec<RawProvenanceRef>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawDetectorRef {
+    pub id: String,
+    pub version: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawPatternFrontmatter {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub concept_ids: Vec<String>,
+    #[serde(default)]
+    pub objective_ids: Vec<String>,
+    pub detector: RawDetectorRef,
+    #[serde(default)]
+    pub required_evidence: Vec<String>,
+    pub resolution_policy_id: String,
+    #[serde(default)]
+    pub provenance_refs: Vec<RawProvenanceRef>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct RawExampleFrontmatter {
     pub id: String,
     pub concept_id: String,
@@ -67,11 +102,45 @@ pub(crate) struct RawExampleFrontmatter {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub(crate) struct RawProblemOpportunity {
+    pub id: String,
+    pub pattern_id: String,
+    pub eligible_when: String,
+    #[serde(default)]
+    pub required_evidence: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct RawProblemFamilyFrontmatter {
     pub id: String,
     pub concept_id: String,
     #[serde(default)]
     pub objective_ids: Vec<String>,
+    pub difficulty: RawDifficultyRange,
+    pub generator: RawGeneratorRef,
+    #[serde(default)]
+    pub parameters: std::collections::BTreeMap<String, RawParameterSpec>,
+    #[serde(default)]
+    pub constraints: Vec<String>,
+    pub response_type: String,
+    pub canonical_solution: RawCanonicalSolution,
+    #[serde(default)]
+    pub hints: Vec<RawHint>,
+    #[serde(default)]
+    pub provenance_refs: Vec<RawProvenanceRef>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RawProblemFamilyV2Frontmatter {
+    pub id: String,
+    pub concept_id: String,
+    #[serde(default)]
+    pub objective_ids: Vec<String>,
+    pub assessed_objective_ids: Vec<String>,
+    pub opportunities: Vec<RawProblemOpportunity>,
     pub difficulty: RawDifficultyRange,
     pub generator: RawGeneratorRef,
     #[serde(default)]

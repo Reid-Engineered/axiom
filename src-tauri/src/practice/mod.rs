@@ -1,3 +1,4 @@
+pub mod engine;
 mod error;
 mod provider;
 mod store;
@@ -7,9 +8,17 @@ pub use error::PracticeError;
 pub use provider::PracticeProvider;
 pub use store::PracticeStore;
 pub use types::{
-    AttemptStatus, ConceptDescriptor, ConceptsRequest, ConceptsResponse, DescribeRequest,
-    DescribeResponse, EvaluateRequest, EvaluateResponse, GenerateRequest, GenerateResponse,
-    HintRequest, HintResponse, ResponseValue, StartRequest, StartResponse,
+    AttemptState, AttemptStatus, Attribution, Available, BloomEvidence, ConceptDescriptor,
+    ConceptEvidence, ConceptsRequest, ConceptsResponse, ContentRef, CreatePlanInput, DecayDetail,
+    DescribeRequest, DescribeResponse, DifficultyHistoryEntry, EditPatternRuleInput,
+    EvaluateRequest, EvaluateResponse, EvidenceReadRequest, GenerateRequest, GenerateResponse,
+    HintRequest, HintResponse, LastKnownValue, MasterySnapshot, PatternDetail,
+    PatternDetailReadRequest, PatternListResponse, PatternResolutionInfo, PatternSessionBucket,
+    PatternSnapshot, PatternsReadRequest, Plan, PlanChange, PlanGoalSnapshot, PlanPhase,
+    PlanQueueSlot, PolicyRef, PracticeDifficulty, PrerequisiteReadiness, ProviderStampRef,
+    Readiness, ResponseValue, SessionActionInput, SessionActionReceipt, SessionHistoryEntry,
+    SessionQuestionRow, SessionSummary, SessionTiming, Stamp, StartRequest, StartResponse,
+    UnavailableReason, VerificationDto, VerificationObjectiveDto,
 };
 
 /// The embedded first-party manifest for this module.

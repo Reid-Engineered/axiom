@@ -5,6 +5,7 @@ import { SessionToolbar } from '../components/session/SessionToolbar';
 import { WorkingArea } from '../components/session/WorkingArea';
 import { useAttempt } from '../hooks/useAttempt';
 import { useConcept } from '../hooks/useConcepts';
+import { useAdaptiveSession } from '../hooks/useLearningEvidence';
 import { useNavigation } from '../hooks/useNavigation';
 import { useSession } from '../hooks/useSessions';
 import { useWorkspaceDetails } from '../hooks/useWorkspaces';
@@ -16,11 +17,19 @@ export interface StudySessionPageProps {
   sessionId: string;
 }
 
+function formatClockMs(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 /** Active study session scoped to one resumable session record. */
 export function StudySessionPage({ sessionId }: StudySessionPageProps) {
   const { session, loading, error, pauseSession, resumeSession, addTutorExchange, setData } =
     useSession(sessionId);
   const attempt = useAttempt(session, setData);
+  const adaptive = useAdaptiveSession(session?.workspaceId, sessionId);
   const { concept } = useConcept(session?.conceptId ?? '');
   const { workspace } = useWorkspaceDetails(session?.workspaceId ?? '');
   const { navigate } = useNavigation();
@@ -63,6 +72,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     setMutationError('');
     try {
       await pauseSession();
+      void adaptive.pause().catch(() => undefined);
     } catch (caught) {
       setMutationError(caught instanceof Error ? caught.message : 'Could not pause the session.');
     }
@@ -71,7 +81,9 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
   const check = async () => {
     setMutationError('');
     try {
+      const currentAnswer = attempt.answer;
       await attempt.check();
+      void adaptive.checkAnswer(currentAnswer).catch(() => undefined);
     } catch (caught) {
       setMutationError(caught instanceof Error ? caught.message : 'Could not check the answer.');
     }
@@ -81,6 +93,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     setMutationError('');
     try {
       await attempt.hint();
+      void adaptive.requestHint().catch(() => undefined);
     } catch (caught) {
       setMutationError(caught instanceof Error ? caught.message : 'Could not request a hint.');
     }
@@ -90,12 +103,34 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     setMutationError('');
     try {
       await attempt.next();
+      void adaptive.advanceProblem().catch(() => undefined);
     } catch (caught) {
       setMutationError(
         caught instanceof Error ? caught.message : 'Could not advance to the next problem.',
       );
     }
   };
+
+  const finishSession = async () => {
+    setMutationError('');
+    try {
+      await adaptive.endSession();
+      navigate({ type: 'sessionHistory', workspaceId: session.workspaceId, sessionId });
+    } catch (caught) {
+      setMutationError(
+        caught instanceof Error ? caught.message : 'Could not complete the session.',
+      );
+    }
+  };
+
+  const liveElapsedMinutes = Math.max(
+    session.elapsedMinutes,
+    Math.floor(adaptive.liveElapsedMs / 60_000),
+  );
+  const targetMinutes =
+    adaptive.plan?.targetMs != null
+      ? Math.round(adaptive.plan.targetMs / 60_000)
+      : (session.intent.targetMinutes ?? liveElapsedMinutes);
 
   return (
     <>
@@ -108,8 +143,8 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
             onChangeIntent={() => setIntentNoteVisible((visible) => !visible)}
             problemIndex={session.problemIndex ?? 1}
             problemCount={session.problemCount ?? 1}
-            elapsedMinutes={session.elapsedMinutes}
-            targetMinutes={session.intent.targetMinutes ?? session.elapsedMinutes}
+            elapsedMinutes={liveElapsedMinutes}
+            targetMinutes={targetMinutes}
             onPause={pause}
           />
         }
@@ -120,11 +155,19 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
           <ProblemPane
             session={session}
             attempt={attempt}
+            adaptive={adaptive}
             working={working}
-            onWorkingChange={setWorking}
+            onWorkingChange={(val) => {
+              setWorking(val);
+              adaptive.setWorkingLines(val.split('\n'));
+            }}
             onCheck={check}
             onHint={hint}
             onNext={next}
+            onFinishSession={finishSession}
+            onInspectPattern={(patternId) =>
+              navigate({ type: 'errorProfile', workspaceId: session.workspaceId, patternId })
+            }
           />
         }
         tutor={
@@ -185,30 +228,91 @@ function VisualizationPane({ onExpand }: { onExpand: () => void }) {
 function ProblemPane({
   session,
   attempt,
+  adaptive,
   working,
   onWorkingChange,
   onCheck,
   onHint,
   onNext,
+  onFinishSession,
+  onInspectPattern,
 }: {
   session: Session;
   attempt: ReturnType<typeof useAttempt>;
+  adaptive: ReturnType<typeof useAdaptiveSession>;
   working: string;
   onWorkingChange: (value: string) => void;
   onCheck: () => void | Promise<void>;
   onHint: () => void | Promise<void>;
   onNext: () => void | Promise<void>;
+  onFinishSession: () => void | Promise<void>;
+  onInspectPattern: (patternId: string) => void;
 }) {
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [changesDismissed, setChangesDismissed] = useState(false);
+
   const solved = attempt.attempt?.status === 'solved';
   const counter = attempt.attempt
     ? `Problem ${session.problemIndex ?? 1}`
     : `Problem ${session.problemIndex ?? 1} of ${session.problemCount ?? 1}`;
 
+  const plan = adaptive.plan;
+  const currentSlot =
+    plan?.queue.find((s) => s.state === 'current') ??
+    plan?.queue[(session.problemIndex ?? 1) - 1] ??
+    plan?.queue[0];
+  const currentPhase = plan?.phases.find((p) => p.id === currentSlot?.phaseId);
+  const verification = adaptive.attempt?.lastVerification;
+  const masterySnap =
+    adaptive.receipt?.masteryChanges[0]?.state === 'available'
+      ? adaptive.receipt.masteryChanges[0].value
+      : undefined;
+  const patternSnap =
+    adaptive.receipt?.patternChanges[0]?.state === 'available'
+      ? adaptive.receipt.patternChanges[0].value
+      : undefined;
+  const latestPlanChange = plan?.changes[plan.changes.length - 1];
+
   return (
     <section className={styles.problemPane} aria-labelledby="problem-heading">
-      <p className={styles.eyebrow} id="problem-heading">
-        {counter}
-      </p>
+      <div className={styles.problemHeaderBar}>
+        <p className={styles.eyebrow} id="problem-heading">
+          {counter}
+        </p>
+        <div className={styles.metaBadges}>
+          {currentPhase ? <span className={styles.metaPill}>{currentPhase.name}</span> : null}
+          {plan?.difficulty ? <span className={styles.metaPill}>{plan.difficulty}</span> : null}
+          <span
+            className={`${styles.metaPill} ${styles.timerPill}`}
+            data-testid="live-session-timer"
+          >
+            {formatClockMs(adaptive.liveElapsedMs)}
+          </span>
+          {currentSlot?.reason ? (
+            <Button
+              size="sm"
+              variant="tertiary"
+              aria-expanded={whyOpen}
+              onClick={() => setWhyOpen((open) => !open)}
+            >
+              Why this question
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {whyOpen && currentSlot?.reason ? (
+        <aside className={styles.inspectorCard} aria-label="Why this question was selected">
+          <div className={styles.inspectorHeader}>
+            <h3 className={styles.inspectorTitle}>Why this question</h3>
+            <Button size="sm" variant="tertiary" onClick={() => setWhyOpen(false)}>
+              Dismiss
+            </Button>
+          </div>
+          <p className={styles.feedback}>{currentSlot.reason}</p>
+        </aside>
+      ) : null}
+
       {attempt.error ? (
         <p className={styles.state} role="status">
           {attempt.error.message}
@@ -246,6 +350,61 @@ function ProblemPane({
               Correct.
             </p>
           ) : null}
+
+          {!changesDismissed && (verification || masterySnap || patternSnap || latestPlanChange) ? (
+            <section
+              className={styles.inspectorCard}
+              aria-label="What this check changed"
+            >
+              <div className={styles.inspectorHeader}>
+                <h3 className={styles.inspectorTitle}>What this check changed</h3>
+                <Button size="sm" variant="tertiary" onClick={() => setChangesDismissed(true)}>
+                  Dismiss
+                </Button>
+              </div>
+              {verification ? (
+                <p className={styles.feedback}>
+                  Checker ({verification.method}): verdict <strong>{verification.verdict}</strong>
+                  {typeof verification.studentValue === 'number'
+                    ? ` · evaluated ${verification.studentValue.toFixed(4)}`
+                    : ''}
+                  {verification.parseError ? ` · ${verification.parseError}` : ''}
+                </p>
+              ) : null}
+              {masterySnap ? (
+                <p className={styles.feedback}>
+                  Mastery updated to <strong>{Math.round(masterySnap.score * 100)}%</strong> (
+                  {masterySnap.namedState})
+                </p>
+              ) : null}
+              {patternSnap ? (
+                <div>
+                  <p className={styles.feedback}>
+                    Pattern <strong>{patternSnap.name}</strong>: {patternSnap.status} (
+                    {patternSnap.cleanStreak}/{patternSnap.resolution.requiredClean} clean streak)
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => onInspectPattern(patternSnap.patternId)}
+                  >
+                    Inspect in Error profile
+                  </Button>
+                </div>
+              ) : null}
+              {latestPlanChange ? (
+                <div className={styles.queueReplacedNotice}>
+                  Queue adapted: {latestPlanChange.reason}
+                </div>
+              ) : null}
+              {adaptive.attempt?.workedSolution ? (
+                <div className={styles.workedSolutionBox}>
+                  Worked structure: {adaptive.attempt.workedSolution}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
           {attempt.revealedHints.length ? (
             <ul className={styles.hintList}>
               {attempt.revealedHints.map((text, index) => (
@@ -262,12 +421,20 @@ function ProblemPane({
           ) : null}
           <div className={styles.problemActions}>
             {solved ? (
-              <Button onClick={() => void onNext()}>Next problem</Button>
+              <>
+                <Button onClick={() => void onNext()}>Next problem</Button>
+                <Button variant="secondary" onClick={() => void onFinishSession()}>
+                  Finish session
+                </Button>
+              </>
             ) : (
               <>
                 <Button onClick={() => void onCheck()}>Check</Button>
                 <Button variant="secondary" onClick={() => void onHint()}>
                   Hint
+                </Button>
+                <Button variant="tertiary" onClick={() => void onFinishSession()}>
+                  Finish session
                 </Button>
                 <span className={styles.shortcutHint}>⌘↵ to check</span>
               </>

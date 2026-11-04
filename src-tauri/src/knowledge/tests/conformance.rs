@@ -303,13 +303,66 @@ fn unsupported_schema_version() {
         root.join("package.toml"),
         fs::read_to_string(root.join("package.toml"))
             .unwrap()
-            .replace("schema_version = 1", "schema_version = 2"),
+            .replace("schema_version = 1", "schema_version = 3"),
     )
     .unwrap();
     assert!(matches!(
         load_knowledge_package(&root),
-        Err(KnowledgeError::UnsupportedSchemaVersion { found: 2 })
+        Err(KnowledgeError::UnsupportedSchemaVersion { found: 3 })
     ));
+}
+
+#[test]
+fn schema_v1_rejects_v2_fields_and_patterns_directory() {
+    let root = temp_root("schema_v1_rejects_v2_fields");
+    write_base_package(&root);
+    fs::create_dir_all(root.join("patterns")).unwrap();
+    assert!(matches!(
+        load_knowledge_package(&root),
+        Err(KnowledgeError::PatternsDirectoryInSchemaV1 { .. })
+    ));
+}
+
+#[test]
+fn schema_v2_package_with_objectives_patterns_and_opportunities_loads() {
+    let root = temp_root("schema_v2_package_loads");
+    write_base_package(&root);
+    fs::write(
+        root.join("package.toml"),
+        fs::read_to_string(root.join("package.toml"))
+            .unwrap()
+            .replace("schema_version = 1", "schema_version = 2"),
+    )
+    .unwrap();
+    fs::write(
+        root.join("objectives/shell.obj.md"),
+        "+++\nid = \"shell.obj\"\nconcept_id = \"shell.a\"\nbloom_level = \"apply\"\nassessment_evidence = [\"final-answer\"]\n\n[[provenance_refs]]\nsource_id = \"src.a\"\nkind = \"direct\"\n+++\n\nObjective body.\n",
+    )
+    .unwrap();
+    fs::create_dir_all(root.join("patterns")).unwrap();
+    fs::write(
+        root.join("patterns/pattern.radius_confusion.md"),
+        "+++\nid = \"pattern.radius_confusion\"\nname = \"Shell radius confusion\"\nconcept_ids = [\"shell.a\"]\nobjective_ids = [\"shell.obj\"]\ndetector = { id = \"diagnostic.shell_radius\", version = 1 }\nrequired_evidence = [\"final-answer\"]\nresolution_policy_id = \"policy.reid_default\"\n\n[[provenance_refs]]\nsource_id = \"src.a\"\nkind = \"derived\"\n+++\n\n## Explanation\n\nLearner swapped radius and height.\n\n## Next action\n\nWrite r(x) and h(x) explicitly before integrating.\n",
+    )
+    .unwrap();
+    fs::create_dir_all(root.join("problems")).unwrap();
+    fs::write(
+        root.join("problems/problem.shell_v2.md"),
+        "+++\nid = \"problem.shell_v2\"\nconcept_id = \"shell.a\"\nobjective_ids = [\"shell.obj\"]\nassessed_objective_ids = [\"shell.obj\"]\ndifficulty = { min = 1, max = 2 }\ngenerator = { id = \"gen.shell_y_poly\", version = 1 }\nresponse_type = \"numeric\"\nstatus = \"verified\"\n\n[parameters.coeff]\ntype = \"integer\"\nmin = 2\nmax = 6\n\n[canonical_solution]\nvalue = 10.0\n\n[[opportunities]]\nid = \"opportunity.radius_1\"\npattern_id = \"pattern.radius_confusion\"\neligible_when = \"coeff >= 3\"\nrequired_evidence = [\"final-answer\"]\n\n[[provenance_refs]]\nsource_id = \"src.a\"\nkind = \"direct\"\n+++\n\n## Prompt\n\nP {coeff}.\n\n## Solution\n\nS.\n",
+    )
+    .unwrap();
+
+    let pkg = load_knowledge_package(&root).unwrap();
+    assert_eq!(pkg.schema_version, 2);
+    assert_eq!(pkg.patterns.len(), 1);
+    assert_eq!(
+        pkg.problem_families[0]
+            .opportunities
+            .as_ref()
+            .unwrap()
+            .len(),
+        1
+    );
 }
 
 #[test]

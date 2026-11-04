@@ -98,22 +98,22 @@ reads from — not a single stylesheet. See `AGENTS.md` §UI Rules.
 
 ---
 
-## 3. Current component inventory (before Reid migration)
+## 3. Current component inventory
 
-The existing page inventory predates the adopted October 2026 handoff. Task 084 adds the
-new product-area routes; tasks 085–086 replace/extend the relevant pages. Pages are the
-only layer allowed to call hooks that fetch data; everything below them is props-driven.
+Pages are the only layer allowed to call hooks that fetch data; everything below them is props-driven.
 
 | Page                                                     | Layout used               | Key composed components                                       |
 | -------------------------------------------------------- | ------------------------- | ------------------------------------------------------------- |
 | `FirstLaunchPage`                                        | `CenteredColumnLayout`    | `Placeholder` (logo), text rows                               |
 | `CreateWorkspacePage`                                    | `CenteredColumnLayout`    | `Chip`, inferred-structure panel                              |
-| `HomePage` (variant: default / session-intent / library) | `AppShell`                | Continue card, `WorkspaceCard`                                |
+| `HomePage` (variant: default / session-intent / library) | `AppShell`                | Continue card, `TodayPlanCard`, `WorkspaceCard`               |
 | `WorkspaceOverviewPage`                                  | `TwoPaneLayout`           | `ConceptRow`, `ReasonedRecommendation`, `SuggestionPanel`     |
-| `StudySessionPage`                                       | `SessionShell`            | working area, tutor panel, visualization pane                 |
+| `StudySessionPage`                                       | `SessionShell`            | working area, adaptive queue/timer/inspector, tutor/viz panes |
 | `FullVisualizationPage`                                  | `FullVisualizationShell`  | `Inspector`, floating toolbar                                 |
-| `ConceptViewPage`                                        | `TwoPaneLayout`           | `Mastery`, `MathDisplay`, `ConceptRow` (Builds on / Leads to) |
+| `ConceptViewPage`                                        | `TwoPaneLayout`           | `Mastery`, `MathDisplay`, `ConceptRow`, evidence strip        |
 | `ConceptsListPage`                                       | `AppShell`                | `ChapterStateProfile`, `ConceptRow`, filter chips             |
+| `ErrorProfilePage`                                       | `AppShell`                | pattern list, resolution rule controls, recent attributions   |
+| `SessionHistoryPage`                                     | `AppShell`                | session history cards, phase/difficulty/elapsed summary       |
 | `MaterialPage`                                           | `AppShell`                | search-typed result rows, progress bar                        |
 | `WorkspaceToolsPage`                                     | `AppShell`                | module rows, `Toggle`, `SuggestionPanel`                      |
 | `MarketplacePage`                                        | `AppShell`                | `SegmentedControl`, `TrustBadge`, `OfflineChip`               |
@@ -141,7 +141,8 @@ session.ts      Session, SessionIntent
 visualization.ts VisualizationScene and its verified rendering primitives
 material.ts     Material (a workspace's textbook), ChapterSegment, MaterialResult
 note.ts         Note — a learner's own note content, linked to a concept
-practice.ts     Attempt, ResponseValue, EvaluationResult, Hint — the Practice IPC contract
+practice.ts     Attempt, ResponseValue, EvaluationResult, Hint, Available<T>, Plan,
+                SessionActionReceipt, ConceptEvidence, PatternSnapshot, SessionHistoryEntry
 index.ts        barrel re-export — the only import path components use
 ```
 
@@ -231,10 +232,7 @@ remain focused acceptance paths rather than full-screen browser coverage.
 
 ## 7. Explicitly out of scope here
 
-The adopted handoff and Roadmap Stage 9 now define the target for app-area navigation,
-concept-map presentation, error profiles, history and adaptive practice. They remain
-unimplemented architecture work until the corresponding task locks its contracts. Tutor
-voice, in-app reading, module authoring, import onboarding and other unscheduled surfaces
+Tutor voice, in-app reading, module authoring, import onboarding and other unscheduled surfaces
 still need separate design passes; do not invent their runtime structure here.
 
 One empty state is implemented in the current runtime: on a fresh install, `Sidebar`
@@ -253,54 +251,46 @@ hook instance — per §5 rule 3, this is a `refresh()` call, not a lifted/share
 ## 8. Adopted Reid product target — implementation boundary
 
 The human approved the full visual/product direction on 2026-10-10, recorded in
-[the adoption decision](docs/superpowers/specs/2026-10-10-reid-design-adoption.md).
-The current runtime still has the types, IPC and pages described above; adopting the
-product does not change those interfaces automatically.
+[the adoption decision](docs/superpowers/specs/2026-10-10-reid-design-adoption.md),
+and approved policy parameters `P1`–`P7` on 2026-11-04 in
+[the learning-evidence contracts spec](docs/superpowers/specs/2026-11-03-learning-evidence-contracts.md).
 
 - Domains is the UI label for Workspace; existing workspace ids and stored records remain.
-- Today / Practice / Error profile / Concept map / History become stable product routes,
-  scoped to the active workspace. Modules remain interchangeable capabilities, not routes.
+- Today / Practice / Error profile / Concept map / History are stable product routes,
+  scoped to the active workspace (`home`, `studySession` / `workspaceOverview`, `errorProfile`,
+  `conceptsList`, `sessionHistory`). Modules remain interchangeable capabilities, not routes.
 - Numeric mastery/Bloom/decay, misconception opportunities/status, difficulty policy,
-  phased plans/adaptive queues, timing and checker evidence need locked versioned
-  provider contracts, queries/migrations, IPC, services and hooks (task 083).
-- Existing named mastery must not be guessed into numeric evidence. Existing correctness
-  results cannot support sample counts, symbolic proof or method attribution.
-- Learning policy and subject diagnosis belong to capability providers. Core transports
-  and persists opaque versioned workspace-scoped data; the UI displays it through props.
+  phased plans/adaptive queues, timing and checker evidence are backed by versioned
+  provider contracts (`math.verify@2`, `practice.plan@1`, `practice.session@1`,
+  `practice.evidence@1`, `practice.patterns@1`), migration `0005_learning_evidence.sql`,
+  IPC commands in `src-tauri/src/commands/practice.rs`, `src/services/practiceService.ts`,
+  and hooks in `src/hooks/useLearningEvidence.ts`.
+- Existing named mastery is never guessed into numeric evidence; unattempted concepts
+  return `Available::Empty { reason: "not-yet-practiced" }`.
 - Keep the two contexts and existing service/hook boundary. No new store, API client or
   dynamic module architecture is justified merely by the redesign.
-- Production tokens move to the Reid vocabulary in task 082. Native window controls and
-  reduced-transparency fallbacks require platform validation; drawing markup is not runtime.
 
-Tasks 082–086 update this inventory/data flow when their actual implementations land.
-
-## 9. Proposed learning-evidence data flow (task 083)
+## 9. Learning-evidence data flow (tasks 083–086, 076)
 
 The [evidence/session spec](docs/superpowers/specs/2026-11-03-learning-evidence-contracts.md)
 and [Knowledge evidence extension](docs/superpowers/specs/2026-11-03-knowledge-evidence-extension.md)
-record the inventory, proposed wire contracts, migration boundaries and conformance plan.
-These are review-stage designs; policy decisions P1–P7 require human resolution before
-policy-dependent implementation. No new type, table, capability or engine exists merely
-because this addendum names it. Task 082's tokens/primitives/styling remain independent.
-
-The target flow preserves §5: provider-owned persisted projections → command DTOs →
-async services → page-owned hooks → props-driven views. Mastery/Bloom/readiness, opportunity
-attributions, pattern status, queue selection reasons and summaries are provider outputs.
-Components and hooks do not recompute them from correctness, named states or missing data.
-Core retains workspace/goal/session identity and measured timing; package authors own
-subject metadata. Frontend cross-cutting state remains the existing two contexts.
-
-Practice session actions must persist their receipt, attempt/working, evidence, projections,
-queue and opaque Core session binding atomically. The proposed implementation uses one
-transaction connection and a narrow validated Core binding helper; the current separate
-Core/Practice connection writes are not an atomic commit. This scoped seam neither exposes
-raw SQL to modules nor introduces an event bus. Resume reads the last acknowledged attempt,
-draft and feedback, including solved feedback until explicit advance; retries cannot
-double-apply evidence or queue changes. Conflicts are explicit revision errors.
-
-Schema-4 migration will add versioned immutable evidence/policy/content records and
-plans/receipts without numeric conversion of legacy rows. Schema-1 Knowledge Packages stay
-readable; proposed schema 2 requires a reviewed loader/content migration and retains old
-instance snapshots. Task 076 supplies timer implementation with 085; historical zero
-elapsed_minutes is not measured evidence. Task 067's permanent generation regression corpus
-and 068's network-disabled native Practice proof remain required outstanding work.
+define the Stage 9 learning-evidence vertical implemented across:
+- **Knowledge Package v2** (`src-tauri/src/knowledge/pattern.rs`, `knowledge-package/patterns/*.toml`):
+  dual-version loader (`schema_version = 1` and `2`), `ObjectiveRecord`, `ErrorPattern`,
+  `OpportunitySpec`, `DetectorSpec`, and `FamilyEvidenceSpec`.
+- **Verification (`math.verify@2`)** (`src-tauri/src/capabilities/math_verify/`):
+  structured `VerificationEvidence` with explicit method (`numeric-tolerance` / `symbolic-sampling`),
+  checker version, tolerances, sample points, and objective verdicts alongside `math.verify@1`.
+- **SQLite migration `0005_learning_evidence.sql`** (`LATEST_SCHEMA_VERSION = 5`):
+  append-only and projection tables for `policy_snapshots`, `knowledge_instance_snapshots`,
+  `practice_submissions`, `verification_evidence`, `mastery_snapshots`, `bloom_evidence`,
+  `error_pattern_rules`, `pattern_attributions`, `pattern_snapshots`, `practice_plans`,
+  `practice_plan_slots`, `practice_plan_changes`, `session_timing_checkpoints`, and
+  `session_operation_receipts`.
+- **Practice engine & capabilities** (`src-tauri/src/practice/engine.rs`, `provider.rs`):
+  implements policy `P1`–`P7` (`policy.reid_default`, rev 1), idempotent `operation_id`
+  receipt replay, atomic session/plan/evidence/timing persistence, and foreground elapsed-time
+  accounting (`076`).
+- **Frontend hooks & pages** (`src/hooks/useLearningEvidence.ts`, `HomePage.tsx`,
+  `StudySessionPage.tsx`, `ConceptViewPage.tsx`, `ErrorProfilePage.tsx`,
+  `SessionHistoryPage.tsx`).

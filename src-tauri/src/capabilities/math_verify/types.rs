@@ -19,6 +19,85 @@ pub struct VerifyResult {
     pub error: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ContentRefInput {
+    pub package_id: String,
+    pub package_version: String,
+    pub entity_id: String,
+    pub schema_version: u32,
+    pub digest: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct VerifyV2Request {
+    pub workspace_id: String,
+    pub attempt_id: String,
+    pub response: serde_json::Value,
+    pub canonical_solution: serde_json::Value,
+    pub response_type: String,
+    #[serde(default)]
+    pub restrictions: Vec<String>,
+    pub content_ref: ContentRefInput,
+    #[serde(default)]
+    pub objective_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum VerifyVerdict {
+    Correct,
+    Incorrect,
+    Partial,
+    Unverifiable,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum VerifyMethod {
+    NumericTolerance,
+    ConstantExpressionNumeric,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ObjectiveVerifyResult {
+    pub objective_id: String,
+    pub verdict: VerifyVerdict,
+    pub evidence: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct VerifySample {
+    pub bindings: std::collections::BTreeMap<String, f64>,
+    pub expected: f64,
+    pub actual: f64,
+    pub error: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct VerifyTerm {
+    pub expression: String,
+    pub verdict: VerifyVerdict,
+    pub evidence: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct VerifyV2Result {
+    pub id: String,
+    pub verdict: VerifyVerdict,
+    pub method: VerifyMethod,
+    pub checker_version: String,
+    pub absolute_tolerance: f64,
+    pub relative_tolerance: f64,
+    pub canonical_value: Option<f64>,
+    pub student_value: Option<f64>,
+    pub restrictions: Vec<String>,
+    pub parse_error: Option<String>,
+    pub limitations: Vec<String>,
+    pub objective_results: Vec<ObjectiveVerifyResult>,
+    pub samples: Option<Vec<VerifySample>>,
+    pub terms: Option<Vec<VerifyTerm>>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -7,6 +7,7 @@ import { Mastery } from '../components/mastery/Mastery';
 import { MathDisplay } from '../components/math/MathDisplay';
 import { Button } from '../components/primitives/Button';
 import { useConcept, useConcepts } from '../hooks/useConcepts';
+import { useConceptEvidence } from '../hooks/useLearningEvidence';
 import { useNavigation } from '../hooks/useNavigation';
 import { useActiveSession } from '../hooks/useSessions';
 import { useWorkspaceDetails } from '../hooks/useWorkspaces';
@@ -24,6 +25,7 @@ export function ConceptViewPage({ workspaceId, conceptId }: ConceptViewPageProps
   const { concept, loading, error } = useConcept(conceptId);
   const { concepts } = useConcepts(workspaceId);
   const { workspace } = useWorkspaceDetails(workspaceId);
+  const { evidence } = useConceptEvidence(workspaceId, conceptId);
   const { startSession } = useActiveSession(workspaceId);
   const { navigate } = useNavigation();
   const [actionError, setActionError] = useState('');
@@ -53,6 +55,12 @@ export function ConceptViewPage({ workspaceId, conceptId }: ConceptViewPageProps
     }
   };
 
+  const masterySnap =
+    evidence?.mastery.state === 'available' ? evidence.mastery.value : undefined;
+  const readinessVal =
+    evidence?.readiness.state === 'available' ? evidence.readiness.value : undefined;
+  const bloomVal = evidence?.bloom.state === 'available' ? evidence.bloom.value : undefined;
+
   return (
     <TwoPaneLayout
       rail={
@@ -63,6 +71,7 @@ export function ConceptViewPage({ workspaceId, conceptId }: ConceptViewPageProps
           onSelect={(selected) =>
             navigate({ type: 'conceptView', workspaceId, conceptId: selected.id })
           }
+          onOpenConceptMap={() => navigate({ type: 'conceptsList', workspaceId })}
         />
       }
     >
@@ -73,7 +82,7 @@ export function ConceptViewPage({ workspaceId, conceptId }: ConceptViewPageProps
           <span>Concepts</span>
           <span>›</span>
           <strong>{concept.name}</strong>
-        </nav>
+        </nav>\r
         <header className={styles.header}>
           <h1>{concept.name}</h1>
           <div className={styles.masteryLine}>
@@ -88,6 +97,45 @@ export function ConceptViewPage({ workspaceId, conceptId }: ConceptViewPageProps
             ) : null}
           </div>
         </header>
+        {evidence ? (
+          <section className={styles.evidenceCard} aria-label="Concept learning evidence">
+            <div className={styles.evidenceItem}>
+              <span className={styles.evidenceLabel}>Measured mastery</span>
+              <span className={styles.evidenceValue}>
+                {masterySnap ? `${Math.round(masterySnap.score * 100)}%` : 'No evidence'}
+              </span>
+              <span className={styles.evidenceMeta}>
+                {masterySnap
+                  ? `${masterySnap.namedState}${
+                      masterySnap.decay
+                        ? ` · decayed −${Math.round(masterySnap.decay.amount * 100)}%`
+                        : ''
+                    }`
+                  : 'Complete a practice check to record mastery'}
+              </span>
+            </div>
+            <div className={styles.evidenceItem}>
+              <span className={styles.evidenceLabel}>Prerequisite readiness</span>
+              <span className={styles.evidenceValue}>
+                {readinessVal ? readinessVal.state : 'unknown'}
+              </span>
+              <span className={styles.evidenceMeta}>
+                {readinessVal ? readinessVal.reason : 'Readiness not yet evaluated'}
+              </span>
+            </div>
+            <div className={styles.evidenceItem}>
+              <span className={styles.evidenceLabel}>Bloom evidence</span>
+              <span className={styles.evidenceValue}>
+                {bloomVal ? bloomVal.demonstratedLevel : 'No evidence'}
+              </span>
+              <span className={styles.evidenceMeta}>
+                {bloomVal
+                  ? `${bloomVal.qualifyingAttemptIds.length} unassisted correct checks`
+                  : 'Requires 2 unassisted correct checks'}
+              </span>
+            </div>
+          </section>
+        ) : null}
         {concept.displayFormula ? (
           <MathDisplay expression={concept.displayFormula} className={styles.formula} />
         ) : null}
@@ -146,17 +194,19 @@ function ConceptRail({
   prerequisites,
   leadsTo,
   onSelect,
+  onOpenConceptMap,
 }: {
   concept: Concept;
   prerequisites: Concept[];
   leadsTo: Concept[];
   onSelect: (concept: Concept) => void;
+  onOpenConceptMap: () => void;
 }) {
   return (
     <div className={styles.rail}>
       <RelatedConcepts title="Builds on" concepts={prerequisites} onSelect={onSelect} />
       <RelatedConcepts title="Leads to" concepts={leadsTo} onSelect={onSelect} />
-      <Button variant="tertiary" size="sm">
+      <Button variant="tertiary" size="sm" onClick={onOpenConceptMap}>
         See in concept map
       </Button>
       {concept.recentDiagnostics?.length ? (
