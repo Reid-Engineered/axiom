@@ -58,7 +58,9 @@
   line-height: 1.45;
   resize: vertical;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .textarea:focus {
@@ -87,7 +89,7 @@
   font-size: var(--font-size-small-plus);
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--motion-fast) ease;
 }
 
 .revertButton:hover {
@@ -107,7 +109,9 @@
   background-color: transparent !important;
   color: var(--text-secondary) !important;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .addChip:hover {

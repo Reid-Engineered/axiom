@@ -19,7 +19,7 @@
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  background: var(--color-content);
+  background: var(--color-surface);
 }
 
 .recovery {
@@ -28,7 +28,7 @@
   overflow: hidden;
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 
@@ -327,7 +327,7 @@
   padding: var(--space-lg) var(--space-xl);
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
   color: var(--text-primary);
   font: inherit;
@@ -370,4 +370,15 @@
   width: 100%;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+@media (max-width: 70rem) {
+  .continueCard,
+  .recovery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .faded {
+    border-left: 0;
+    border-top: var(--border-width-hairline) solid var(--color-hairline);
+  }
 }

@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100vh;
   background: var(--color-content);
+  color: var(--text-primary);
 }
 
 .dragStrip {
@@ -14,15 +15,21 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  gap: var(--space-lg);
+  padding: 0 var(--space-lg) var(--space-lg);
 }
 
 .sidebar {
   flex: 0 0 var(--sidebar-width);
   min-width: 0;
-  border-right: var(--border-width-hairline) solid var(--color-hairline);
+  overflow: auto;
+  border: var(--border-width-hairline) solid var(--color-hairline-strong);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-glass);
 }
 
 .content {
+  border-radius: var(--radius-card);
   flex: 1;
   min-width: 0;
   overflow: auto;

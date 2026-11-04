@@ -3,7 +3,7 @@
   align-items: center;
   gap: var(--space-md-minus);
   padding: var(--space-sm) var(--space-lg-minus);
-  border-radius: var(--radius-row);
+  border-radius: var(--radius-pill);
   font-family: var(--font-ui);
   font-size: var(--font-size-small-plus);
   line-height: 1.4;
@@ -22,7 +22,7 @@
 }
 
 .variantAccent {
-  background-color: var(--color-chrome);
+  background-color: var(--accent-soft);
   border-color: var(--accent-action);
   color: var(--accent-action);
 }
@@ -54,7 +54,9 @@
   line-height: 1;
   border-radius: 50%;
   cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition:
+    color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 .removeButton:hover {

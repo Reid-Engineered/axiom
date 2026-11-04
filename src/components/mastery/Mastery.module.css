@@ -39,27 +39,18 @@
 }
 
 .stateDeveloping {
-  border: var(--border-width-mastery) solid var(--accent-mastery);
-  background: conic-gradient(
-    var(--accent-mastery) 0% 25%,
-    transparent 25% 100%
-  );
+  border: var(--border-width-mastery) dotted var(--accent-mastery);
+  background-color: transparent;
 }
 
 .stateFamiliar {
-  border: var(--border-width-mastery) solid var(--accent-mastery);
-  background: conic-gradient(
-    var(--accent-mastery) 0% 50%,
-    transparent 50% 100%
-  );
+  border: var(--border-width-mastery) dashed var(--accent-mastery);
+  background-color: transparent;
 }
 
 .stateStrong {
   border: var(--border-width-mastery) solid var(--accent-mastery);
-  background: conic-gradient(
-    var(--accent-mastery) 0% 75%,
-    transparent 75% 100%
-  );
+  background-color: transparent;
 }
 
 .stateMastered {

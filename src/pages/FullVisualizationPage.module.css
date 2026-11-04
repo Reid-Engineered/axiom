@@ -38,7 +38,7 @@
   margin: 0;
   transform: translate(-50%, -50%);
   color: var(--text-metadata);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-size-small);
   line-height: 1.65;
   text-align: center;
@@ -56,7 +56,7 @@
   padding: var(--space-xl);
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   color: var(--text-primary);
   box-shadow: var(--shadow-card);
 }
@@ -137,7 +137,7 @@
   padding: var(--space-2xs);
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 

@@ -68,7 +68,7 @@
 .groupCard {
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
@@ -150,7 +150,7 @@
   font-size: var(--font-size-small-plus);
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s ease;
+  transition: color var(--motion-fast) ease;
 }
 
 .settingsButton:hover {

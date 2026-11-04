@@ -7,11 +7,11 @@
 }
 
 .toolbar {
-  height: var(--toolbar-height-session);
+  min-height: var(--toolbar-height-session);
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 var(--space-xl);
+  padding: var(--space-md) var(--space-xl);
   background: var(--color-content);
   border-bottom: var(--border-width-hairline) solid var(--color-hairline);
 }
