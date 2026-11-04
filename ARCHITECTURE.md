@@ -270,3 +270,34 @@ product does not change those interfaces automatically.
   reduced-transparency fallbacks require platform validation; drawing markup is not runtime.
 
 Tasks 082–086 update this inventory/data flow when their actual implementations land.
+
+## 9. Proposed learning-evidence data flow (task 083)
+
+The [evidence/session spec](docs/superpowers/specs/2026-11-03-learning-evidence-contracts.md)
+and [Knowledge evidence extension](docs/superpowers/specs/2026-11-03-knowledge-evidence-extension.md)
+record the inventory, proposed wire contracts, migration boundaries and conformance plan.
+These are review-stage designs; policy decisions P1–P7 require human resolution before
+policy-dependent implementation. No new type, table, capability or engine exists merely
+because this addendum names it. Task 082's tokens/primitives/styling remain independent.
+
+The target flow preserves §5: provider-owned persisted projections → command DTOs →
+async services → page-owned hooks → props-driven views. Mastery/Bloom/readiness, opportunity
+attributions, pattern status, queue selection reasons and summaries are provider outputs.
+Components and hooks do not recompute them from correctness, named states or missing data.
+Core retains workspace/goal/session identity and measured timing; package authors own
+subject metadata. Frontend cross-cutting state remains the existing two contexts.
+
+Practice session actions must persist their receipt, attempt/working, evidence, projections,
+queue and opaque Core session binding atomically. The proposed implementation uses one
+transaction connection and a narrow validated Core binding helper; the current separate
+Core/Practice connection writes are not an atomic commit. This scoped seam neither exposes
+raw SQL to modules nor introduces an event bus. Resume reads the last acknowledged attempt,
+draft and feedback, including solved feedback until explicit advance; retries cannot
+double-apply evidence or queue changes. Conflicts are explicit revision errors.
+
+Schema-4 migration will add versioned immutable evidence/policy/content records and
+plans/receipts without numeric conversion of legacy rows. Schema-1 Knowledge Packages stay
+readable; proposed schema 2 requires a reviewed loader/content migration and retains old
+instance snapshots. Task 076 supplies timer implementation with 085; historical zero
+elapsed_minutes is not measured evidence. Task 067's permanent generation regression corpus
+and 068's network-disabled native Practice proof remain required outstanding work.
