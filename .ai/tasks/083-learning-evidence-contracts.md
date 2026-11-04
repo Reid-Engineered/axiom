@@ -91,7 +91,7 @@ Validation on 2026-11-03:
   All seven required CI jobs, including unconditional E2E, must pass on the PR before merge;
   the PR is the mechanical-gate authority. No runtime conformance tests claimed as run.
 - GitHub CLI is absent; use the connected GitHub tool for PR creation after git push.
-  PR link will be appended once created. No repository-specific Codex co-author trailer
+  PR: [#27](https://github.com/Reid-Engineered/axiom/pull/27). No repository-specific Codex co-author trailer
   convention was found in the required authorities; no invented trailer is added.
 
 ## Open policy decisions for the human
