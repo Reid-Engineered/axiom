@@ -26,6 +26,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
   const { navigate } = useNavigation();
   const [working, setWorking] = useState('r = x, h = x² − 1\n= 2π∫ (x³ − x) dx');
   const [question, setQuestion] = useState('');
+  const [tutorUnavailableFor, setTutorUnavailableFor] = useState<string | null>(null);
   const [intentNoteVisible, setIntentNoteVisible] = useState(false);
   const [mutationError, setMutationError] = useState('');
   const resumedOnOpen = useRef(false);
@@ -50,8 +51,9 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
     if (!trimmed) return;
     setMutationError('');
     try {
-      await addTutorExchange(trimmed);
-      setQuestion('');
+      const response = await addTutorExchange(trimmed);
+      setTutorUnavailableFor(response.tutorStatus === 'unavailable' ? sessionId : null);
+      if (!response.tutorStatus) setQuestion('');
     } catch (caught) {
       setMutationError(caught instanceof Error ? caught.message : 'Could not ask the tutor.');
     }
@@ -128,6 +130,7 @@ export function StudySessionPage({ sessionId }: StudySessionPageProps) {
         tutor={
           <TutorPane
             session={session}
+            unavailable={tutorUnavailableFor === sessionId}
             question={question}
             onQuestionChange={setQuestion}
             onSubmit={submitQuestion}
@@ -278,11 +281,13 @@ function ProblemPane({
 
 function TutorPane({
   session,
+  unavailable,
   question,
   onQuestionChange,
   onSubmit,
 }: {
   session: Session;
+  unavailable: boolean;
   question: string;
   onQuestionChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
@@ -336,13 +341,7 @@ function TutorPane({
           </div>
         </section>
       ) : null}
-      {session.tutorStatus === 'unavailable' ? (
-        <article className={styles.currentExchange} aria-label="Current tutor exchange">
-          <p className={styles.currentAnswer} role="status">
-            Tutor replies are not available in this build yet.
-          </p>
-        </article>
-      ) : current ? (
+      {current ? (
         <article className={styles.currentExchange} aria-label="Current tutor exchange">
           <div className={styles.timestampDivider}>
             <span>Now · problem {session.problemIndex ?? 1}</span>
@@ -352,6 +351,13 @@ function TutorPane({
       ) : (
         <p className={styles.emptyPrompt}>Ask about the step you are working on.</p>
       )}
+      <div role="status" aria-label="Tutor availability">
+        {unavailable ? (
+          <p className={styles.currentAnswer}>
+            Tutor replies are not available in this build yet.
+          </p>
+        ) : null}
+      </div>
       {session.elapsedMinutes >= 90 ? (
         <p className={styles.breakSuggestion}>
           A break now would protect what you’ve built. Stop here and review tomorrow?

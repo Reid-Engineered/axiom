@@ -51,14 +51,14 @@ token changes, Practice generation changes, or items 2–6 of task `077`.
 - `src/types/session.ts` — add optional `tutorStatus?: 'unavailable'` to `Session` (preserving the
   `addTutorExchange(sessionId, question): Promise<Session>` service signature in
   `src/services/sessionService.ts`).
-- `src/hooks/useSessions.ts` & `src/hooks/useSessions.test.tsx` — preserve `tutorStatus` across
-  subsequent session state updates in `useSession` and cover it in hook unit tests.
+- `src/hooks/useSessions.ts` & `src/hooks/useSessions.test.tsx` — treat `tutorStatus` as a
+  response-only status; lifecycle updates replace it rather than copying it forward.
 - `src/test/mockBackend.ts` — mirror the real handler in `addTutorExchange` (validate mutable
   session, store no exchange, return `tutorStatus: 'unavailable'`).
 - `src/pages/StudySessionPage.tsx` & `src/pages/StudySessionPage.test.tsx` — render the honest
-  unavailable message in `TutorPane` where the reply was shown when
-  `session.tutorStatus === 'unavailable'`, and test that asking a question displays the unavailable
-  state without incrementing the exchange count or rendering the canned sentence.
+  unavailable message beside existing exchanges in a persistent live region. Keep the notice
+  in ephemeral page state scoped to the session, preserve the typed question, and test that
+  asking displays the notice without hiding history or incrementing the exchange count.
 
 ## Worklog
 
@@ -85,12 +85,13 @@ token changes, Practice generation changes, or items 2–6 of task `077`.
     session with `tutor_status: Some(TutorStatus::Unavailable)`.
   - `src/types/session.ts`: added optional `tutorStatus?: 'unavailable'` to `Session` (all existing
     consumers and `sessionService.ts` signatures typecheck unchanged).
-  - `src/hooks/useSessions.ts`: preserved `tutorStatus` across subsequent `replace` calls (`pauseSession`,
-    `resumeSession`).
+  - `src/hooks/useSessions.ts`: lifecycle mutations replace the session without carrying a
+    previous tutor response status forward.
   - `src/test/mockBackend.ts`: updated `addTutorExchange` to return `tutorStatus: 'unavailable'`
     without pushing to `session.exchanges`.
-  - `src/pages/StudySessionPage.tsx`: rendered `"Tutor replies are not available in this build yet."`
-    in `TutorPane`'s current-exchange slot when `session.tutorStatus === 'unavailable'`.
+  - `src/pages/StudySessionPage.tsx`: renders `"Tutor replies are not available in this build yet."`
+    in a persistent live region alongside existing exchanges; the notice is ephemeral page state,
+    scoped to the session, and unavailable submissions retain the typed question.
 - **Tested:**
   - `npm run typecheck` — passed (0 errors).
   - `npm run lint` — passed (0 errors).
@@ -114,4 +115,30 @@ token changes, Practice generation changes, or items 2–6 of task `077`.
 
 ## Review
 
+Reviewer: Claude (independent review, 2026-11-04)
+Reviewed head: `3f707c3e7504ac22e3deb380918bb5bce7a7e742`
+
+Verdict: changes-requested
+
+- Correctness: the unavailable branch hid the latest real exchange; lifecycle updates
+  copied the response-only status into later session payloads.
+- Coverage: migration test omitted assertions for session preservation and migration v5.
+- Process: required CI predates merged 082/083; integrate current master and rerun gates.
+- Architecture, tokens, scope, and remaining implementation checks passed.
+
+Codex remediation (2026-11-04): integrated `origin/master`; removed status carry-forward;
+kept availability as ephemeral page state and displayed it in an always-present live
+region alongside current history; retained typed questions; added assertions for latest
+exchange visibility, response status replacement, session preservation and migration v5.
+Fresh validation and final independent review remain pending.
+
+Remediation validation: `npm run typecheck`, `npm run lint`, `npm run build` and
+`npm run test` passed (62 files, 210 tests), as did `git diff --check` and
+`cargo +stable-x86_64-pc-windows-gnu fmt --all --check`. The GNU `cargo test --locked --lib`
+build was still running when this update was recorded; fresh CI remains required,
+including native Linux E2E.
+
 ## Follow-ups
+
+- Task 077: disclose unavailable tutoring before learners type a question. This task keeps
+  the question intact after submitting but does not redesign that affordance.

@@ -376,4 +376,20 @@ fn remove_canned_tutor_exchanges_migration_purges_fabricated_replies() {
         .collect::<rusqlite::Result<Vec<_>>>()
         .unwrap();
     assert_eq!(remaining_ids, vec!["exchange-other"]);
+    let session_status: String = connection
+        .query_row(
+            "SELECT status FROM sessions WHERE id = 'session-existing'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(session_status, "active");
+    let migration_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM schema_migrations WHERE version = 5",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(migration_count, 1);
 }

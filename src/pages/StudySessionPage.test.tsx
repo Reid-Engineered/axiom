@@ -52,6 +52,8 @@ describe('StudySessionPage', () => {
 
     fireEvent.change(working, { target: { value: 'r = 2 − x' } });
     expect(working).toHaveValue('r = 2 − x');
+    const availability = screen.getByRole('status', { name: 'Tutor availability' });
+    expect(availability).toBeEmptyDOMElement();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Ask about this step' }), {
       target: { value: 'Why is the radius measured from the axis?' },
@@ -59,12 +61,20 @@ describe('StudySessionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     await waitFor(() =>
       expect(
-        within(screen.getByRole('article', { name: 'Current tutor exchange' })).getByText(
+        within(availability).getByText(
           'Tutor replies are not available in this build yet.',
         ),
       ).toBeVisible(),
     );
     expect(screen.getByText('40 exchanges today')).toBeVisible();
+    expect(
+      within(screen.getByRole('article', { name: 'Current tutor exchange' })).getByText(
+        /Measure from the axis of rotation/,
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Ask about this step' })).toHaveValue(
+      'Why is the radius measured from the axis?',
+    );
     expect(
       screen.queryByText(
         'Start with what the current representation makes visible, then test one step against the goal.',
@@ -76,7 +86,7 @@ describe('StudySessionPage', () => {
       expect((await getSession('session-shell-method')).status).toBe('paused'),
     );
     expect(
-      within(screen.getByRole('article', { name: 'Current tutor exchange' })).getByText(
+      within(availability).getByText(
         'Tutor replies are not available in this build yet.',
       ),
     ).toBeVisible();
@@ -103,12 +113,8 @@ describe('StudySessionPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
 
-    const currentExchange = await screen.findByRole('article', {
-      name: 'Current tutor exchange',
-    });
-    expect(
-      within(currentExchange).getByText('Tutor replies are not available in this build yet.'),
-    ).toBeVisible();
+    expect(await screen.findByText('Tutor replies are not available in this build yet.')).toBeVisible();
+    expect(screen.queryByRole('article', { name: 'Current tutor exchange' })).not.toBeInTheDocument();
     expect(screen.getByText('0 exchanges today')).toBeVisible();
     expect(
       screen.queryByText(

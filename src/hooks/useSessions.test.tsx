@@ -28,7 +28,8 @@ describe('session domain hooks', () => {
     await act(async () => {
       await result.current.pauseSession();
     });
-    expect(result.current.session?.tutorStatus).toBe('unavailable');
+    expect(result.current.session?.tutorStatus).toBeUndefined();
+    expect(result.current.session?.exchanges).toHaveLength(40);
   });
 
   it('loads an active fixture session and can start a fixture-backed session', async () => {
