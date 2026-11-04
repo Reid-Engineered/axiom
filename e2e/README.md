@@ -1,6 +1,7 @@
 # Native E2E
 
-This directory holds the one Stage 7 native flow: first launch → create workspace → home.
+This directory covers first launch, workspace creation, restart persistence, and the
+network-disabled Practice loop.
 It drives the release Tauri binary through the W3C WebDriver boundary, so the React UI,
 Tauri IPC commands, and SQLite persistence all participate.
 
@@ -9,6 +10,7 @@ Tauri IPC commands, and SQLite persistence all participate.
 - `cargo install tauri-driver --version 2.0.6 --locked`
 - Ubuntu 26.04: `sudo apt-get install webkitgtk-webdriver xvfb`
 - Ubuntu 22.04/24.04 package name: `webkit2gtk-driver`
+- `unshare` (util-linux) and `ip` (iproute2), with user/network namespaces permitted
 - Project dependencies installed with `npm ci`
 
 Run `npm run test:e2e:linux`. The script builds the unbundled release binary, starts the
@@ -27,3 +29,53 @@ avoid tauri-driver 2.0.6's known legacy Element Send Keys forwarding defect.
 For Linux CI, install the Tauri build prerequisites plus the two driver packages above,
 cache Cargo and `src-tauri/target`, and run `npm run test:e2e:linux`. A cold release build is
 the expensive part; the flow itself is intentionally narrow.
+
+## Offline Practice acceptance
+
+`offline-practice-loop.test.mjs` is included automatically by both existing e2e scripts.
+It re-executes only itself using `unshare --user --map-root-user --net`, brings `lo` up,
+and launches the Node harness, tauri-driver, WebKit driver and release app inside that
+private network namespace. No physical interfaces, virtual uplinks or host firewall rules
+are changed. The other native tests and the release build run outside isolation, so build
+dependencies can still download. This is Linux-only and fails on unsupported hosts.
+
+Before app launch and after the loop, the guard checks a different `/proc/self/ns/net`
+identity from the parent, exactly one interface (`lo`), no routes outside loopback in any
+IPv4/IPv6 routing table, immediate `ENETUNREACH` connecting to literal external IPv4 and
+IPv6 addresses, and a successful TCP connection to a temporary loopback listener. A timeout,
+permission failure, missing command or forged marker is a failure, never a skip. Literal
+addresses avoid confusing DNS failures with isolation. All native processes inherit the
+namespace; WebDriver still communicates over loopback. This proves this flow can complete
+without external networking, not that the app never attempts best-effort network calls.
+
+The test creates real learner data through the UI, opens the bundled vertical-axis Shell
+concept (its full provider-owned name), starts Practice, rejects `0`, verifies the automatic
+hint, requests another hint, solves the visible generated polynomial problem with an
+independent shell-integral calculation, and advances to Problem 2 with cleared answer,
+hints and feedback. It uses no sample import, mocked IPC, database seeding or canonical
+solution lookup. Problem 2 may legitimately have the same prompt as Problem 1.
+
+For an already built release binary, run:
+
+```sh
+xvfb-run -a node --test e2e/offline-practice-loop.test.mjs
+node --test e2e/harness-checks.mjs
+```
+
+WSL2 uses the same namespace mechanism. WSLg can use the first command without `xvfb-run`
+if its display works inside the namespace; Xvfb is more reproducible. Install the matching
+WebKit driver and ensure `tauri-driver`, `WebKitWebDriver`, `ip` and `unshare` are on PATH.
+`AXIOM_E2E_APP` and `TAURI_DRIVER_BIN` work as for the other tests. Do not manually set
+`AXIOM_E2E_PARENT_NETNS`; the wrapper supplies it and the guard verifies kernel state.
+
+Ubuntu runners can deny unprivileged user namespaces via AppArmor. The CI e2e job explicitly
+sets `kernel.apparmor_restrict_unprivileged_userns=0` on its disposable VM. On a restricted
+local machine, use an environment that permits namespaces; the harness never silently
+falls back to an online run or changes this system setting itself.
+
+For a negative offline-behavior check, use a disposable source copy: temporarily await a
+required `fetch('https://1.1.1.1/')` before `describeAttempt` invokes Practice, build that
+copy, and run this same native test against it. Expect the Answer field wait to fail
+because the required request cannot complete. Rebuild the unmodified source afterward.
+A failed namespace guard alone is not this negative Practice proof. The task 068 handoff
+records which of these checks were actually executed.

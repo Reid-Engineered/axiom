@@ -1,8 +1,8 @@
 ---
 id: 068
 title: Network-disabled native acceptance test for the Practice loop
-status: proposed
-owner: unassigned
+status: review
+owner: codex
 stage: 8
 depends_on: [063, 065, 066]
 ---
@@ -81,12 +81,90 @@ intact. Getting that distinction right is most of the work.
 
 ## Worklog
 
+- 2026-11-04 — Isolation decision before implementation: re-execute this one native
+  test inside `unshare --user --map-root-user --net`; enable only `lo`, and run the
+  harness, tauri-driver, WebKit driver and app as descendants in that namespace.
+  Build outside isolation. Before launching the app, require a different network
+  namespace from the parent, only the loopback interface, no external IPv4/IPv6
+  routes, immediate ENETUNREACH for literal external IPv4/IPv6 addresses, and a
+  successful loopback socket exchange. Missing permissions/tools or an ineffective
+  namespace fail the test, never skip it. CI may need its AppArmor user-namespace
+  restriction disabled explicitly; no host firewall or interface changes.
+  Baseline is origin/master 0b479f3 (includes 082 and 083); unrelated 067 excluded.
+- 2026-11-04 — Implemented the native loop and extracted the existing restart test's
+  driver/workspace helpers for reuse. The actual provider concept name is
+  `The Method of Cylindrical Shells (Vertical Axis of Revolution)`, not the old sample
+  `Shell method` label. 082 renders the problem counter uppercase through CSS, so the
+  assertion reads its DOM text content. 083 is contracts only; no production changes
+  were needed. Re-fetched master before final validation; baseline remains 0b479f3.
+- 2026-11-04 — Initial re-execution exposed Node's inherited `NODE_TEST_CONTEXT`
+  suppressing nested test discovery. That apparent green was discarded. The wrapper
+  now removes the worker marker, and a focused regression test requires the nested
+  test body to verify isolation and write a completion file. Subsequent native runs
+  visibly executed the child test (one test, zero skipped).
+
 - 2026-09-09 — Filed by claude. Named as "not yet filed" in task `064`'s follow-ups; this
   closes that gap. Scope drawn from `ROADMAP.md:297`, task `064` criterion 3, and the existing
   `e2e/` harness rather than newly invented.
 
 ## What was built / tested / left out
 
+Built:
+
+- Self-isolating native acceptance through real release assets, WebDriver, IPC and
+  SQLite: create workspace, open mapped vertical-shell concept, start Practice,
+  reject `0`, reveal automatic and explicit hints, accept an independently calculated
+  rational multiple of pi from the visible generated prompt, advance to Problem 2,
+  and verify cleared answer/hints/feedback. No fixture import or canonical-answer read.
+- Kernel-state and IPv4/IPv6 socket guards before and after Practice. Failure is
+  mandatory on unsupported platforms, missing tools, denied namespaces, extra links,
+  external routes, unchanged namespace, unexpected socket result or broken loopback.
+- Narrow CI prerequisites: iproute2/util-linux, disposable-runner AppArmor setting,
+  focused harness checks. Existing required `e2e` job/script still runs every native
+  test. README covers commands, WSLg, isolation boundaries and the negative control.
+
+Validation actually executed on 2026-11-04:
+
+- Windows worktree: `npm ci`; `npm run typecheck`; `npm run lint`; `npm run build`;
+  `npm run test` — 62 files / 209 tests passed. `node --check` on all five new MJS
+  files; Prettier check on every changed e2e MJS/README; `git diff --check` passed.
+  Windows focused checks: two passed, Linux namespace regression explicitly skipped.
+- Linux native environment: Ubuntu 26.04 in WSL2, kernel 6.18.33.2, Node 22.23.1,
+  tauri-driver 2.0.6 (Cargo install metadata), WebKitGTK/driver 2.52.6, Xvfb. Matching
+  driver package extracted under the user's cache without system installation.
+  Built a snapshot of this worktree under `/home/marcus/.cache/axiom-068/repo`, using
+  the existing Linux node_modules (JSON-equivalent package lock) and Cargo target cache.
+  No other checkout's source was edited. `npm run build:e2e` passed, then
+  `AXIOM_E2E_APP=/home/marcus/axiom/src-tauri/target/release/axiom xvfb-run -a node --test
+  --test-concurrency=1 e2e/*.test.mjs` passed all three native flows. The isolated child
+  executed the full Practice loop, not just its wrapper. This is the build/run
+  equivalent of `npm run test:e2e:linux`, with an explicit cached target path.
+- Linux `node --test e2e/harness-checks.mjs`: three passed, zero skipped, including
+  rejection of the real parent namespace marker and execution of the nested Node test.
+- Negative Practice proof: only in that disposable snapshot, inserted
+  `await fetch('https://1.1.1.1/');` immediately before the `describeAttempt` IPC call,
+  rebuilt the release app, and ran the same isolated native test. It failed with exit 1
+  waiting 10 seconds for the Answer input, after the isolation guard and session entry.
+  Restored the source from this unchanged worktree, rebuilt clean assets (original
+  frontend hash restored), and reran all three native flows successfully. No mutation
+  is committed; the negative log remains in the WSL cache as `negative.log`.
+
+Limits / gates remaining:
+
+- GitHub's Ubuntu/Node 20 CI execution and independent review remain pending on the PR;
+  local WSL evidence does not claim those have passed. Native Windows/macOS runs were
+  not attempted; the offline acceptance deliberately requires Linux namespaces.
+- No Rust or production frontend/service code changed. Separate Cargo test/check/
+  clippy/fmt gates were not run locally; the native release build did compile Rust.
+  CI retains all existing frontend/backend gates. No folder-layout/data-flow rule
+  changed, so no architecture update is needed.
+- Isolation proves this learner flow works without external networking; it does not
+  assert absence of best-effort outbound attempts or test offline sync. No app UI,
+  Practice production logic, task 067 files or other task records are included.
+
 ## Review
+
+Awaiting independent review and CI. Human sign-off is required before merging the
+task record under `.ai/merge-strategy.md`; implementation agent has not merged or watched.
 
 ## Follow-ups
