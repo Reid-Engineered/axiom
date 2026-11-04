@@ -54,6 +54,9 @@ The child writes a parent-created completion marker only after all learner asser
 the final isolation guard pass. A zero exit without that marker fails even if nested Node
 test discovery ran no tests. The outer test allows 150 seconds, the inner flow 120; aborting
 the outer test terminates the isolated process group and force-kills survivors.
+Driver teardown closes inherited output pipes and stops descendants after driver exit.
+Outside isolation each driver has its own process group; inside isolation it stays in
+the wrapper's group so the outer abort still reaches it.
 Forced termination can bypass the learner test's `finally`, leaving its temporary
 `XDG_DATA_HOME` on a local machine. Descendants that create a separate session can escape
 the process group; this harness does not provide cgroup containment. CI uses disposable VMs.

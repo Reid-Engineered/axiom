@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtemp, readFile, readlink, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -6,6 +8,53 @@ import test from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { assertOfflineIsolation, runIsolated } from './offline-isolation.mjs';
 import { shellVolumeAnswer } from './shell-volume.mjs';
+import { stopProcess } from './native-helpers.mjs';
+
+test(
+  'driver cleanup stops descendants even after the driver exits',
+  {
+    skip: process.platform !== 'linux',
+    timeout: 10_000,
+  },
+  async () => {
+    const child = spawn(
+      process.execPath,
+      [
+        '-e',
+        `
+    const { spawn } = require('node:child_process');
+    const orphan = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'inherit' });
+    console.log(orphan.pid);
+    orphan.unref();
+  `,
+      ],
+      { detached: true, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    let output = '';
+    child.stdout.on('data', (chunk) => {
+      output += chunk;
+    });
+    try {
+      await once(child, 'exit');
+      const pid = Number(output.trim());
+      assert.ok(pid > 0, 'Driver fixture did not start a descendant.');
+      await stopProcess(child);
+      assert.ok(child.stdout.destroyed && child.stderr.destroyed);
+      let stopped = false;
+      for (let attempt = 0; attempt < 20 && !stopped; attempt += 1) {
+        const stat = await readFile(`/proc/${pid}/stat`, 'utf8').catch((error) => {
+          if (error.code === 'ENOENT') return '';
+          throw error;
+        });
+        stopped = !stat || /^\d+ \(.*\) Z /.test(stat);
+        if (!stopped) await delay(100);
+      }
+      assert.ok(stopped, 'Driver descendant remained running after cleanup.');
+    } finally {
+      await stopProcess(child);
+    }
+  },
+);
 
 test('volume oracle reads supported prompts and rejects unrelated/sample prose', () => {
   const prompt = (c, b) =>

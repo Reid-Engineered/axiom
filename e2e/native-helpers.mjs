@@ -11,6 +11,8 @@ export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.met
 const applicationPath =
   process.env.AXIOM_E2E_APP ?? path.join(repositoryRoot, 'src-tauri', 'target', 'release', 'axiom');
 const tauriDriverPath = process.env.TAURI_DRIVER_BIN ?? 'tauri-driver';
+// Isolated drivers stay in the wrapper's group so its timeout can reach every descendant.
+const separateDriverGroup = process.platform === 'linux' && !process.env.AXIOM_E2E_PARENT_NETNS;
 
 async function availablePort() {
   return new Promise((resolve, reject) => {
@@ -45,13 +47,33 @@ async function waitForDriver(driverUrl, driverProcess, output) {
 }
 
 export async function stopProcess(child) {
-  if (child.exitCode !== null) return;
-  child.kill('SIGTERM');
-  await Promise.race([
-    new Promise((resolve) => child.once('exit', resolve)),
-    new Promise((resolve) => setTimeout(resolve, 3_000)),
-  ]);
-  if (child.exitCode === null) child.kill('SIGKILL');
+  const signal = (name) => {
+    try {
+      if (separateDriverGroup && child.pid) process.kill(-child.pid, name);
+      else child.kill(name);
+    } catch (error) {
+      if (error.code !== 'ESRCH') console.warn(`Native driver cleanup failed: ${error.message}`);
+    }
+  };
+  try {
+    if (child.exitCode === null && child.signalCode === null) {
+      await new Promise((resolve) => {
+        const finish = () => {
+          clearTimeout(timer);
+          child.removeListener('exit', finish);
+          resolve();
+        };
+        const timer = setTimeout(finish, 3_000);
+        child.once('exit', finish);
+        signal('SIGTERM');
+      });
+    }
+  } finally {
+    // WebKit descendants can outlive tauri-driver and hold its inherited pipes open.
+    signal('SIGKILL');
+    child.stdout?.destroy();
+    child.stderr?.destroy();
+  }
 }
 
 export async function startSession(isolatedDataHome, driverProcesses) {
@@ -66,6 +88,7 @@ export async function startSession(isolatedDataHome, driverProcesses) {
       cwd: repositoryRoot,
       env: { ...process.env, XDG_DATA_HOME: isolatedDataHome },
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached: separateDriverGroup,
     },
   );
   driverProcesses.push(driverProcess);

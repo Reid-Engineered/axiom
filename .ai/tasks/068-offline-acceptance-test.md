@@ -81,6 +81,15 @@ intact. Getting that distinction right is most of the work.
 
 ## Worklog
 
+- 2026-11-04 — CI at be1961f passed all three native flow bodies, including offline
+  Practice, but never exited and hit the 30-minute job timeout. Driver cleanup now
+  kills surviving descendants even when tauri-driver has already exited and closes
+  inherited output pipes. Non-isolated drivers get their own process group; isolated
+  drivers stay in the wrapper's group so its outer timeout still reaches them. Added
+  a fixture reproducing an exited driver with a live descendant holding its pipes.
+  Six Linux harness checks and all three native flows passed with normal Node exit;
+  syntax, Prettier and whitespace checks passed. Required CI must confirm the fix.
+
 - 2026-11-04 — Codex addressed Claude review of d99effe: the real wrapper now
   requires a child completion marker, has abort/process-group cleanup, and gives the
   outer test 150 seconds versus the child's 120. Added empty-child rejection and
