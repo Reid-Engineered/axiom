@@ -154,6 +154,7 @@ fn drifted_fields(committed: &CorpusCase, current: &CorpusCase) -> Vec<String> {
         }
     };
 
+    compare("seed", committed.seed.to_string(), current.seed.to_string());
     compare(
         "family_id",
         committed.family_id.clone(),
@@ -192,6 +193,18 @@ fn drifted_fields(committed: &CorpusCase, current: &CorpusCase) -> Vec<String> {
         format!("{:?}", current.canonical_solution),
     );
     drift
+}
+
+#[test]
+fn corpus_reports_returned_seed_drift() {
+    let committed = load_case(42);
+    let mut current = committed.clone();
+    current.seed = 43;
+
+    assert_eq!(
+        drifted_fields(&committed, &current),
+        vec!["  seed:\n    committed: 42\n    generated: 43"]
+    );
 }
 
 #[test]

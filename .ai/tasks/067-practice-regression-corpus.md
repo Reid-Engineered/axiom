@@ -146,4 +146,10 @@ lives inside the existing `generation/tests/` module.
 
 ## Review
 
+2026-11-04 — Independent Codex review identified that the field-level drift reporter
+omitted the returned seed. Added seed comparison and `corpus_reports_returned_seed_drift`,
+which mutates only the returned seed and checks the precise diagnostic. Integrated current
+`origin/master` (082/083); CI on the resulting PR must validate the combined tree.
+Final review verdict and fresh check results remain pending.
+
 ## Follow-ups
