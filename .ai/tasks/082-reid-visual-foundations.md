@@ -1,7 +1,7 @@
 ---
 id: 082
 title: Reid visual foundations and native shell
-status: in-progress
+status: review
 owner: codex
 stage: 9
 depends_on: [081]
@@ -63,11 +63,20 @@ Validation (Windows host, 2026-11-03):
 
 Left out deliberately: new Today/product-area navigation (084), evidence contracts (083), numeric mastery/diagnostics/difficulty/adaptive queues (085), profile/history/summary features (086). Existing empty/unavailable surfaces remain; no sample reference observations were imported. Implementation stays in one PR; outstanding work is acceptance evidence, not a newly invented contract.
 
-PR: https://github.com/Reid-Engineered/axiom/pull/28 (draft).
+- 2026-11-03 (antigravity review polish): Updated remaining card/row surfaces (`HomePage` `.continueCard`, `MarketplacePage` cards, `CreateWorkspacePage` `.inference`, `ConceptRow` `.row`) from `--color-content` to `--color-surface` for consistent raised-surface treatment on the dark canvas, and aligned `DiagnosticDot` `.typeMistake` with `--accent-amber`. All 7 required CI checks passed on PR #28; moved task status to `review`.
+
+PR: https://github.com/Reid-Engineered/axiom/pull/28.
 
 ## Review
 
-Pending implementation and independent review.
+Reviewer: antigravity
+Date: 2026-11-03
+- [x] Correctness — pass: Reid token palette, typography, metrics, opaque/glass fallbacks, forced-colors, reduced-motion/transparency, and textual status feedback match the handoff; 44 WCAG AA contrast tests and StudySessionPage status assertions pass.
+- [x] Architecture conformance — pass: zero changes to `src/types/`, `src/services/`, `src/hooks/`, or `src-tauri/`; component prop contracts untouched.
+- [x] UI rules — pass: zero hardcoded hex/rgb/rgba/oklch values outside `tokens.css`; all CSS custom properties resolve; raised card surfaces (`--color-surface`) and `--accent-amber` diagnostic dots consistent across screens.
+- [x] Process — pass: all 7 required CI checks (frontend Ubuntu/macOS/Windows, backend Ubuntu/macOS/Windows, Linux E2E) green on PR #28; worklog and scope accurate.
+
+Verdict: pass
 
 ## Follow-ups
 
