@@ -219,10 +219,13 @@ enough. `src/test/setup.ts` installs Tauri's official IPC mock, and `test/mockBa
 serves the retained fixtures behind the same command names and payloads used in production.
 See `AGENTS.md` §Testing for the policy this shape exists to support.
 
-Stage 7's native smoke flow lives in `e2e/`. It launches the release Tauri binary through
-`tauri-driver`, exercises real IPC and SQLite from first launch through workspace creation,
-and isolates its application data with a temporary `XDG_DATA_HOME`. It is deliberately one
-high-value flow rather than full-screen browser coverage.
+Native acceptance flows in `e2e/` launch the release Tauri binary through `tauri-driver`
+and exercise real IPC and SQLite with temporary `XDG_DATA_HOME` directories. They cover
+first launch, workspace creation, restart persistence and offline Practice. Shared driver
+and workspace helpers live in `native-helpers.mjs`. The offline flow re-executes inside a
+private Linux network namespace with loopback preserved; kernel/socket guards verify
+isolation, and a completion marker proves the nested learner flow actually ran. These
+remain focused acceptance paths rather than full-screen browser coverage.
 
 ---
 
