@@ -203,8 +203,8 @@ Review remediation validation (supersedes the original CORS-mode negative proof)
 
 Limits / gates remaining:
 
-- GitHub's Ubuntu/Node 20 CI execution and independent review remain pending on the PR;
-  local WSL evidence does not claim those have passed. Native Windows/macOS runs were
+- Required GitHub CI remains a separate merge gate; independent code review passes
+  at c5bc294 as recorded below. Local WSL evidence does not replace CI. Native Windows/macOS runs were
   not attempted; the offline acceptance deliberately requires Linux namespaces.
 - No Rust or production frontend/service code changed. Separate Cargo test/check/
   clippy/fmt gates were not run locally; the native release build did compile Rust.
@@ -215,6 +215,27 @@ Limits / gates remaining:
   Practice production logic, task 067 files or other task records are included.
 
 ## Review
+
+Reviewer: Claude (independent final review, 2026-11-04)
+Reviewed implementation head: `c5bc2943a91745967c61ec3e7fb34397ae697f77`
+
+- Correctness: pass. Driver cleanup stops descendants by process group even after
+  driver exit, closes inherited pipes, and clears the timer. Isolated drivers remain
+  in the wrapper group so outer abort still reaches them. Completion-marker and
+  isolation guards are sound; the new fixture reproduces the post-test hang mode.
+- Tests: pass by inspection; descendant, aborted-grandchild and empty-child regressions
+  assert actual outcomes. Offline answer oracle and unchanged restart assertions hold.
+- Architecture: pass; no production behavior changed. README and architecture match
+  the process-group rules, cleanup, isolation boundaries and timeout limitations.
+- UI rules: not applicable.
+- Scope/worklog: pass. Remaining first-launch helper duplication is a named follow-up.
+
+Verdict: pass (independent code review), conditional on all seven required CI checks.
+
+Merge requires green CI on the final head, including native E2E completing with normal
+exit within the job limit; any required failure or timeout keeps this task unmergeable.
+This review-record commit changes no implementation. Human sign-off is still required
+for ARCHITECTURE.md and .ai/ changes. No CI gate or local limitation is waived.
 
 Claude re-reviewed `c821fb8` on 2026-11-04: all five original findings resolved;
 correctness/architecture pass apart from the conditional CI clipping risk. Required
