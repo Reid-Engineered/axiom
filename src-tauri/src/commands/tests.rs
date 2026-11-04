@@ -755,14 +755,59 @@ fn session_handlers_cover_the_full_lifecycle() {
         "  What should I use as the radius?  ",
     )
     .unwrap();
-    assert_eq!(with_exchange.exchanges.len(), 1);
+    assert!(with_exchange.exchanges.is_empty());
     assert_eq!(
-        with_exchange.exchanges[0].question,
-        "What should I use as the radius?"
+        with_exchange.tutor_status,
+        Some(super::TutorStatus::Unavailable)
     );
     let completed = session::end_session_handler(&database, &started.id).unwrap();
     assert_eq!(completed.status, "completed");
     assert!(session::resume_session_handler(&database, &started.id).is_err());
+}
+
+#[test]
+fn add_tutor_exchange_reports_unavailable_without_persisting_a_reply() {
+    let database = database();
+    let workspace = create_workspace(&database);
+    insert_concept(&database, &workspace.id, "concept-shells", "Shell method");
+    let registry = Arc::new(RwLock::new(ModuleRegistry::new()));
+    let installation = ModuleInstallation {
+        workspace_id: workspace.id.clone(),
+        enabled_module_ids: Vec::new(),
+    };
+    let started = tauri::async_runtime::block_on(session::start_session_handler(
+        &database,
+        &registry,
+        &installation,
+        session_input(&workspace.id),
+    ))
+    .unwrap();
+
+    let updated = session::add_tutor_exchange_handler(
+        &database,
+        &started.id,
+        "Why is the shell radius measured from the axis?",
+    )
+    .unwrap();
+    assert_eq!(updated.tutor_status, Some(super::TutorStatus::Unavailable));
+    assert!(updated.exchanges.is_empty());
+
+    let reloaded = session::get_session_handler(&database, &started.id).unwrap();
+    assert!(reloaded.exchanges.is_empty());
+    assert_eq!(reloaded.tutor_status, None);
+
+    let count: i64 = database
+        .connection()
+        .unwrap()
+        .query_row("SELECT COUNT(*) FROM tutor_exchanges", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 0);
+
+    let completed = session::end_session_handler(&database, &started.id).unwrap();
+    assert!(session::add_tutor_exchange_handler(&database, &completed.id, "Question?").is_err());
+    assert!(
+        session::add_tutor_exchange_handler(&database, "missing-session", "Question?").is_err()
+    );
 }
 
 #[test]
