@@ -16,7 +16,9 @@
   font-family: var(--font-ui);
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
   user-select: none;
 }
 
@@ -51,7 +53,7 @@
 }
 
 .subItem.active {
-  background: var(--color-chrome-rail);
+  background: var(--accent-soft);
   color: var(--accent-action);
   font-weight: 600;
   box-shadow: var(--shadow-card);

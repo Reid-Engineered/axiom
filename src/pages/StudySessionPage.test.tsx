@@ -108,6 +108,8 @@ describe('StudySessionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
 
     expect(await screen.findByText('Set up the shell method integral.')).toBeVisible();
+    expect(screen.getByText('That does not match yet.')).toHaveAttribute('role', 'status');
+    expect(screen.getByText('That does not match yet.').className).toContain('feedbackMiss');
   });
 
   it('shows a plain confirmation and a next problem action once solved', async () => {
@@ -123,6 +125,8 @@ describe('StudySessionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
 
     expect(await screen.findByText('Correct.')).toBeVisible();
+    expect(screen.getByText('Correct.')).toHaveAttribute('role', 'status');
+    expect(screen.getByText('Correct.').className).toContain('feedbackCorrect');
     fireEvent.click(screen.getByRole('button', { name: 'Next problem' }));
     await waitFor(() => expect(screen.getByText('Problem 2')).toBeVisible());
   });

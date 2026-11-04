@@ -1,21 +1,16 @@
-import styles from "./DiagnosticDot.module.css";
+import styles from './DiagnosticDot.module.css';
 
 export interface DiagnosticDotProps {
-  type: "mistake" | "positive" | "neutral";
-  size?: "sm" | "md" | "lg";
+  type: 'mistake' | 'positive' | 'neutral';
+  size?: 'sm' | 'md' | 'lg';
   tooltip?: string;
   className?: string;
 }
 
 /**
- * Diagnostic indicator dot: amber for specific mistake, mastery accent for positive practice, neutral for metadata.
+ * Diagnostic indicator with an accessible label alongside its semantic status color.
  */
-export function DiagnosticDot({
-  type,
-  size = "md",
-  tooltip,
-  className = "",
-}: DiagnosticDotProps) {
+export function DiagnosticDot({ type, size = 'md', tooltip, className = '' }: DiagnosticDotProps) {
   const typeClass = {
     mistake: styles.typeMistake,
     positive: styles.typePositive,

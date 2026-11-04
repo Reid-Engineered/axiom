@@ -147,7 +147,7 @@
   overflow: hidden;
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 
@@ -180,8 +180,8 @@
 }
 
 .segments li[data-status='read'] {
-  color: var(--color-content);
-  background: var(--accent-mastery);
+  color: var(--text-success);
+  background: var(--color-surface-raised);
   font-weight: 600;
 }
 

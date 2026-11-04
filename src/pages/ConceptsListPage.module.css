@@ -54,12 +54,12 @@
 .viewToggle button {
   padding: var(--space-md-minus) var(--space-lg);
   border-radius: var(--radius-row);
-  transition: all 0.15s ease;
+  transition: all var(--motion-fast) ease;
 }
 
 .viewToggle button[aria-pressed='true'] {
   color: var(--text-primary);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
   font-weight: 500;
 }
@@ -103,7 +103,7 @@
   border: var(--border-width-hairline) solid var(--color-hairline-strong);
   border-radius: var(--radius-pill);
   background: var(--color-content);
-  transition: all 0.15s ease;
+  transition: all var(--motion-fast) ease;
 }
 
 .filters button[aria-pressed='true'] {
@@ -149,7 +149,7 @@
 .chapter {
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
-  background: var(--color-content);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }

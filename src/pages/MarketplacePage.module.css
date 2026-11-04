@@ -62,7 +62,7 @@
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  background: var(--color-content);
+  background: var(--color-surface);
 }
 
 .featured {

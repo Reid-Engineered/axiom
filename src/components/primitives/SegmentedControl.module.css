@@ -2,13 +2,14 @@
   display: inline-flex;
   align-items: center;
   padding: var(--space-2xs);
-  background-color: var(--color-hairline);
+  background-color: var(--color-recessed);
   border-radius: var(--radius-row);
   user-select: none;
   font-family: var(--font-ui);
 }
 
 .option {
+  min-height: var(--control-height-sm);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-control);
   font-size: var(--font-size-small-plus);
@@ -17,7 +18,10 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -27,7 +31,7 @@
 }
 
 .selected {
-  background-color: var(--color-content);
+  background-color: var(--color-fill-strong);
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: var(--shadow-card);

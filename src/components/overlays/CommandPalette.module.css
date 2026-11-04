@@ -13,8 +13,8 @@
   transform: translateX(-50%);
   border: var(--border-width-hairline) solid var(--color-hairline);
   border-radius: var(--radius-sheet);
-  background: var(--color-content);
-  box-shadow: var(--shadow-sheet);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-menu);
   overflow: hidden;
 }
 
